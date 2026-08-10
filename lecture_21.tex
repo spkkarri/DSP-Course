@@ -1,0 +1,136 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amsfonts,amssymb}
+\usepackage{graphicx}
+\usepackage{geometry}
+\geometry{margin=1in}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{float}
+\usepackage{xcolor}
+
+\definecolor{darkbg}{HTML}{0d121f}
+\definecolor{lighttext}{HTML}{e2e8f0}
+\definecolor{primary}{HTML}{8b5cf6}
+\definecolor{secondary}{HTML}{0dd5c5}
+
+\pagecolor{darkbg}
+\color{lighttext}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=secondary,
+    urlcolor=secondary
+}
+
+\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Lecture 21: Quantization Effects in DSP Systems \\ \large (III B.Tech EEE)}
+\author{Lecture Notes (40-Minute Plan)}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{Lecture Plan \& Objectives (40 Minutes Breakdown)}
+\begin{itemize}
+    \item \textbf{00:00 -- 05:00 (5 mins):} Why Quantization Matters (ADC limitations, fixed-point vs floating-point).
+    \item \textbf{05:00 -- 12:00 (7 mins):} Uniform Quantization \& Error Model (step size, representation levels, white noise assumption).
+    \item \textbf{12:00 -- 18:00 (6 mins):} SQNR Derivation ($6.02b + 1.76$ dB).
+    \item \textbf{18:00 -- 25:00 (7 mins):} Coefficient Quantization (FIR/IIR, sensitivity, direct vs cascade forms).
+    \item \textbf{25:00 -- 30:00 (5 mins):} Round-off Noise in Fixed-Point IIR (additive noise model, PSD, noise power).
+    \item \textbf{30:00 -- 35:00 (5 mins):} Limit Cycles \& Overflow (granular, overflow, saturation vs two's complement).
+    \item \textbf{35:00 -- 40:00 (5 mins):} Checkpoints \& Full Derivations.
+\end{itemize}
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{Why Quantization Matters}
+In any practical Digital Signal Processing (DSP) system, we face finite word-length effects due to hardware limitations.
+An Analog-to-Digital Converter (ADC) maps continuous amplitudes into a finite set of digital levels, inherently discarding information.
+Fixed-point DSPs assign a strict number of bits to the integer and fractional parts. We discard bits after multiplication via truncation (chopping lower bits) or rounding (choosing the nearest representable value).
+
+\section{Uniform Quantization}
+Let the input signal range be from $x_{min}$ to $x_{max}$. For a quantizer with $b$ bits, the number of levels is $L = 2^b$. The step size $\Delta$ is:
+\begin{equation}
+\Delta = \frac{x_{max} - x_{min}}{2^b}
+\end{equation}
+
+In the \textbf{Granular Noise Region}, the signal stays within bounds and error is constrained by $\Delta$. In the \textbf{Overload Region}, the signal exceeds bounds and clipping causes severe distortion.
+
+\section{Quantization Error Model}
+The quantized signal $x_Q[n]$ is modeled as $x[n]$ plus additive noise $e[n]$:
+\begin{equation}
+x_Q[n] = x[n] + e[n] \quad \Rightarrow \quad e[n] = x_Q[n] - x[n]
+\end{equation}
+Under the white noise model (Widrow assumption), $e[n]$ is uniformly distributed over $[-\Delta/2, \Delta/2]$. The variance is:
+\begin{align}
+\sigma_e^2 &= E[e^2] \\
+&= \int_{-\Delta/2}^{\Delta/2} e^2 \frac{1}{\Delta} de \\
+&= \frac{1}{\Delta} \left[ \frac{e^3}{3} \right]_{-\Delta/2}^{\Delta/2} \\
+&= \frac{\Delta^2}{12}
+\end{align}
+
+\section{Signal-to-Quantization-Noise Ratio (SQNR)}
+For a full-scale sinusoid $x[n] = A \cos(\omega n)$, peak-to-peak is $2A$. Thus, $\Delta = \frac{2A}{2^b}$.
+\begin{align}
+P_x &= \frac{A^2}{2} \\
+P_e &= \frac{\Delta^2}{12} = \frac{1}{12} \left( \frac{2A}{2^b} \right)^2 = \frac{A^2}{3 \cdot 2^{2b}} \\
+\text{SQNR} &= \frac{P_x}{P_e} = \frac{3}{2} \cdot 2^{2b} \\
+\text{SQNR (dB)} &= 10 \log_{10} \left( \frac{3}{2} \cdot 2^{2b} \right) = 6.02b + 1.76
+\end{align}
+Every additional bit increases SQNR by roughly 6 dB.
+
+\section{Coefficient Quantization in FIR/IIR}
+Filter coefficients $h_k$ are quantized, perturbing poles and zeros:
+\begin{equation}
+\Delta H(e^{j\omega}) \approx \sum_k \frac{\partial H(e^{j\omega})}{\partial h_k} \Delta h_k
+\end{equation}
+High-order direct form IIR filters are highly sensitive to coefficient quantization and can become unstable. Cascade forms (second-order sections) are much less sensitive since root dependency is decoupled.
+
+\section{Round-off Noise in Fixed-Point IIR}
+A $b$-bit times $b$-bit multiplication gives $2b$ bits, which is rounded. We model this as inserting white noise $e[n]$ after each multiplier. The output PSD is:
+\begin{equation}
+S_{ee}^{out}(e^{j\omega}) = \frac{\sigma_e^2}{2\pi} |H_{noise}(e^{j\omega})|^2
+\end{equation}
+Total output noise power is:
+\begin{equation}
+\sigma_{out}^2 = \sigma_e^2 \sum_{n=0}^{\infty} h_{noise}^2[n]
+\end{equation}
+
+\section{Limit Cycles}
+Fixed-point IIR filters can exhibit sustained oscillations for zero input.
+\begin{itemize}
+    \item \textbf{Granular Limit Cycles:} Rounding/truncation inside the feedback loop.
+    \item \textbf{Overflow Limit Cycles:} Occurs due to Two's Complement wraparound. Saturation arithmetic clips the value instead, heavily reducing this risk.
+\end{itemize}
+
+\section{Floating-Point vs Fixed-Point}
+Fixed-point has constant absolute error. IEEE 754 Floating-point uses a mantissa and exponent ($x = M \cdot 2^E$), offering bounded relative error and a huge dynamic range. It is preferred when scaling is too complex or dynamic range fluctuates drastically.
+
+\section{Key Formulas Summary}
+\begin{table}[H]
+\centering
+\begin{tabular}{ll}
+\toprule
+\textbf{Concept} & \textbf{Formula} \\
+\midrule
+Step Size & $\Delta = \frac{x_{max} - x_{min}}{2^b}$ \\
+Quantization Noise Variance & $\sigma_e^2 = \frac{\Delta^2}{12}$ \\
+SQNR for Full-Scale Sine & $\text{SQNR (dB)} = 6.02b + 1.76$ \\
+Output Noise Power & $\sigma_{out}^2 = \sigma_e^2 \sum_{n} h^2[n]$ \\
+\bottomrule
+\end{tabular}
+\caption{Key quantization formulas.}
+\end{table}
+
+\section{Checkpoint Questions}
+\textbf{Q1:} An 8-bit ADC has range $\pm 5$V. Calculate step size and quantization noise power. \\
+\textbf{A1:} $\Delta = \frac{10}{256} \approx 0.039$ V. $\sigma_e^2 = \frac{(0.039)^2}{12} \approx 1.27 \times 10^{-4}$ W.
+
+\textbf{Q2:} Derive the max amplitude $A$ for a 12-bit ADC (range $\pm 2.5$V) to get SQNR = 70 dB. \\
+\textbf{A2:} $\Delta = 5/4096 = 0.00122$ V. $P_e = \frac{\Delta^2}{12} = 1.24 \times 10^{-7}$ W. For 70 dB, $P_x/P_e = 10^7$. $P_x = 1.24$ W. $P_x = A^2/2 \Rightarrow A \approx 1.57$ V.
+
+\textbf{Q3:} A first-order IIR $y[n] = x[n] + 0.8 y[n-1]$ has multiplication noise $e[n]$. Total output noise power? \\
+\textbf{A3:} $h_{noise}[n] = (0.8)^n u[n]$. $\sigma_{out}^2 = \sigma_e^2 \sum (0.8^{2n}) = \sigma_e^2 \sum (0.64)^n = \sigma_e^2 \frac{1}{1-0.64} \approx 2.78 \sigma_e^2$.
+
+\end{document}

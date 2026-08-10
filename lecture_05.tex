@@ -1,0 +1,143 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amsfonts,amssymb}
+\usepackage{graphicx}
+\usepackage{geometry}
+\geometry{margin=1in}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{float}
+
+\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Lecture 5: Z-Transform, ROC \& Common Pairs \\ \large (III B.Tech EEE)}
+\author{Lecture Notes (40-Minute Plan)}
+\date{}
+
+\usepackage{xcolor}
+\definecolor{darkbg}{HTML}{0d121f}
+\definecolor{lighttext}{HTML}{e2e8f0}
+\definecolor{primary}{HTML}{8b5cf6}
+\definecolor{secondary}{HTML}{0dd5c5}
+
+\pagecolor{darkbg}
+\color{lighttext}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=secondary,
+    urlcolor=secondary
+}
+
+\begin{document}
+
+\maketitle
+
+\section{Lecture Plan \& Objectives (40 Minutes Breakdown)}
+\begin{itemize}
+    \item \textbf{00:00 -- 08:00 (8 mins):} Motivation: Z-transform as a generalization of the DTFT ($z = r e^{j\omega}$) and convergence proof.
+    \item \textbf{08:00 -- 18:00 (10 mins):} The Region of Convergence (ROC): Detailed properties, causal vs. anti-causal vs. two-sided signals.
+    \item \textbf{18:00 -- 30:00 (12 mins):} Properties of the Z-Transform with full algebraic proofs.
+    \item \textbf{30:00 -- 35:00 (5 mins):} Common Z-Transform Pairs and Pole-Zero plots.
+    \item \textbf{35:00 -- 40:00 (5 mins):} Checkpoint and Q\&A.
+\end{itemize}
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{Definition \& Mathematical Motivation}
+The Z-transform of a sequence $x[n]$ is defined as:
+\begin{equation}
+X(z) = \sum_{n=-\infty}^{\infty} x[n] z^{-n}
+\end{equation}
+Expressing $z$ in polar form $z = r e^{j\omega}$:
+\begin{equation}
+X(r e^{j\omega}) = \sum_{n=-\infty}^{\infty} (x[n] r^{-n}) e^{-j\omega n}
+\end{equation}
+This shows that the Z-transform corresponds to the DTFT of $x[n]$ scaled by $r^{-n}$. Evaluating $X(z)$ on the unit circle ($|z|=1$) yields the DTFT $X(e^{j\omega})$.
+The Z-transform converges if the scaled sequence is absolutely summable:
+\begin{equation}
+\sum_{n=-\infty}^{\infty} |x[n] r^{-n}| < \infty
+\end{equation}
+The set of values of $z$ satisfying this condition forms the Region of Convergence (ROC).
+
+\section{Properties of the Region of Convergence (ROC)}
+\begin{itemize}
+    \item \textbf{Shape:} The ROC consists of concentric rings in the z-plane centered at the origin.
+    \item \textbf{Poles:} The ROC does not contain any poles.
+    \item \textbf{Causal (Right-sided) signals:} ROC is the exterior of a circle: $|z| > r_{max}$.
+    \item \textbf{Anti-causal (Left-sided) signals:} ROC is the interior of a circle: $|z| < r_{min}$.
+    \item \textbf{Two-sided signals:} ROC is an annular ring: $r_{min} < |z| < r_{max}$.
+    \item \textbf{Stability:} A system is stable if and only if the ROC contains the unit circle ($|z|=1$). For causal systems, this requires all poles to lie inside the unit circle ($r_{max} < 1$).
+\end{itemize}
+
+See Figure~\ref{fig:roc_causal} for illustrations of causal and anti-causal ROC regions.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{images/roc_causal_anticausal.png}
+\caption{ROC shapes in the complex z-plane for causal and anti-causal exponential sequences.}
+\label{fig:roc_causal}
+\end{figure}
+
+\section{Z-Transform Properties \& Proofs}
+For $x[n] \leftrightarrow X(z)$ (ROC $R_x$) and $y[n] \leftrightarrow Y(z)$ (ROC $R_y$):
+
+\subsection{Time Shifting}
+\begin{equation}
+x[n - n_0] \longleftrightarrow z^{-n_0} X(z)
+\end{equation}
+\textit{Proof:} Let $m = n - n_0$.
+\begin{equation}
+\sum_{n=-\infty}^{\infty} x[n-n_0] z^{-n} = \sum_{m=-\infty}^{\infty} x[m] z^{-(m+n_0)} = z^{-n_0} X(z)
+\end{equation}
+
+\subsection{Scaling in the Z-domain}
+\begin{equation}
+a^n x[n] \longleftrightarrow X(a^{-1} z)
+\end{equation}
+\textit{Proof:}
+\begin{equation}
+\sum_{n=-\infty}^{\infty} a^n x[n] z^{-n} = \sum_{n=-\infty}^{\infty} x[n] (a^{-1}z)^{-n} = X(a^{-1}z)
+\end{equation}
+
+\subsection{Differentiation in the Z-domain}
+\begin{equation}
+n x[n] \longleftrightarrow -z \frac{dX(z)}{dz}
+\end{equation}
+\textit{Proof:}
+\begin{equation}
+\frac{dX(z)}{dz} = \sum_{n=-\infty}^{\infty} x[n] (-n) z^{-n-1} = -z^{-1} \sum_{n=-\infty}^{\infty} n x[n] z^{-n} \quad \Longrightarrow \quad -z \frac{dX(z)}{dz} = \text{Z}\{n x[n]\}
+\end{equation}
+
+\subsection{Initial Value Theorem}
+For causal $x[n]$:
+\begin{equation}
+x[0] = \lim_{z \to \infty} X(z)
+\end{equation}
+\textit{Proof:} $X(z) = x[0] + x[1]z^{-1} + x[2]z^{-2} + \dots$ As $z \to \infty$, all terms with negative powers of $z$ vanish.
+
+\section{Common Pairs and Annular ROC}
+Table~\ref{tab:z_pairs} summarizes the primary Z-transform pairs. An annular ring representing a two-sided signal is illustrated in Figure~\ref{fig:annular}.
+
+\begin{table}[H]
+\centering
+\caption{Common Z-transform pairs.}
+\label{tab:z_pairs}
+\begin{tabular}{lll}
+\toprule
+\textbf{Signal $x[n]$} & \textbf{Z-Transform $X(z)$} & \textbf{ROC} \\
+\midrule
+$\delta[n]$ & $1$ & All $z$ \\
+$u[n]$ & $\frac{1}{1-z^{-1}}$ & $|z| > 1$ \\
+$a^n u[n]$ & $\frac{1}{1-a z^{-1}}$ & $|z| > |a|$ \\
+$-a^n u[-n-1]$ & $\frac{1}{1-a z^{-1}}$ & $|z| < |a|$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.45\textwidth]{images/zplane_common_pairs.png}
+\caption{ROC of a stable two-sided sequence, forming an annular ring bounded by pole radii.}
+\label{fig:annular}
+\end{figure}
+
+\end{document}

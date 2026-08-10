@@ -1,0 +1,169 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amsfonts,amssymb}
+\usepackage{graphicx}
+\usepackage{geometry}
+\geometry{margin=1in}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{float}
+\usepackage{xcolor}
+
+\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Lecture 10: FIR Filter Design — Window Method \\ \large (III B.Tech EEE)}
+\author{Lecture Notes (40-Minute Plan)}
+\date{}
+
+\definecolor{darkbg}{HTML}{0d121f}
+\definecolor{lighttext}{HTML}{e2e8f0}
+\definecolor{primary}{HTML}{8b5cf6}
+\definecolor{secondary}{HTML}{0dd5c5}
+
+\pagecolor{darkbg}
+\color{lighttext}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=secondary,
+    urlcolor=secondary
+}
+
+\begin{document}
+
+\maketitle
+
+\section{Lecture Plan (40 Minutes Breakdown)}
+\begin{itemize}
+    \item \textbf{00:00 -- 05:00 (5 mins):} Introduction to FIR vs IIR trade-offs and the concept of linear phase.
+    \item \textbf{05:00 -- 12:00 (7 mins):} Linear phase conditions for FIR filters and group delay.
+    \item \textbf{12:00 -- 20:00 (8 mins):} Ideal frequency responses and derivation of the ideal impulse response (LPF).
+    \item \textbf{20:00 -- 25:00 (5 mins):} The problem of truncation and introduction of the Window Method.
+    \item \textbf{25:00 -- 32:00 (7 mins):} Common window types and their specifications.
+    \item \textbf{32:00 -- 36:00 (4 mins):} Step-by-step design procedure.
+    \item \textbf{36:00 -- 40:00 (4 mins):} Worked Example: 21-tap Hamming-windowed LPF and Checkpoint Questions.
+\end{itemize}
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{FIR vs IIR Trade-offs}
+When designing digital filters, we primarily choose between Infinite Impulse Response (IIR) and Finite Impulse Response (FIR) filters.
+
+\subsection{FIR Filter Advantages}
+\begin{itemize}
+    \item \textbf{Strictly Linear Phase:} FIR filters can be designed to have exact linear phase. Linear phase means that all frequency components experience the same time delay (group delay), preventing phase distortion.
+    \item \textbf{Inherent Stability:} Because the impulse response is finite, there is no feedback loop. The poles of the transfer function are always located at the origin ($z=0$), guaranteeing bounded-input bounded-output (BIBO) stability.
+    \item \textbf{Implementation Simplicity:} FIR filters can be implemented efficiently using fast convolution (FFT) or specialized DSP hardware.
+\end{itemize}
+
+\subsection{FIR Filter Disadvantages}
+\begin{itemize}
+    \item \textbf{Higher Order Requirement:} To achieve the same magnitude specifications as an IIR filter, an FIR filter typically requires a much higher order, meaning more memory and computations.
+\end{itemize}
+
+\section{Linear Phase Condition in FIR Filters}
+An FIR filter has a transfer function:
+\begin{equation}
+H(z) = \sum_{n=0}^{M-1} h[n] z^{-n}
+\end{equation}
+where $M$ is the filter length.
+
+\subsection{Symmetry and Antisymmetry}
+A causal FIR filter possesses exact linear phase if its impulse response $h[n]$ satisfies:
+\begin{itemize}
+    \item \textbf{Symmetric:} $h[n] = h[M - 1 - n]$
+    \item \textbf{Antisymmetric:} $h[n] = -h[M - 1 - n]$
+\end{itemize}
+The group delay is $\alpha = \frac{M-1}{2}$. There are four types of linear phase FIR filters depending on symmetry and whether $M$ is even or odd.
+
+\section{Ideal Frequency Responses}
+The four basic ideal filter types defined over $-\pi \le \omega \le \pi$:
+\begin{itemize}
+    \item \textbf{Ideal LPF:} $H_d(e^{j\omega}) = 1$ for $|\omega| \le \omega_c$, $0$ otherwise.
+    \item \textbf{Ideal HPF:} $H_d(e^{j\omega}) = 0$ for $|\omega| < \omega_c$, $1$ otherwise.
+    \item \textbf{Ideal BPF:} $H_d(e^{j\omega}) = 1$ for $\omega_{c1} \le |\omega| \le \omega_{c2}$, $0$ otherwise.
+    \item \textbf{Ideal BSF:} $H_d(e^{j\omega}) = 0$ for $\omega_{c1} < |\omega| < \omega_{c2}$, $1$ otherwise.
+\end{itemize}
+
+\section{Ideal Impulse Response (Ideal LPF)}
+Using the Inverse Discrete-Time Fourier Transform (IDTFT):
+\begin{equation}
+h_d[n] = \frac{1}{2\pi} \int_{-\pi}^{\pi} H_d(e^{j\omega}) e^{j\omega n} d\omega = \frac{1}{2\pi} \int_{-\omega_c}^{\omega_c} e^{j\omega n} d\omega
+\end{equation}
+\begin{equation}
+h_d[n] = \frac{1}{2\pi j n} \left( e^{j\omega_c n} - e^{-j\omega_c n} \right) = \frac{\sin(\omega_c n)}{\pi n}
+\end{equation}
+For $n=0$, $h_d[0] = \frac{\omega_c}{\pi}$.
+The response extends to $\pm\infty$, making it non-causal and unrealizable.
+
+\section{Truncation and Windowing Method}
+We truncate $h_d[n]$ and shift it to ensure causality. Multiplying the shifted $h_d[n]$ by a finite window function $w[n]$ suppresses the Gibbs phenomenon.
+\begin{equation}
+h[n] = h_d\left[n - \frac{M-1}{2}\right] \cdot w[n], \quad 0 \le n \le M-1
+\end{equation}
+
+\section{Window Types with Specifications}
+Let $N = M - 1$.
+\begin{itemize}
+    \item \textbf{Rectangular:} $w[n] = 1$. Mainlobe width $\frac{4\pi}{M}$, Peak Sidelobe $-13$ dB.
+    \item \textbf{Hanning:} $w[n] = 0.5 - 0.5 \cos\left(\frac{2\pi n}{M-1}\right)$. Mainlobe width $\frac{8\pi}{M}$, Peak Sidelobe $-31$ dB.
+    \item \textbf{Hamming:} $w[n] = 0.54 - 0.46 \cos\left(\frac{2\pi n}{M-1}\right)$. Mainlobe width $\frac{8\pi}{M}$, Peak Sidelobe $-41$ dB.
+    \item \textbf{Blackman:} $w[n] = 0.42 - 0.5 \cos\left(\frac{2\pi n}{M-1}\right) + 0.08 \cos\left(\frac{4\pi n}{M-1}\right)$. Mainlobe width $\frac{12\pi}{M}$, Peak Sidelobe $-57$ dB.
+    \item \textbf{Kaiser:} Parameterized by $\beta$ allowing continuous trade-off.
+    \begin{equation}
+    w[n] = \frac{I_0\left(\beta \sqrt{1 - \left(\frac{n - \alpha}{\alpha}\right)^2}\right)}{I_0(\beta)}
+    \end{equation}
+\end{itemize}
+
+\section{Design Procedure Step-by-Step}
+\begin{enumerate}
+    \item Determine specifications ($\omega_p, \omega_s, A_s$).
+    \item Select the appropriate window based on required attenuation $A_s$.
+    \item Compute the required filter length $M$ using the chosen window's mainlobe width formula $\frac{C\pi}{M} \le \omega_s - \omega_p$.
+    \item Compute the delayed ideal impulse response $h_d[n-\alpha]$.
+    \item Compute the window function $w[n]$.
+    \item Multiply to get causal coefficients $h[n] = h_d[n-\alpha] w[n]$.
+    \item Verify symmetry for linear phase.
+\end{enumerate}
+
+\section{Worked Example: 21-tap Hamming-windowed LPF}
+Design a 21-tap causal FIR Lowpass Filter with cutoff frequency $\omega_c = 0.4\pi$ using a Hamming window.
+\begin{itemize}
+    \item $M = 21 \implies \alpha = 10$.
+    \item $h_d[n-10] = \frac{\sin(0.4\pi (n-10))}{\pi (n-10)}$ for $n \ne 10$, and $0.4$ for $n=10$.
+    \item $w[n] = 0.54 - 0.46 \cos\left(\frac{2\pi n}{20}\right)$.
+\end{itemize}
+Computing the center tap $n=10$:
+\begin{equation}
+h[10] = 0.4 \times \left(0.54 - 0.46 \cos(\pi)\right) = 0.4 \times 1.0 = 0.4
+\end{equation}
+Computing $n=9$:
+\begin{equation}
+h[9] = \frac{\sin(0.4\pi)}{\pi} \times \left(0.54 - 0.46 \cos(0.9\pi)\right) \approx 0.3027 \times 0.9775 \approx 0.2959
+\end{equation}
+
+\section{Table of Key Formulas}
+\begin{table}[H]
+\centering
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Concept} & \textbf{Formula} \\
+\midrule
+Ideal LPF $h_d[n]$ & $\frac{\sin(\omega_c n)}{\pi n}$ \\
+Group Delay $\alpha$ & $\frac{M-1}{2}$ \\
+Causal FIR $h[n]$ & $h_d[n-\alpha] \cdot w[n]$ \\
+Transition Band $\Delta\omega$ & $\omega_s - \omega_p$ \\
+Linear Phase Condition & $h[n] = \pm h[M-1-n]$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Checkpoint Questions}
+\begin{enumerate}
+    \item \textbf{Why is an ideal Lowpass filter physically unrealizable?} \\
+    \textit{Answer:} Its impulse response $\frac{\sin(\omega_c n)}{\pi n}$ extends to $-\infty$, making it non-causal. It also extends to $+\infty$, requiring infinite memory.
+    \item \textbf{For 50 dB stopband attenuation and $0.05\pi$ transition band, find the window and minimum $M$.} \\
+    \textit{Answer:} We need at least Blackman (-57 dB). Setting $\frac{12\pi}{M} \le 0.05\pi \implies M \ge 240$.
+    \item \textbf{Prove that a symmetric impulse response $h[n]=h[M-1-n]$ has linear phase.} \\
+    \textit{Answer:} Extracting $e^{-j\omega \alpha}$ from $H(e^{j\omega})$ allows pairing $h[n]$ terms to form real cosine terms, yielding a purely real amplitude function multiplied by a linear phase factor $e^{-j\omega \alpha}$.
+\end{enumerate}
+
+\end{document}

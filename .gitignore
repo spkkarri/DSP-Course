@@ -1,0 +1,17 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Agent files
+.agents/
+.gemini/
+
+# Scratch and configuration scripts containing tokens
+scratch/
+scratch_*.py
+write_*.py
+*.log

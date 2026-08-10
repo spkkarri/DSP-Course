@@ -1,0 +1,168 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amsfonts,amssymb}
+\usepackage{graphicx}
+\usepackage{geometry}
+\geometry{margin=1in}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{float}
+\usepackage{xcolor}
+
+\definecolor{darkbg}{HTML}{0d121f}
+\definecolor{lighttext}{HTML}{e2e8f0}
+\definecolor{primary}{HTML}{8b5cf6}
+\definecolor{secondary}{HTML}{0dd5c5}
+
+\pagecolor{darkbg}
+\color{lighttext}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=secondary,
+    urlcolor=secondary
+}
+
+\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Lecture 12: IIR Filter Design — Analog Prototype \& Bilinear Transform \\ \large (III B.Tech EEE)}
+\author{Lecture Notes (40-Minute Plan)}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{Lecture Plan \& Objectives (40 Minutes Breakdown)}
+\begin{itemize}
+    \item \textbf{00:00 -- 05:00 (5 mins):} \textbf{IIR Design Philosophy} --- Borrowing from continuous-time analog filter theory.
+    \item \textbf{05:00 -- 15:00 (10 mins):} \textbf{Analog Prototypes} --- Butterworth, Chebyshev (I \& II), and Elliptic filters.
+    \item \textbf{15:00 -- 20:00 (5 mins):} \textbf{Impulse Invariance Method} --- Time-domain mapping and aliasing.
+    \item \textbf{20:00 -- 28:00 (8 mins):} \textbf{The Bilinear Transform} --- Frequency-domain mapping and warping.
+    \item \textbf{28:00 -- 35:00 (7 mins):} \textbf{Bilinear Design Procedure} --- Worked example for a 3rd-order Butterworth.
+    \item \textbf{35:00 -- 40:00 (5 mins):} \textbf{Checkpoints} --- Review questions.
+\end{itemize}
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{IIR Design Philosophy}
+Infinite Impulse Response (IIR) digital filters are typically designed by first designing a continuous-time analog prototype. The standard approach involves:
+\begin{enumerate}
+    \item \textbf{Pre-warping:} Convert digital frequency specs to analog frequency specs.
+    \item \textbf{Analog Design:} Compute the analog transfer function $H_a(s)$.
+    \item \textbf{Transformation:} Map $H_a(s)$ to the digital transfer function $H(z)$.
+\end{enumerate}
+
+\section{Butterworth Analog Prototype}
+The Butterworth filter is maximally flat in the passband. 
+
+\subsection{Magnitude Response}
+The squared magnitude response is:
+\begin{equation}
+|H_a(j\Omega)|^2 = \frac{1}{1 + \left(\frac{\Omega}{\Omega_c}\right)^{2N}}
+\end{equation}
+
+\subsection{Derivation of Pole Locations}
+Substituting $s = j\Omega$ ($\Omega = s/j$):
+\begin{equation}
+H_a(s) H_a(-s) = \frac{1}{1 + \left(\frac{s/j}{\Omega_c}\right)^{2N}} = \frac{1}{1 + (-1)^N \left(\frac{s}{\Omega_c}\right)^{2N}}
+\end{equation}
+Setting the denominator to zero:
+\begin{equation}
+1 + (-1)^N \left(\frac{s}{\Omega_c}\right)^{2N} = 0 \implies \left(\frac{s}{\Omega_c}\right)^{2N} = (-1)^{N-1}
+\end{equation}
+The stable poles (LHP) are:
+\begin{equation}
+s_k = \Omega_c e^{j\frac{\pi}{2N}(2k + N - 1)}, \quad \text{for } k = 1, 2, \dots, N
+\end{equation}
+These poles lie precisely on a circle of radius $\Omega_c$.
+
+\subsection{Derivation of Order Formula}
+Given passband attenuation $A_p$ at $\Omega_p$ and stopband attenuation $A_s$ at $\Omega_s$:
+\begin{equation}
+\left(\frac{\Omega_p}{\Omega_c}\right)^{2N} = A_p^2 - 1 \quad \text{and} \quad \left(\frac{\Omega_s}{\Omega_c}\right)^{2N} = A_s^2 - 1
+\end{equation}
+Dividing and solving for $N$:
+\begin{equation}
+N \geq \frac{\log_{10}\left( \frac{A_s^2 - 1}{A_p^2 - 1} \right)}{2 \log_{10}\left( \frac{\Omega_s}{\Omega_p} \right)}
+\end{equation}
+
+\section{Chebyshev and Elliptic Prototypes}
+\begin{itemize}
+    \item \textbf{Chebyshev Type I:} Equiripple passband, monotonic stopband. $|H(j\Omega)|^2 = \frac{1}{1 + \epsilon^2 C_N^2(\Omega/\Omega_p)}$. Poles lie on an ellipse.
+    \item \textbf{Chebyshev Type II:} Monotonic passband, equiripple stopband.
+    \item \textbf{Elliptic (Cauer):} Equiripple in both bands, providing the minimum possible order. Uses Jacobian elliptic functions.
+\end{itemize}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lllll}
+\toprule
+\textbf{Filter Type} & \textbf{Passband} & \textbf{Stopband} & \textbf{Phase Linearity} & \textbf{Order Required} \\
+\midrule
+Butterworth & Maximally Flat & Monotonic & Best & Highest \\
+Chebyshev I & Equiripple & Monotonic & Moderate & Lower \\
+Chebyshev II & Monotonic & Equiripple & Moderate & Lower \\
+Elliptic & Equiripple & Equiripple & Non-linear & Lowest \\
+\bottomrule
+\end{tabular}
+\caption{Comparison of Analog Prototype Filters}
+\end{table}
+
+\section{The Impulse Invariance Method}
+The impulse invariance method defines $h[n] = T_s \, h_a(nT_s)$. 
+An analog pole at $s_k$ maps directly to a digital pole at $z_k = e^{s_k T_s}$:
+\begin{equation}
+H_a(s) = \sum_{k=1}^N \frac{A_k}{s - s_k} \implies H(z) = \sum_{k=1}^N \frac{T_s A_k}{1 - e^{s_k T_s} z^{-1}}
+\end{equation}
+\textbf{Drawback:} Inherently suffers from aliasing, rendering it useless for highpass/bandstop filters.
+
+\section{The Bilinear Transform (BLT)}
+The BLT applies the conformal mapping:
+\begin{equation}
+s = \frac{2}{T_s} \frac{1 - z^{-1}}{1 + z^{-1}} = \frac{2}{T_s} \frac{z - 1}{z + 1}
+\end{equation}
+This maps the entire $j\Omega$ axis onto the unit circle without aliasing.
+By substituting $s = j\Omega$ and $z = e^{j\omega}$, the frequency warping relationship is:
+\begin{equation}
+\Omega = \frac{2}{T_s} \tan\left(\frac{\omega}{2}\right)
+\end{equation}
+
+\section{Worked Example: 3rd-Order Digital Butterworth LPF}
+Design a 3rd-order digital Butterworth LPF with $\omega_c = 0.3\pi$ using BLT.
+\begin{enumerate}
+    \item \textbf{Prewarping:} Let $T_s = 2$.
+    $\Omega_c = \tan(0.15\pi) \approx 0.5095 \text{ rad/s}$.
+    
+    \item \textbf{Analog Prototype Design:} For $N=3$, the poles are:
+    \begin{align*}
+    s_1 &= 0.5095 e^{j120^\circ} = -0.2548 + j0.4412 \\
+    s_2 &= 0.5095 e^{j180^\circ} = -0.5095 \\
+    s_3 &= 0.5095 e^{j240^\circ} = -0.2548 - j0.4412
+    \end{align*}
+    The transfer function is:
+    \begin{equation}
+    H_a(s) = \frac{\Omega_c^3}{(s-s_1)(s-s_2)(s-s_3)} = \frac{0.1323}{s^3 + 1.0191s^2 + 0.5193s + 0.1323}
+    \end{equation}
+    
+    \item \textbf{Bilinear Transform:} Substitute $s = \frac{z-1}{z+1}$:
+    \begin{equation}
+    H(z) = \frac{0.1323 (z+1)^3}{(z-1)^3 + 1.0191(z-1)^2(z+1) + 0.5193(z-1)(z+1)^2 + 0.1323(z+1)^3}
+    \end{equation}
+    Expanding and collecting terms yields:
+    \begin{equation}
+    H(z) = \frac{0.0495 (1 + 3z^{-1} + 3z^{-2} + z^{-3})}{1 - 1.1618z^{-1} + 0.6959z^{-2} - 0.1378z^{-3}}
+    \end{equation}
+\end{enumerate}
+
+\section{Checkpoints}
+\begin{enumerate}
+    \item \textbf{Q: Why use BLT for highpass filters instead of Impulse Invariance?} \\
+    \textbf{A:} Impulse Invariance causes spectral aliasing. Since highpass filters are not bandlimited, aliasing ruins the passband. BLT maps the whole axis without aliasing.
+    
+    \item \textbf{Q: What happens to Butterworth poles as order $N$ increases?} \\
+    \textbf{A:} The poles crowd along the circle of radius $\Omega_c$ and the ones near the $j\Omega$ axis create a steeper transition band roll-off.
+    
+    \item \textbf{Q: Why choose $T_s = 2$ in BLT?} \\
+    \textbf{A:} It simplifies calculations; $T_s$ scales the prewarped $\Omega_c$ and then is identically cancelled out during the $s \to z$ substitution, having no effect on final coefficients.
+\end{enumerate}
+
+\end{document}

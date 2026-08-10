@@ -1,0 +1,234 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amsfonts,amssymb}
+\usepackage{graphicx}
+\usepackage{geometry}
+\geometry{margin=1in}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{float}
+
+\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Lecture 28: DSP for Biomedical Signals — ECG, EEG \& EMG Processing \\ \large (III B.Tech EEE)}
+\author{Lecture Notes (40-Minute Plan)}
+\date{}
+
+\usepackage{xcolor}
+\definecolor{darkbg}{HTML}{0d121f}
+\definecolor{lighttext}{HTML}{e2e8f0}
+\definecolor{primary}{HTML}{8b5cf6}
+\definecolor{secondary}{HTML}{0dd5c5}
+
+\pagecolor{darkbg}
+\color{lighttext}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=secondary,
+    urlcolor=secondary
+}
+
+\begin{document}
+
+\maketitle
+
+\section{Lecture Plan \& Objectives (40 Minutes Breakdown)}
+\begin{itemize}
+    \item \textbf{00:00 -- 05:00 (5 mins):} Biomedical Signal Characteristics: Amplitudes, frequencies, and noise sources for ECG, EEG, and EMG.
+    \item \textbf{05:00 -- 12:00 (7 mins):} ECG Processing Pipeline: From Anti-aliasing and ADC to Baseline Wander and Notch Filtering.
+    \item \textbf{12:00 -- 18:00 (6 mins):} Notch Filter Design: Pole-zero placement, transfer function, and derivation of notch width. Connection to Bilinear Transformation.
+    \item \textbf{18:00 -- 25:00 (7 mins):} Pan-Tompkins QRS Detection Algorithm: Step-by-step mathematical breakdown and physical intuition.
+    \item \textbf{25:00 -- 30:00 (5 mins):} Heart Rate Variability (HRV): Time and frequency domain metrics, sympathovagal balance.
+    \item \textbf{30:00 -- 35:00 (5 mins):} EEG \& EMG Analysis: Frequency bands, ICA, spatial filtering, rectification, zero-crossing, and muscle fatigue.
+    \item \textbf{35:00 -- 40:00 (5 mins):} Real-time Considerations \& Checkpoints.
+\end{itemize}
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{Biomedical Signal Characteristics}
+
+Biomedical signals present unique challenges for DSP engineers because they typically have very low amplitudes and share frequency bands with various physiological and environmental noises.
+
+\subsection{Signal Parameters}
+\begin{itemize}
+    \item \textbf{ECG (Electrocardiogram):} Bandwidth: 0.05 Hz to 150 Hz. Amplitude: $\sim$1 mV.
+    \item \textbf{EEG (Electroencephalogram):} Bandwidth: 0.1 Hz to 70 Hz. Amplitude: 10 to 100 $\mu$V.
+    \item \textbf{EMG (Electromyogram):} Bandwidth: 20 Hz to 2000 Hz. Amplitude: 0.1 mV to 10 mV.
+\end{itemize}
+
+\subsection{Common Noise Sources}
+\begin{enumerate}
+    \item \textbf{Powerline Interference:} 50 Hz or 60 Hz sinusoidal noise from the mains supply.
+    \item \textbf{Motion Artifacts:} Low-frequency transients caused by electrode motion.
+    \item \textbf{Baseline Wander:} Very low-frequency drift ($<$0.5 Hz) usually due to respiration.
+    \item \textbf{Muscle Artifacts:} High-frequency noise from muscle contractions.
+\end{enumerate}
+
+\section{ECG Processing Pipeline}
+\begin{enumerate}
+    \item \textbf{Anti-aliasing LPF:} Analog low-pass filter with a cutoff frequency around 150 Hz.
+    \item \textbf{ADC:} Analog-to-Digital Conversion with a sampling rate $f_s$ of 500 Hz to 1000 Hz.
+    \item \textbf{Baseline Wander Removal:} A digital high-pass filter with a cutoff at 0.5 Hz, or a morphological filter, removes respiratory drift.
+    \item \textbf{Powerline Notch Filter:} Removes 50/60 Hz interference.
+    \item \textbf{QRS Detection:} Locating the main spikes (R-peaks) in the signal.
+    \item \textbf{Feature Extraction:} Measuring PR intervals, ST segments, etc.
+\end{enumerate}
+
+\section{Notch Filter Design for Powerline Interference}
+
+Powerline noise is typically a pure sine wave at 50 Hz. We design an IIR notch filter to remove it without distorting the surrounding ECG frequencies.
+
+\subsection{Pole-Zero Placement}
+Let $\omega_0 = 2\pi(50)/f_s$ be the digital frequency of the noise.
+\begin{itemize}
+    \item Place a conjugate pair of \textbf{zeros} exactly on the unit circle at $z_1, z_2 = e^{\pm j\omega_0}$. This ensures the gain is strictly zero at the target frequency.
+    \item Place a conjugate pair of \textbf{poles} slightly inside the unit circle at $p_1, p_2 = r e^{\pm j\omega_0}$, where $r < 1$ controls the notch width.
+\end{itemize}
+
+\subsection{Transfer Function}
+The transfer function is:
+\begin{equation}
+H(z) = \frac{(z - e^{j\omega_0})(z - e^{-j\omega_0})}{(z - r e^{j\omega_0})(z - r e^{-j\omega_0})}
+\end{equation}
+Expanding the numerator and denominator:
+\begin{equation}
+H(z) = \frac{z^2 - (e^{j\omega_0} + e^{-j\omega_0})z + 1}{z^2 - r(e^{j\omega_0} + e^{-j\omega_0})z + r^2}
+\end{equation}
+\begin{equation}
+H(z) = \frac{1 - 2\cos(\omega_0)z^{-1} + z^{-2}}{1 - 2r\cos(\omega_0)z^{-1} + r^2 z^{-2}}
+\end{equation}
+
+\subsection{Derivation of Notch Width}
+The 3-dB bandwidth (notch width) $\Delta\omega$ is related to the pole radius $r$. For $r$ close to 1:
+\begin{equation}
+r \approx 1 - \frac{\Delta\omega}{2} \implies \Delta\omega \approx 2(1 - r)
+\end{equation}
+\textbf{KEY RESULT:} A closer pole ($r \to 1$) makes the notch sharper (narrower bandwidth) but increases the transient response time (ringing).
+
+\subsection{Connection to Bilinear Transformation}
+Sometimes, biomedical filters are designed in the analog domain and converted using the Bilinear Transformation. The mapping preserves stability.
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\textwidth]{images/bilinear_s_to_z.png}
+\caption{Domain mapping: Left-Half Plane to Unit Circle interior under BZT.}
+\label{fig:bzt_domains}
+\end{figure}
+
+When mapping from continuous to discrete time, the frequency axis is warped:
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.65\textwidth]{images/bilinear_frequency_warping.png}
+\caption{Non-linear frequency compression warping curve.}
+\label{fig:warping}
+\end{figure}
+
+\section{Pan-Tompkins QRS Detection Algorithm}
+
+\subsection{Step 1: Bandpass Filter}
+A cascade of low-pass and high-pass filters to isolate the 5--15 Hz band, which maximizes QRS energy and attenuates muscle noise and baseline wander.
+
+\subsection{Step 2: Differentiation}
+Provides the slope of the QRS complex.
+\begin{equation}
+y[n] = \frac{1}{8T} \left( 2x[n] + x[n-1] - x[n-3] - 2x[n-4] \right)
+\end{equation}
+
+\subsection{Step 3: Squaring}
+Amplifies large slopes and makes all data points positive.
+\begin{equation}
+y[n] = (x[n])^2
+\end{equation}
+
+\subsection{Step 4: Moving-Window Integration}
+Smooths out multiple peaks within a single QRS complex into a single lump.
+\begin{equation}
+y[n] = \frac{1}{N} \left( x[n - (N - 1)] + x[n - (N - 2)] + \dots + x[n] \right)
+\end{equation}
+
+\subsection{Step 5: Adaptive Thresholding}
+Maintains two thresholds: a signal peak tracking threshold and a noise peak tracking threshold. Helps adapt to varying ECG amplitudes.
+
+\section{Heart Rate Variability (HRV)}
+
+HRV is the physiological phenomenon of variation in the time interval between heartbeats (RR interval).
+
+\subsection{Time-Domain Metrics}
+\begin{itemize}
+    \item \textbf{SDNN:} Standard deviation of all normal RR intervals.
+    \item \textbf{RMSSD:} Root mean square of successive differences between adjacent RR intervals.
+\end{itemize}
+
+\subsection{Frequency-Domain Metrics}
+Power Spectral Density (PSD) of the RR intervals gives:
+\begin{itemize}
+    \item \textbf{VLF (Very Low Frequency):} $<$ 0.04 Hz
+    \item \textbf{LF (Low Frequency):} 0.04 Hz to 0.15 Hz
+    \item \textbf{HF (High Frequency):} 0.15 Hz to 0.4 Hz
+\end{itemize}
+\textbf{Sympathovagal Balance:} The LF/HF ratio is used as a measure of the balance between the sympathetic and parasympathetic nervous systems.
+
+\section{EEG and EMG Signal Analysis}
+
+\subsection{EEG Frequency Bands}
+\begin{itemize}
+    \item \textbf{Delta ($\delta$):} $<$ 4 Hz (Deep sleep)
+    \item \textbf{Theta ($\theta$):} 4--8 Hz (Light sleep)
+    \item \textbf{Alpha ($\alpha$):} 8--13 Hz (Relaxed, eyes closed)
+    \item \textbf{Beta ($\beta$):} 13--30 Hz (Active thinking)
+    \item \textbf{Gamma ($\gamma$):} $>$ 30 Hz (Cognitive processing)
+\end{itemize}
+\textbf{Artifact Removal:} Independent Component Analysis (ICA) is heavily used to separate statistically independent sources like eye blinks and muscle artifacts from EEG. \\
+\textbf{Spatial Filtering:} Techniques like Common Average Reference (CAR) and Laplacian filters enhance spatial resolution by referencing electrodes to their neighbors.
+
+\subsection{EMG Signal Analysis}
+\begin{itemize}
+    \item \textbf{Rectification and RMS Envelope:} Converting raw alternating EMG into a smoothed envelope representing muscle force.
+    \item \textbf{Zero-Crossing Rate:} Used as a simple time-domain indicator of frequency content.
+    \item \textbf{Power Spectral Fatigue Index:} As a muscle fatigues, motor unit firing slows down, and the median frequency of the EMG power spectrum shifts to lower frequencies.
+    \item \textbf{Wavelet Decomposition:} Used for detecting specific muscle activation events across different scales.
+\end{itemize}
+
+\section{Real-time Considerations}
+
+\begin{enumerate}
+    \item \textbf{Latency Constraints:} Medical monitors often require sub-100ms latency.
+    \item \textbf{Causal vs Non-Causal Filters:} Non-causal filters (like zero-phase forward-backward filtering) cannot be used in strict real-time applications because they require future samples.
+    \item \textbf{Hardware:} Low-power microcontrollers with hardware FPUs (Floating Point Units) or dedicated DSP chips are utilized for efficiency.
+\end{enumerate}
+
+\section{Checkpoint \& Quick Review Questions}
+
+\textbf{Q1: An ECG signal is sampled at 1000 Hz. You need to design an IIR notch filter to remove 50 Hz powerline noise with a pole radius of 0.95. What are the filter coefficients?} \\
+\textit{Answer:} \\
+Digital frequency: $\omega_0 = \frac{2\pi \times 50}{1000} = 0.1\pi$ rad/sample. \\
+$\cos(\omega_0) = \cos(0.1\pi) \approx 0.951$. \\
+Transfer function coefficients: \\
+Numerator: $1 - 2\cos(0.1\pi)z^{-1} + z^{-2} = 1 - 1.902z^{-1} + z^{-2}$. \\
+Denominator: $1 - 2r\cos(0.1\pi)z^{-1} + r^2 z^{-2} = 1 - 2(0.95)(0.951)z^{-1} + 0.95^2 z^{-2} = 1 - 1.807z^{-1} + 0.9025z^{-2}$. \\
+Final filter: $H(z) = \frac{1 - 1.902z^{-1} + z^{-2}}{1 - 1.807z^{-1} + 0.9025z^{-2}}$.
+
+\textbf{Q2: In the Pan-Tompkins algorithm, why is the squaring operation necessary after differentiation?} \\
+\textit{Answer:} \\
+The differentiation step amplifies high-frequency slopes, producing both large positive and large negative peaks. The squaring operation ensures all data points are positive (rectification) and non-linearly amplifies the larger higher-frequency components (the QRS complex) while suppressing smaller baseline noise, making peak detection by integration much more robust.
+
+\textbf{Q3: Explain how muscle fatigue is detected using the frequency domain of an EMG signal.} \\
+\textit{Answer:} \\
+As a muscle fatigues during sustained contraction, the conduction velocity of the muscle fibers decreases. This causes a shift in the energy of the EMG signal from higher frequencies to lower frequencies. By calculating the power spectral density (PSD) and tracking the median frequency or mean frequency over time, fatigue is indicated by a progressive downward shift in these frequency metrics.
+
+\section{Summary of Key Formulas}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{ll}
+\toprule
+\textbf{Concept} & \textbf{Formula} \\
+\midrule
+Notch Filter Transfer Function & $H(z) = \frac{1 - 2\cos(\omega_0)z^{-1} + z^{-2}}{1 - 2r\cos(\omega_0)z^{-1} + r^2 z^{-2}}$ \\
+Notch 3-dB Bandwidth & $\Delta\omega \approx 2(1 - r)$ \\
+PT Differentiator & $y[n] = \frac{1}{8T} (2x[n] + x[n-1] - x[n-3] - 2x[n-4])$ \\
+Moving Window Integrator & $y[n] = \frac{1}{N} \sum_{k=0}^{N-1} x[n-k]$ \\
+\bottomrule
+\end{tabular}
+\caption{Key Formulas for Biomedical DSP.}
+\end{table}
+
+\end{document}
