@@ -7,12 +7,12 @@
 \usepackage{booktabs}
 \usepackage{hyperref}
 \usepackage{float}
+\usepackage{xcolor}
 
 \title{\textbf{EE3621: Digital Signal Processing} \\ \Large Lecture 3: The Discrete-Time Fourier Transform (DTFT) \\ \large (III B.Tech EEE)}
 \author{Lecture Notes (40-Minute Plan)}
 \date{}
 
-\usepackage{xcolor}
 \definecolor{darkbg}{HTML}{0d121f}
 \definecolor{lighttext}{HTML}{e2e8f0}
 \definecolor{primary}{HTML}{8b5cf6}
@@ -33,104 +33,93 @@
 
 \section{Lecture Plan \& Objectives (40 Minutes Breakdown)}
 \begin{itemize}
-    \item \textbf{00:00 -- 05:00 (5 mins):} Motivation: Continuous spectrum for discrete signals and periodic spectrum.
-    \item \textbf{05:00 -- 12:00 (7 mins):} DTFT \& IDTFT Definitions and Convergence Criteria.
-    \item \textbf{12:00 -- 22:00 (10 mins):} DTFT of Common Signals: Rectangular Pulse, Decaying Exponential, and Double-Sided Exponential.
-    \item \textbf{22:00 -- 35:00 (13 mins):} Key Properties of the DTFT with full algebraic proofs.
-    \item \textbf{35:00 -- 40:00 (5 mins):} Duality, the Uncertainty Principle, and Checkpoint.
+    \item \textbf{00:00 -- 05:00 (5 mins):} Motivation: Time-domain limitations, continuous spectrum, and periodicity.
+    \item \textbf{05:00 -- 12:00 (7 mins):} DTFT \& IDTFT Mathematical Definitions, Convergence Criteria.
+    \item \textbf{12:00 -- 22:00 (10 mins):} DTFT of Common Signals: Rectangular Pulse (Dirichlet Kernel), Exponentials, Impulse, and DC.
+    \item \textbf{22:00 -- 35:00 (13 mins):} Key Properties of the DTFT (Linearity, Shifting, Modulation, Symmetry, Differentiation, Convolution, Parseval) with proofs.
+    \item \textbf{35:00 -- 40:00 (5 mins):} Time-Frequency Duality, the Uncertainty Principle, and Checkpoints.
 \end{itemize}
 
-\noindent\rule{\textwidth}{0.5pt}
-
-\section{Mathematical Definition of DTFT}
-The Discrete-Time Fourier Transform (DTFT) maps a sequence $x[n]$ to a periodic frequency function:
+\section{Mathematical Definition of the DTFT}
+The Discrete-Time Fourier Transform (DTFT) maps a discrete-time sequence $x[n]$ to a continuous, periodic complex frequency function $X(e^{j\omega})$:
 \begin{equation}
 X(e^{j\omega}) = \sum_{n=-\infty}^{\infty} x[n] e^{-j\omega n}
 \end{equation}
-The inverse transform (IDTFT) is:
+\textit{Periodicity Proof:}
+\begin{equation}
+X(e^{j(\omega + 2\pi)}) = \sum_{n=-\infty}^{\infty} x[n] e^{-j(\omega + 2\pi)n} = \sum_{n=-\infty}^{\infty} x[n] e^{-j\omega n} e^{-j 2\pi n} = X(e^{j\omega})
+\end{equation}
+Since $e^{-j 2\pi n} = 1$ for any integer $n$, the transform is periodic with period $2\pi$.
+
+The Inverse DTFT (IDTFT) is defined as:
 \begin{equation}
 x[n] = \frac{1}{2\pi} \int_{-\pi}^{\pi} X(e^{j\omega}) e^{j\omega n} d\omega
 \end{equation}
-The DTFT converges uniformly if $x[n]$ is absolutely summable:
+
+\subsection{Convergence Conditions}
+A sequence $x[n]$ has a uniformly convergent DTFT if it is absolutely summable:
 \begin{equation}
 \sum_{n=-\infty}^{\infty} |x[n]| < \infty
 \end{equation}
 
 \section{DTFT of Common Signals}
 \subsection{Finite Rectangular Pulse (Length $M$)}
-For $x[n] = 1$ for $0 \le n \le M-1$:
+Let $x[n] = 1$ for $0 \le n \le M-1$, and $0$ otherwise.
 \begin{equation}
-X(e^{j\omega}) = \sum_{n=0}^{M-1} e^{-j\omega n} = \frac{1 - e^{-j\omega M}}{1 - e^{-j\omega}} = e^{-j\omega(M-1)/2} \frac{\sin(\omega M/2)}{\sin(\omega/2)}
+X(e^{j\omega}) = \sum_{n=0}^{M-1} e^{-j\omega n} = \frac{1 - e^{-j\omega M}}{1 - e^{-j\omega}} = e^{-j\omega(M-1)/2} \frac{\sin\left(\frac{\omega M}{2}\right)}{\sin\left(\frac{\omega}{2}\right)}
 \end{equation}
+This is the periodic sinc function (Dirichlet kernel).
 
 \subsection{Single-Sided Decaying Exponential}
-For $x[n] = a^n u[n]$ ($|a| < 1$):
+Let $x[n] = a^n u[n]$ ($|a| < 1$).
 \begin{equation}
-X(e^{j\omega}) = \sum_{n=0}^{\infty} (a e^{-j\omega})^n = \frac{1}{1 - a e^{-j\omega}}
+X(e^{j\omega}) = \sum_{n=0}^{\infty} \left( a e^{-j\omega} \right)^n = \frac{1}{1 - a e^{-j\omega}}
+\end{equation}
+Magnitude:
+\begin{equation}
+|X(e^{j\omega})| = \frac{1}{\sqrt{1 + a^2 - 2a\cos\omega}}
 \end{equation}
 
-\subsection{Double-Sided Decaying Exponential}
-For $x[n] = a^{|n|}$ ($|a| < 1$):
-\begin{equation}
-X(e^{j\omega}) = \sum_{n=-\infty}^{-1} a^{-n} e^{-j\omega n} + \sum_{n=0}^{\infty} a^n e^{-j\omega n} = \frac{1 - a^2}{1 + a^2 - 2a\cos\omega}
-\end{equation}
+\subsection{Unit Impulse and Constant DC}
+For $x[n] = \delta[n]$, $X(e^{j\omega}) = 1$.  
+For $x[n] = 1$, $X(e^{j\omega}) = 2\pi \sum_{k=-\infty}^{\infty} \delta(\omega - 2\pi k)$.
 
 \section{Key Properties of the DTFT}
-For $x[n] \leftrightarrow X(e^{j\omega})$ and $y[n] \leftrightarrow Y(e^{j\omega})$:
+\begin{itemize}
+    \item \textbf{Linearity:} $a x[n] + b y[n] \leftrightarrow a X(e^{j\omega}) + b Y(e^{j\omega})$
+    \item \textbf{Time Shifting:} $x[n - n_0] \leftrightarrow X(e^{j\omega}) e^{-j\omega n_0}$
+    \item \textbf{Frequency Shifting (Modulation):} $x[n] e^{j\omega_0 n} \leftrightarrow X(e^{j(\omega - \omega_0)})$
+    \item \textbf{Differentiation in Frequency:} $n x[n] \leftrightarrow j \frac{d X(e^{j\omega})}{d\omega}$
+    \item \textbf{Convolution Theorem:} $x[n] * y[n] \leftrightarrow X(e^{j\omega}) \cdot Y(e^{j\omega})$
+    \item \textbf{Parseval's Theorem:} $\sum_{n=-\infty}^{\infty} |x[n]|^2 = \frac{1}{2\pi} \int_{-\pi}^{\pi} |X(e^{j\omega})|^2 d\omega$
+\end{itemize}
 
-\subsection{Time Shifting}
-\begin{equation}
-x[n - n_0] \longleftrightarrow X(e^{j\omega}) e^{-j\omega n_0}
-\end{equation}
-\textit{Proof:} Let $m = n - n_0$.
-\begin{equation}
-\text{DTFT}\{x[n-n_0]\} = \sum_{n=-\infty}^{\infty} x[n-n_0]e^{-j\omega n} = \sum_{m=-\infty}^{\infty} x[m]e^{-j\omega(m+n_0)} = X(e^{j\omega})e^{-j\omega n_0}
-\end{equation}
-See Figure~\ref{fig:shifting} for magnitude and phase profiles under time delay.
+\section{Detailed Worked Numerical Examples}
 
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.85\textwidth]{images/dtft_shifting_property.png}
-\caption{Time Shifting property: magnitude response remains invariant while phase shifts linearly.}
-\label{fig:shifting}
-\end{figure}
+\subsection{Example 1: DTFT of a Shifted Impulse Pair}
+Find the DTFT of $x[n] = \delta[n] - \delta[n-1]$.
+\begin{equation*}
+X(e^{j\omega}) = 1 - e^{-j\omega} = e^{-j\omega/2} \left( e^{j\omega/2} - e^{-j\omega/2} \right) = 2j \sin(\omega/2) e^{-j\omega/2} = 2 \sin(\omega/2) e^{j(\pi/2 - \omega/2)}
+\end{equation*}
+Magnitude: $|X(e^{j\omega})| = 2|\sin(\omega/2)|$.
 
-\subsection{Frequency Shifting (Modulation)}
-\begin{equation}
-x[n]e^{j\omega_0 n} \longleftrightarrow X(e^{j(\omega - \omega_0)})
-\end{equation}
+\subsection{Example 2: DTFT of a Modulated Signal}
+Find the DTFT of $x[n] = a^n \cos(\omega_0 n) u[n]$ for $|a| < 1$.
+Using Euler's formula:
+\begin{equation*}
+X(e^{j\omega}) = \text{DTFT}\left\{ \frac{1}{2} a^n e^{j\omega_0 n} u[n] + \frac{1}{2} a^n e^{-j\omega_0 n} u[n] \right\} = \frac{1}{2} \left[ \frac{1}{1 - a e^{-j(\omega - \omega_0)}} + \frac{1}{1 - a e^{-j(\omega + \omega_0)}} \right]
+\end{equation*}
 
-\subsection{Differentiation in Frequency}
-\begin{equation}
-n x[n] \longleftrightarrow j \frac{dX(e^{j\omega})}{d\omega}
-\end{equation}
-\textit{Proof:}
-\begin{equation}
-\frac{dX(e^{j\omega})}{d\omega} = \sum_{n=-\infty}^{\infty} x[n] (-jn) e^{-j\omega n} \quad \Longrightarrow \quad j \frac{dX(e^{j\omega})}{d\omega} = \sum_{n=-\infty}^{\infty} (n x[n]) e^{-j\omega n}
-\end{equation}
-
-\subsection{Convolution Property}
-\begin{equation}
-x[n] * h[n] \longleftrightarrow X(e^{j\omega}) H(e^{j\omega})
-\end{equation}
-\textit{Proof:}
-\begin{equation}
-\sum_{n} (x[n]*h[n]) e^{-j\omega n} = \sum_{n}\sum_{k} x[k]h[n-k]e^{-j\omega n} = \sum_{k} x[k] e^{-j\omega k} \sum_{m} h[m]e^{-j\omega m} = X(e^{j\omega})H(e^{j\omega})
-\end{equation}
-
-\subsection{Parseval's Relation}
-\begin{equation}
-\sum_{n=-\infty}^{\infty} |x[n]|^2 = \frac{1}{2\pi} \int_{-\pi}^{\pi} |X(e^{j\omega})|^2 d\omega
-\end{equation}
-
-\section{Duality \& The Uncertainty Principle}
-A signal cannot be narrow in both time and frequency domains simultaneously (Figure~\ref{fig:duality}).
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.85\textwidth]{images/dtft_rect_sinc.png}
-\caption{Duality: shorter rectangular time pulse maps to a wider frequency response main lobe.}
-\label{fig:duality}
-\end{figure}
+\subsection{Example 3: Energy Calculation using Parseval's}
+Given $x[n] = 0.5^n u[n]$, calculate total energy.
+In the time domain:
+\begin{equation*}
+E = \sum_{n=0}^{\infty} (0.25)^n = \frac{1}{1 - 0.25} = \frac{4}{3}
+\end{equation*}
+In the frequency domain using Parseval's formula:
+\begin{equation*}
+E = \frac{1}{2\pi} \int_{-\pi}^{\pi} \frac{1}{1.25 - \cos\omega} d\omega = \frac{1}{\sqrt{1.25^2 - 1}} = \frac{1}{\sqrt{1.5625 - 1}} = \frac{1}{\sqrt{0.5625}} = \frac{1}{0.75} = \frac{4}{3}
+\end{equation*}
+Both domains yield identical energy, verifying Parseval's theorem.
 
 \end{document}

@@ -649,6 +649,72 @@
     .sr-title { font-size: 13px; font-weight: 500; color: var(--accent-gold); }
     .sr-preview { font-size: 11px; color: var(--text-muted); margin-top: 2px; line-height: 1.4; }
 
+    /* Collapsible Sidebar Styles */
+    aside {
+      transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    body.sidebar-collapsed aside {
+      width: 0;
+      margin-left: calc(-1 * var(--sidebar-w));
+      border-right: none;
+    }
+    .sidebar-overlay {
+      display: none;
+      position: fixed;
+      left: 0; right: 0; top: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.6);
+      z-index: 80;
+    }
+    body.sidebar-active .sidebar-overlay {
+      display: block;
+    }
+    
+    .sidebar-toggle-btn {
+      background: none;
+      border: none;
+      color: var(--text-primary);
+      font-size: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      transition: background 0.15s, color 0.15s;
+      flex-shrink: 0;
+    }
+    .sidebar-toggle-btn:hover {
+      background: var(--bg-tertiary);
+      color: var(--accent-gold);
+    }
+
+    @media (max-width: 1024px) {
+      aside {
+        position: fixed;
+        left: 0; top: var(--header-h); bottom: 0;
+        z-index: 90;
+        width: var(--sidebar-w);
+        margin-left: calc(-1 * var(--sidebar-w));
+        box-shadow: 20px 0 40px rgba(0,0,0,0.5);
+      }
+      body.sidebar-active aside {
+        margin-left: 0;
+      }
+      body.sidebar-collapsed aside {
+        margin-left: calc(-1 * var(--sidebar-w));
+      }
+      .toc-panel {
+        display: none !important;
+      }
+      .content-scroll {
+        padding: 30px 24px;
+      }
+      .header-search input {
+        width: 160px;
+      }
+    }
+
     /* Print styles */
     @media print {
       aside, header .header-search, .toolbar, .toc-panel, .breadcrumb { display: none !important; }
@@ -662,6 +728,7 @@
 
 <!-- HEADER -->
 <header>
+  <button class="sidebar-toggle-btn" onclick="toggleSidebar()" title="Toggle Sidebar">☰</button>
   <div class="header-logo">∿</div>
   <div class="header-title">
     <h1>EE3621 — Digital Signal Processing</h1>
@@ -676,6 +743,7 @@
 </header>
 
 <div class="app-body">
+  <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
   <!-- SIDEBAR -->
   <aside>
@@ -814,6 +882,16 @@ let currentLecture = null;
 let visitedLectures = new Set();
 let fontSize = 17; // px
 
+// ── SIDEBAR TOGGLE ──
+function toggleSidebar() {
+  const isMobile = window.innerWidth <= 1024;
+  if (isMobile) {
+    document.body.classList.toggle('sidebar-active');
+  } else {
+    document.body.classList.toggle('sidebar-collapsed');
+  }
+}
+
 // ── BUILD SIDEBAR ──
 function buildSidebar() {
   const nav = document.getElementById('sidebar-nav');
@@ -845,6 +923,11 @@ async function loadLecture(n) {
   currentLecture = n;
   const pad = String(n).padStart(2, '0');
   const url = `faculty_notes/lecture_${pad}_faculty.md`;
+
+  // Auto-close sidebar on mobile after selecting a lecture
+  if (window.innerWidth <= 1024) {
+    document.body.classList.remove('sidebar-active');
+  }
 
   // UI state
   document.getElementById('welcomeScreen').style.display = 'none';

@@ -968,6 +968,8 @@
                                         <option value="rect">Rectangular Pulse: {1, 1, 1, 1, 1}</option>
                                         <option value="step">Causal Step (finite): {1, 1, 1, 1, 1, 1, 1, 1}</option>
                                         <option value="ramp">Causal Ramp (finite): {0, 1, 2, 3, 4, 5}</option>
+                                        <option value="decay_sig">Decaying Exp: (0.5)^n * u[n]</option>
+                                        <option value="cosine_sig">Sine Pulse: cos(0.2*pi*n)</option>
                                     </select>
                                 </div>
 
@@ -977,6 +979,9 @@
                                         <option value="decay">Decaying Exp: 0.8^n * u[n] (finite)</option>
                                         <option value="rect">Short Pulse: {1, 1, 1}</option>
                                         <option value="impulse">Unit Impulse: \(\delta[n]\)</option>
+                                        <option value="highpass">Highpass Filter: {1, -1}</option>
+                                        <option value="triangle">Triangular Window: {1, 2, 1}</option>
+                                        <option value="oscillating">Oscillating: 0.7^n * cos(0.3*pi*n)</option>
                                     </select>
                                 </div>
 
@@ -1009,13 +1014,22 @@
 
                         <div class="sandbox-grid" style="grid-template-columns: 1fr 280px; gap: 20px;">
                             <div class="plot-container">
-                                <h4 style="font-size: 0.85rem; margin-bottom: 5px; color: var(--color-teal);">Impulse Response Stems: \(h[n]\)</h4>
+                                <h4 style="font-size: 0.85rem; margin-bottom: 5px; color: var(--color-teal);">Impulse/System Response Stems: \(h[n]\) or \(y[n]\)</h4>
                                 <canvas id="canvas-lti-impulse" style="height: 320px;"></canvas>
                             </div>
 
                             <div class="controls-panel">
                                 <h3>Difference Equation Coeffs</h3>
                                 <hr style="border-color: var(--border-color); margin: 10px 0 15px 0;">
+
+                                <div class="control-group">
+                                    <label>Input Excitation \(x[n]\):</label>
+                                    <select id="select-lti-x" style="width: 100%; background: #111827; color: white; border: 1px solid var(--border-color); padding: 8px; border-radius: 6px; outline: none; cursor: pointer;">
+                                        <option value="impulse">Unit Impulse \(\delta[n]\) (Shows \(h[n]\))</option>
+                                        <option value="step">Unit Step \(u[n]\) (Shows step response)</option>
+                                        <option value="sine">Sinusoid \(\cos(0.15\pi n)\) (Shows output response)</option>
+                                    </select>
+                                </div>
 
                                 <div class="control-group">
                                     <label>Feedback Gain (\(a_1\)): 
@@ -1279,6 +1293,10 @@
                                         <option value="rect">Rectangular Pulse</option>
                                         <option value="decay">Decaying Exponential (a^n u[n])</option>
                                         <option value="dual">Double Impulse (delta[n] + delta[n-n0])</option>
+                                        <option value="triangular">Symmetrical Triangle</option>
+                                        <option value="sine_burst">Sinusoidal Burst</option>
+                                        <option value="double_decay">Double Decaying Exp (a^|n|)</option>
+                                        <option value="dc">Constant DC (finite)</option>
                                     </select>
                                 </div>
 
@@ -1295,6 +1313,14 @@
                                     </label>
                                     <input type="range" id="slider-dtft-shift" min="-4" max="4" value="0" step="1">
                                     <p style="font-size: 0.65rem; color: var(--text-dim); margin-top: 2px;">Observe how shift creates phase slope without altering magnitude!</p>
+                                </div>
+
+                                <div class="control-group">
+                                    <label>Modulation Freq (\(\omega_0\)): 
+                                        <span id="val-dtft-mod" class="control-val">0.00</span>
+                                    </label>
+                                    <input type="range" id="slider-dtft-mod" min="0.0" max="1.57" value="0.0" step="0.05">
+                                    <p style="font-size: 0.65rem; color: var(--text-dim); margin-top: 2px;">Observe frequency modulation shifting the spectrum center!</p>
                                 </div>
 
                                 <div class="math-card" style="margin-top: 15px; font-size: 0.75rem; line-height: 1.5;">

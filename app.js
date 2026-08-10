@@ -1426,6 +1426,10 @@ function initConvolutionSimulator() {
             return (k >= 0 && k <= 7) ? 1.0 : 0.0;
         } else if (type === "ramp") {
             return (k >= 0 && k <= 5) ? k * 0.4 : 0.0; // scale factor to fit
+        } else if (type === "decay_sig") {
+            return (k >= 0 && k <= 10) ? Math.pow(0.5, k) : 0.0;
+        } else if (type === "cosine_sig") {
+            return (k >= 0 && k <= 10) ? Math.cos(0.2 * Math.PI * k) : 0.0;
         }
         return 0;
     }
@@ -1438,6 +1442,12 @@ function initConvolutionSimulator() {
             return (k >= 0 && k <= 2) ? 1.0 : 0.0;
         } else if (type === "impulse") {
             return (k === 0) ? 1.0 : 0.0;
+        } else if (type === "highpass") {
+            return (k === 0) ? 1.0 : (k === 1) ? -1.0 : 0.0;
+        } else if (type === "triangle") {
+            return (k === 0 || k === 2) ? 1.0 : (k === 1) ? 2.0 : 0.0;
+        } else if (type === "oscillating") {
+            return (k >= 0 && k <= 8) ? Math.pow(0.7, k) * Math.cos(0.3 * Math.PI * k) : 0.0;
         }
         return 0;
     }
@@ -1670,6 +1680,7 @@ function initLTIStabilitySimulator() {
     const sliderA1 = document.getElementById("slider-lti-a1");
     const sliderB0 = document.getElementById("slider-lti-b0");
     const sliderB1 = document.getElementById("slider-lti-b1");
+    const selectLtiX = document.getElementById("select-lti-x");
     
     const valA1 = document.getElementById("val-lti-a1");
     const valB0 = document.getElementById("val-lti-b0");
@@ -1695,12 +1706,6 @@ function initLTIStabilitySimulator() {
     window.addEventListener("resize", resize);
 
     function draw() {
-        // feedback coefficient is input slider value.
-        // wait, let's treat the equation as:
-        // y[n] = -a1 * y[n-1] + b0 * x[n] + b1 * x[n-1]
-        // The slider sliderA1 gives us the value of a1. So:
-        // If a1 = 0.8: y[n] = -0.8 y[n-1] + ...
-        // If a1 = -0.8: y[n] = +0.8 y[n-1] + ...
         const a1 = parseFloat(sliderA1.value);
         const b0 = parseFloat(sliderB0.value);
         const b1 = parseFloat(sliderB1.value);
@@ -1714,20 +1719,40 @@ function initLTIStabilitySimulator() {
         const sign_b1 = b1 >= 0 ? "+" : "";
         valEq.innerText = `y[n] = ${sign_a1}${(-a1).toFixed(2)}y[n-1] + ${b0.toFixed(1)}x[n] ${sign_b1}${b1.toFixed(1)}x[n-1]`;
 
-        // Calculate impulse response h[n] for n = 0 to 20
-        // h[n] = -a1 h[n-1] + b0 delta[n] + b1 delta[n-1]
-        const h_vals = [];
-        let prev_h = 0;
-        let sumAbs = 0;
+        // Input excitation sequence helper
+        const inputType = selectLtiX ? selectLtiX.value : "impulse";
+        function getLtiX(m) {
+            if (m < 0) return 0.0;
+            if (inputType === "impulse") {
+                return (m === 0) ? 1.0 : 0.0;
+            } else if (inputType === "step") {
+                return 1.0;
+            } else if (inputType === "sine") {
+                return Math.cos(0.15 * Math.PI * m);
+            }
+            return 0.0;
+        }
 
-        for (let n = 0; n <= 20; n++) {
+        // Calculate absolute sum of impulse response h[n] to evaluate stability
+        let prev_imp = 0;
+        let sumAbs = 0;
+        for (let n = 0; n <= 40; n++) { // check more terms for stability sum
             const x_n = (n === 0) ? 1.0 : 0.0;
             const x_minus_1 = (n === 1) ? 1.0 : 0.0;
-            
-            const hn = -a1 * prev_h + b0 * x_n + b1 * x_minus_1;
-            h_vals.push(hn);
-            sumAbs += Math.abs(hn);
-            prev_h = hn;
+            const hn_imp = -a1 * prev_imp + b0 * x_n + b1 * x_minus_1;
+            sumAbs += Math.abs(hn_imp);
+            prev_imp = hn_imp;
+        }
+
+        // Calculate actual system output response y[n] to the selected excitation x[n]
+        const h_vals = [];
+        let prev_y = 0;
+        for (let n = 0; n <= 20; n++) {
+            const x_n = getLtiX(n);
+            const x_minus_1 = getLtiX(n - 1);
+            const yn = -a1 * prev_y + b0 * x_n + b1 * x_minus_1;
+            h_vals.push(yn);
+            prev_y = yn;
         }
 
         // Pole of the first-order system is z = -a1
@@ -1798,8 +1823,8 @@ function initLTIStabilitySimulator() {
         }
     }
 
-    [sliderA1, sliderB0, sliderB1].forEach(ctrl => {
-        ctrl.addEventListener("input", draw);
+    [sliderA1, sliderB0, sliderB1, selectLtiX].forEach(ctrl => {
+        if (ctrl) ctrl.addEventListener("input", draw);
     });
 
     draw();
@@ -1815,6 +1840,8 @@ function initDTFTSimulator() {
     const labelParam = document.getElementById("label-dtft-param");
     const sliderShift = document.getElementById("slider-dtft-shift");
     const valShift = document.getElementById("val-dtft-shift");
+    const sliderMod = document.getElementById("slider-dtft-mod");
+    const valMod = document.getElementById("val-dtft-mod");
     const valFormula = document.getElementById("val-dtft-formula");
     
     const canvasTime = document.getElementById("canvas-dtft-time");
@@ -1847,12 +1874,12 @@ function initDTFTSimulator() {
 
     function updateControlsLayout() {
         const type = selectSig.value;
-        if (type === "rect") {
+        if (type === "rect" || type === "sine_burst") {
             labelParam.innerHTML = `Pulse Width (M): <span id="val-dtft-param" class="control-val">${sliderParam.value}</span>`;
             sliderParam.min = 2;
             sliderParam.max = 10;
             sliderParam.step = 1;
-        } else if (type === "decay") {
+        } else if (type === "decay" || type === "double_decay") {
             labelParam.innerHTML = `Decay Factor (a): <span id="val-dtft-param" class="control-val">${parseFloat(sliderParam.value).toFixed(2)}</span>`;
             if (parseFloat(sliderParam.value) > 0.95 || parseFloat(sliderParam.value) < -0.95) {
                 sliderParam.value = 0.70;
@@ -1860,11 +1887,16 @@ function initDTFTSimulator() {
             sliderParam.min = -0.90;
             sliderParam.max = 0.90;
             sliderParam.step = 0.05;
-        } else if (type === "dual") {
-            labelParam.innerHTML = `Spacing (n0): <span id="val-dtft-param" class="control-val">${sliderParam.value}</span>`;
+        } else if (type === "dual" || type === "triangular") {
+            labelParam.innerHTML = `Param (n0/M): <span id="val-dtft-param" class="control-val">${sliderParam.value}</span>`;
             sliderParam.min = 1;
             sliderParam.max = 6;
             sliderParam.step = 1;
+        } else if (type === "dc") {
+            labelParam.innerHTML = `Signal Level: <span id="val-dtft-param" class="control-val">${parseFloat(sliderParam.value).toFixed(1)}</span>`;
+            sliderParam.min = 0.2;
+            sliderParam.max = 1.5;
+            sliderParam.step = 0.1;
         }
     }
 
@@ -1874,8 +1906,10 @@ function initDTFTSimulator() {
         const type = selectSig.value;
         const param = parseFloat(sliderParam.value);
         const nd = parseInt(sliderShift.value);
+        const w0 = sliderMod ? parseFloat(sliderMod.value) : 0.0;
         
         valShift.innerText = nd;
+        if (valMod) valMod.innerText = w0.toFixed(2);
 
         const wTime = canvasTime.width / window.devicePixelRatio;
         const hTime = canvasTime.height / window.devicePixelRatio;
@@ -1906,6 +1940,30 @@ function initDTFTSimulator() {
                 if (n === nd || n === nd + param) {
                     x_vals[idx] = 1.0;
                 }
+            } else if (type === "triangular") {
+                if (n >= nd - param && n <= nd + param) {
+                    x_vals[idx] = 1.0 - Math.abs(n - nd) / (param + 1);
+                }
+            } else if (type === "sine_burst") {
+                if (n >= nd && n < nd + param) {
+                    x_vals[idx] = Math.cos(0.25 * Math.PI * (n - nd));
+                }
+            } else if (type === "double_decay") {
+                if (Math.abs(n - nd) < 10) {
+                    x_vals[idx] = Math.pow(Math.abs(param), Math.abs(n - nd));
+                }
+            } else if (type === "dc") {
+                if (n >= nd - 6 && n <= nd + 6) {
+                    x_vals[idx] = param;
+                }
+            }
+        }
+
+        // Apply Frequency Modulation: x[n] = x[n] * cos(w0 * n)
+        if (w0 > 0.0) {
+            for (let idx = 0; idx < numSamples; idx++) {
+                const n = nMin + idx;
+                x_vals[idx] *= Math.cos(w0 * n);
             }
         }
 
@@ -1916,6 +1974,10 @@ function initDTFTSimulator() {
             valFormula.innerText = `X(e^{j\u03c9}) = [1 / (1 - ${param.toFixed(2)}e^{-j\u03c9})] \u22c5 e^{-j\u03c9 ${nd}}`;
         } else if (type === "dual") {
             valFormula.innerText = `X(e^{j\u03c9}) = [1 + e^{-j\u03c9 ${param}}] \u22c5 e^{-j\u03c9 ${nd}}\n             = 2 cos(\u03c9 \u22c5 ${(param/2).toFixed(1)}) \u22c5 e^{-j\u03c9 (${(nd + param/2).toFixed(1)})}`;
+        } else if (type === "triangular") {
+            valFormula.innerText = `X(e^{j\u03c9}) \u2248 [sin(\u03c9 \u22c5 ${param}/2) / sin(\u03c9/2)]\u00b2 \u22c5 e^{-j\u03c9 ${nd}} (Triangle spectrum)`;
+        } else {
+            valFormula.innerText = `Modulated / Custom Signal Response (numerical evaluation shown in plots below)`;
         }
 
         // Draw Canvas 1: Time Domain Stems
@@ -2053,8 +2115,8 @@ function initDTFTSimulator() {
         ctxPhase.fillText("\u03c0", x_plus_pi, hPhase - 4);
     }
 
-    [selectSig, sliderParam, sliderShift].forEach(ctrl => {
-        ctrl.addEventListener("input", draw);
+    [selectSig, sliderParam, sliderShift, sliderMod].forEach(ctrl => {
+        if (ctrl) ctrl.addEventListener("input", draw);
     });
 
     draw();
