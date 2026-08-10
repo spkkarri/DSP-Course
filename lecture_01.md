@@ -209,12 +209,74 @@ $$y[n] = \mathcal{T}\{x[n]\}$$
 In DSP, the processor executes this transformation mathematically. A system is characterized by its properties:
 
 ### 1. Linearity
-A system is linear if it satisfies superposition and homogeneity:
-$$\mathcal{T}\{a x_1[n] + b x_2[n]\} = a \mathcal{T}\{x_1[n]\} + b \mathcal{T}\{x_2[n]\}$$
+A system is linear if it satisfies both **Additivity (Superposition)** and **Homogeneity (Scaling)**.
+* **Superposition Property:** 
+  Feeding two inputs into identical systems and summing the outputs is equivalent to summing the inputs first and feeding them through the system:
+  $$\mathcal{T}\{x_1[n] + x_2[n]\} = \mathcal{T}\{x_1[n]\} + \mathcal{T}\{x_2[n]\}$$
+  ```
+  Method A (Process in Parallel, then Sum):
+  x1[n] ---> [ System T ] ---> y1[n] ---\
+                                         (+) ---> y_A[n] = y1[n] + y2[n]
+  x2[n] ---> [ System T ] ---> y2[n] ---/
+
+  Method B (Sum first, then Process):
+  x1[n] ---\
+            (+) ---> [ x1[n]+x2[n] ] ---> [ System T ] ---> y_B[n] = T{x1[n]+x2[n]}
+  x2[n] ---/
+  
+  For Linearity, Method A output must equal Method B output: y_A[n] = y_B[n].
+  ```
+
+* **Homogeneity (Scaling) Property:**
+  Scaling the input before processing yields the same result as scaling the output after processing:
+  $$\mathcal{T}\{a \cdot x[n]\} = a \cdot \mathcal{T}\{x[n]\}$$
+  ```
+  Method A (Scale first, then Process):
+  x[n] ---> [ Scale by a ] ---> a*x[n] ---> [ System T ] ---> y_A[n] = T{a*x[n]}
+
+  Method B (Process first, then Scale):
+  x[n] ---> [ System T ] ---> y[n] ---> [ Scale by a ] ---> y_B[n] = a*y[n]
+  
+  For Linearity, Method A output must equal Method B output: y_A[n] = y_B[n].
+  ```
+
+#### Mathematical Proof: Why a Line Equation System is Non-Linear
+Consider a system described by the affine relation (similar to a straight line equation):
+$$y[n] = \mathcal{T}\{x[n]\} = m \cdot x[n] + c \quad (c \neq 0)$$
+Students often mistake this for a linear system because its plot is a straight line. Let's prove it is **non-linear**:
+
+1. **Test Homogeneity (Scaling):**
+   Scale the input by a factor $a$: $x_1[n] = a \cdot x[n]$.
+   The system response to this scaled input is:
+   $$y_1[n] = \mathcal{T}\{a \cdot x[n]\} = m \cdot (a \cdot x[n]) + c = a \cdot m \cdot x[n] + c$$
+   Now, scale the original output by $a$:
+   $$a \cdot y[n] = a \cdot (m \cdot x[n] + c) = a \cdot m \cdot x[n] + a \cdot c$$
+   Comparing the two:
+   $$y_1[n] - a \cdot y[n] = c - a \cdot c = c \cdot (1 - a)$$
+   Since $c \neq 0$, the two expressions are not equal for $a \neq 1$. Homogeneity is violated!
+
+2. **Test Additivity (Superposition):**
+   Sum two inputs: $x_3[n] = x_1[n] + x_2[n]$.
+   The system response is:
+   $$y_3[n] = \mathcal{T}\{x_1[n] + x_2[n]\} = m \cdot (x_1[n] + x_2[n]) + c = m \cdot x_1[n] + m \cdot x_2[n] + c$$
+   Now, sum the individual outputs:
+   $$y_1[n] + y_2[n] = (m \cdot x_1[n] + c) + (m \cdot x_2[n] + c) = m \cdot x_1[n] + m \cdot x_2[n] + 2c$$
+   Since $c \neq 2c$ for $c \neq 0$, $y_3[n] \neq y_1[n] + y_2[n]$. Superposition is violated!
+
+* **Conclusion:** The system is **non-linear**. It is only linear if $c = 0$.
 
 ### 2. Time-Invariance
-If $y[n] = \mathcal{T}\{x[n]\}$, then the system is time-invariant if:
-$$\mathcal{T}\{x[n-n_0]\} = y[n-n_0]$$
+A system is time-invariant if a time shift in the input results in an identical time shift in the output:
+$$\text{If } y[n] = \mathcal{T}\{x[n]\}, \quad \text{then } \mathcal{T}\{x[n-n_0]\} = y[n-n_0]$$
+```
+Method A (Delay first, then Process):
+x[n] ---> [ Delay by n0 ] ---> x[n-n0] ---> [ System T ] ---> y_A[n] = T{x[n-n0]}
+
+Method B (Process first, then Delay):
+x[n] ---> [ System T ] ---> y[n] ---> [ Delay by n0 ] ---> y_B[n] = y[n-n0]
+
+For Time-Invariance, Method A output must equal Method B output: y_A[n] = y_B[n].
+```
 
 ### 3. Causality
 A system is causal if the output at $n_0$ depends only on present and past inputs: $x[n]$ for $n \le n_0$.

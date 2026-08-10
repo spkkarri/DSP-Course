@@ -34,6 +34,7 @@ document.addEventListener("DOMContentLoaded", () => {
         initEnergyPowerSimulator,
         initConvolutionSimulator,
         initLTIStabilitySimulator,
+        initSystolicSimulator,
         initDTFTSimulator,
         initFrequencyResponseSimulator,
         initZTransformSimulator,
@@ -1842,6 +1843,181 @@ function initLTIStabilitySimulator() {
         if (ctrl) ctrl.addEventListener("input", draw);
     });
 
+    draw();
+}
+
+// ============================================================================
+// 9.5. Parallel Systolic Convolution (MAC Cascade) Simulator (Lecture 2)
+// ============================================================================
+function initSystolicSimulator() {
+    const btnStep = document.getElementById("btn-systolic-step");
+    const btnReset = document.getElementById("btn-systolic-reset");
+    const valClk = document.getElementById("val-systolic-clk");
+    const valIn = document.getElementById("val-systolic-in");
+    const valOut = document.getElementById("val-systolic-out");
+
+    const r0El = document.getElementById("systolic-r0");
+    const r1El = document.getElementById("systolic-r1");
+    const r2El = document.getElementById("systolic-r2");
+
+    const p0El = document.getElementById("systolic-p0");
+    const p1El = document.getElementById("systolic-p1");
+    const p2El = document.getElementById("systolic-p2");
+
+    const canvas = document.getElementById("canvas-systolic-conv");
+
+    if (!btnStep || !canvas) return;
+
+    const ctx = canvas.getContext("2d");
+
+    // Systolic hardware state variables
+    const H = [1, 2, 1]; // filter coefficients: h[0]=1, h[1]=2, h[2]=1
+    const X = [1, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0]; // input sequence
+    let R = [0, 0, 0]; // registers R0, R1, R2
+    let clk = 0;
+    let Y_log = []; // records outputs at each cycle
+    let X_log = []; // records input at each cycle
+
+    function resize() {
+        canvas.width = canvas.parentElement.clientWidth * window.devicePixelRatio;
+        canvas.height = 110 * window.devicePixelRatio;
+        ctx.resetTransform();
+        ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    }
+    resize();
+    window.addEventListener("resize", resize);
+
+    function resetPipeline() {
+        R = [0, 0, 0];
+        clk = 0;
+        Y_log = [];
+        X_log = [];
+        updateUI(0, 0);
+        draw();
+    }
+
+    function stepClock() {
+        if (clk >= X.length) {
+            // cycle loop back
+            R = [0, 0, 0];
+            clk = 0;
+            Y_log = [];
+            X_log = [];
+        }
+
+        const x_in = X[clk];
+        
+        // Multiplier products
+        const p0 = x_in * H[0];
+        const p1 = x_in * H[1];
+        const p2 = x_in * H[2];
+
+        // Register updates (Parallel state transitions)
+        const next_R0 = R[1] + p0;
+        const next_R1 = R[2] + p1;
+        const next_R2 = p2;
+
+        R[0] = next_R0;
+        R[1] = next_R1;
+        R[2] = next_R2;
+
+        const y_out = R[0];
+        Y_log.push(y_out);
+        X_log.push(x_in);
+
+        clk++;
+        updateUI(x_in, y_out, p0, p1, p2);
+        draw();
+    }
+
+    function updateUI(x_in, y_out, p0=0, p1=0, p2=0) {
+        valClk.innerText = clk;
+        valIn.innerText = x_in.toFixed(1);
+        valOut.innerText = y_out.toFixed(1);
+
+        r0El.innerText = R[0].toFixed(1);
+        r1El.innerText = R[1].toFixed(1);
+        r2El.innerText = R[2].toFixed(1);
+
+        p0El.innerText = p0.toFixed(1);
+        p1El.innerText = p1.toFixed(1);
+        p2El.innerText = p2.toFixed(1);
+    }
+
+    function draw() {
+        const w = canvas.width / window.devicePixelRatio;
+        const h = canvas.height / window.devicePixelRatio;
+        ctx.clearRect(0, 0, w, h);
+
+        // draw axes
+        ctx.strokeStyle = "rgba(255,255,255,0.06)";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(0, h/2);
+        ctx.lineTo(w, h/2);
+        ctx.stroke();
+
+        const maxPoints = X.length;
+        const margin = 20;
+        const step = (w - 2*margin) / (maxPoints - 1);
+        const centerY = h/2;
+
+        // Draw input sequence (faded blue dots)
+        ctx.strokeStyle = "rgba(13, 213, 197, 0.25)";
+        ctx.fillStyle = "rgba(13, 213, 197, 0.25)";
+        ctx.lineWidth = 1.5;
+        for (let i = 0; i < maxPoints; i++) {
+            const x = margin + i * step;
+            const val = X[i];
+            const y = centerY - val * 15;
+            ctx.beginPath();
+            ctx.moveTo(x, centerY);
+            ctx.lineTo(x, y);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(x, y, 2.5, 0, 2*Math.PI);
+            ctx.fill();
+        }
+
+        // Draw generated output sequence (solid red stems)
+        ctx.strokeStyle = "#ef4444";
+        ctx.fillStyle = "#ef4444";
+        ctx.lineWidth = 2.5;
+        for (let i = 0; i < Y_log.length; i++) {
+            const x = margin + i * step;
+            const val = Y_log[i];
+            const y = centerY - val * 15;
+            ctx.beginPath();
+            ctx.moveTo(x, centerY);
+            ctx.lineTo(x, y);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(x, y, 4, 0, 2*Math.PI);
+            ctx.fill();
+
+            // Label output values above stems
+            ctx.fillStyle = "#ffffff";
+            ctx.font = "8px Fira Code";
+            ctx.textAlign = "center";
+            ctx.fillText(val.toString(), x, y - 6);
+            ctx.fillStyle = "#ef4444";
+        }
+
+        // Label clock/ticks on bottom
+        for (let i = 0; i < maxPoints; i++) {
+            const x = margin + i * step;
+            ctx.fillStyle = i < clk ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.2)";
+            ctx.font = "7px Fira Code";
+            ctx.textAlign = "center";
+            ctx.fillText("n=" + i, x, h - 4);
+        }
+    }
+
+    btnStep.addEventListener("click", stepClock);
+    btnReset.addEventListener("click", resetPipeline);
+
+    // Initial state draw
+    updateUI(0, 0);
     draw();
 }
 

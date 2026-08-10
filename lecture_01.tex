@@ -254,15 +254,77 @@ y[n] = \mathcal{T}\{x[n]\}
 \end{equation}
 The digital signal processor is the physical implementation of this system. Systems are classified by these fundamental properties:
 \begin{itemize}
-    \item \textbf{Linearity:} Satisfies both additivity and scaling (superposition):
+    \item \textbf{Linearity:} Satisfies both \textbf{Additivity (Superposition)} and \textbf{Homogeneity (Scaling)}.
+    \begin{enumerate}
+        \item \textbf{Superposition (Additivity):}
+        \begin{equation}
+        \mathcal{T}\{x_1[n] + x_2[n]\} = \mathcal{T}\{x_1[n]\} + \mathcal{T}\{x_2[n]\}
+        \end{equation}
+        \begin{center}
+        \begin{tabular}{ccccc}
+        $x_1[n]$ & $\rightarrow$ & \boxed{\mathcal{T}} & $\rightarrow$ & $y_1[n]$ \\
+        $x_2[n]$ & $\rightarrow$ & \boxed{\mathcal{T}} & $\rightarrow$ & $y_2[n]$ \\
+        \multicolumn{5}{c}{Outputs are added: $y_A[n] = y_1[n] + y_2[n]$} \\
+        \midrule
+        $x_1[n] + x_2[n]$ & $\rightarrow$ & \boxed{\mathcal{T}} & $\rightarrow$ & $y_B[n] = \mathcal{T}\{x_1[n] + x_2[n]\}$
+        \end{tabular}
+        \\ \vspace{0.1cm}
+        \textit{Linear system condition: $y_A[n] = y_B[n]$}
+        \end{center}
+        
+        \item \textbf{Homogeneity (Scaling):}
+        \begin{equation}
+        \mathcal{T}\{a \cdot x[n]\} = a \cdot \mathcal{T}\{x[n]\}
+        \end{equation}
+        \begin{center}
+        \begin{tabular}{ccccc}
+        $x[n]$ & $\rightarrow$ & \boxed{\text{Scale by } a} & $\rightarrow$ & \boxed{\mathcal{T}} $\rightarrow y_A[n]$ \\
+        $x[n]$ & $\rightarrow$ & \boxed{\mathcal{T}} & $\rightarrow$ & \boxed{\text{Scale by } a} $\rightarrow y_B[n]$
+        \end{tabular}
+        \\ \vspace{0.1cm}
+        \textit{Linear system condition: $y_A[n] = y_B[n]$}
+        \end{center}
+    \end{enumerate}
+
+    \textbf{Mathematical Proof: Why a Straight Line Equation is Non-Linear}\\
+    Consider the system:
     \begin{equation}
-    \mathcal{T}\{a \cdot x_1[n] + b \cdot x_2[n]\} = a \cdot \mathcal{T}\{x_1[n]\} + b \cdot \mathcal{T}\{x_2[n]\}
+    y[n] = \mathcal{T}\{x[n]\} = m \cdot x[n] + c \quad (c \neq 0)
     \end{equation}
-    
+    \begin{enumerate}
+        \item \textbf{Homogeneity Check:} For input $x_1[n] = a \cdot x[n]$:
+        \begin{equation}
+        y_1[n] = \mathcal{T}\{a \cdot x[n]\} = m(a \cdot x[n]) + c = a m x[n] + c
+        \end{equation}
+        Scaling the output by $a$:
+        \begin{equation}
+        a \cdot y[n] = a(m \cdot x[n] + c) = a m x[n] + a c
+        \end{equation}
+        Since $c \neq a c$ for $c \neq 0$ (when $a \neq 1$), homogeneity is violated.
+        \item \textbf{Additivity Check:} For input $x_3[n] = x_1[n] + x_2[n]$:
+        \begin{equation}
+        y_3[n] = m(x_1[n] + x_2[n]) + c = m x_1[n] + m x_2[n] + c
+        \end{equation}
+        Sum of individual outputs:
+        \begin{equation}
+        y_1[n] + y_2[n] = (m x_1[n] + c) + (m x_2[n] + c) = m x_1[n] + m x_2[n] + 2c
+        \end{equation}
+        Since $c \neq 2c$ for $c \neq 0$, additivity is violated.
+    \end{enumerate}
+    Thus, the straight-line affine relation $y[n] = m x[n] + c$ is a \textbf{non-linear} system.
+
     \item \textbf{Time-Invariance:} A time-shift of the input causes an identical time-shift of the output:
     \begin{equation}
     \mathcal{T}\{x[n - n_0]\} = y[n - n_0]
     \end{equation}
+    \begin{center}
+    \begin{tabular}{ccccc}
+    $x[n]$ & $\rightarrow$ & \boxed{\text{Delay } n_0} & $\rightarrow$ & \boxed{\mathcal{T}} $\rightarrow y_A[n]$ \\
+    $x[n]$ & $\rightarrow$ & \boxed{\mathcal{T}} & $\rightarrow$ & \boxed{\text{Delay } n_0} $\rightarrow y_B[n]$
+    \end{tabular}
+    \\ \vspace{0.1cm}
+    \textit{Time-Invariance condition: $y_A[n] = y_B[n]$}
+    \end{center}
     
     \item \textbf{Causality:} The output at index $n_0$ depends only on present and past input values ($x[n]$ for $n \le n_0$).
     

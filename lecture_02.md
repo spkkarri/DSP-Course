@@ -179,6 +179,77 @@ $$y[n] = y_h[n] + y_p[n]$$
   $$h[n] = s[n] - s[n-1]$$
   This behaves as the discrete-time analogue to differentiation.
 
+## 6. Hardware Implementation of Convolution: Parallelization & Systolic MAC Arrays
+
+In real-time digital signal processing (e.g., FPGAs, ASICs, and specialized DSP chips), computing convolution sequentially using the standard equation $y[n] = \sum_{k} x[k] h[n-k]$ is highly inefficient. For a signal of length $L_x$ and filter of length $L_h$, sequential computation requires $O(L_x \cdot L_h)$ operations.
+
+To run this in real-time, hardware architectures parallelize this calculation to achieve $O(1)$ throughput (one output sample per clock cycle) using a **Systolic MAC (Multiply-Accumulate) Array** in the **Transposed Direct Form FIR** structure.
+
+### A. Transposed Direct Form Architecture
+Rather than storing historical input samples in a delay line and summing them through a large adder tree, the Transposed Direct Form broadcasts the current input sample $x[n]$ to all multipliers simultaneously. The delay elements (registers) are placed along the accumulation path.
+
+Here is the block diagram of a 3-tap ($L_h = 3$) parallel systolic convolution array:
+
+```
+Broadcast Input x[n]
+   ----------------------+----------------------+----------------------+
+                         |                      |                      |
+                         v                      v                      v
+                     ( x h[0] )             ( x h[1] )             ( x h[2] )
+                         |                      |                      |
+                         v                      v                      v
+   y[n] <----------------(+) <--- [ Reg R0 ] <---(+) <--- [ Reg R1 ] <--- [ Reg R2 ]
+```
+
+### B. Register Update Equations (Parallel State Transition)
+Let $R_0[n]$, $R_1[n]$, and $R_2[n]$ represent the register values at clock cycle $n$. When the clock edge triggers:
+1. All multiplications occur in parallel.
+2. The registers are updated simultaneously using the values from the previous clock cycle:
+   $$R_0[n] = R_1[n-1] + x[n] \cdot h[0]$$
+   $$R_1[n] = R_2[n-1] + x[n] \cdot h[1]$$
+   $$R_2[n] = x[n] \cdot h[2]$$
+3. The output at cycle $n$ is read directly from the accumulator output:
+   $$y[n] = R_0[n]$$
+
+### C. Example Execution Walkthrough
+Let input stream $x[n] = \{1, 2, 1, 0, 0, \dots\}$ and impulse response $h[n] = \{1, 2, 1\}$.
+* **Cycle 0 ($x[0] = 1$):**
+  * Multipliers compute: $1 \cdot h[0] = 1$, $1 \cdot h[1] = 2$, $1 \cdot h[2] = 1$.
+  * Registers update:
+    * $R_2 = 1$
+    * $R_1 = 0 + 2 = 2$
+    * $R_0 = 0 + 1 = 1$
+  * Output: $y[0] = R_0 = 1$.
+* **Cycle 1 ($x[1] = 2$):**
+  * Multipliers compute: $2 \cdot 1 = 2$, $2 \cdot 2 = 4$, $2 \cdot 1 = 2$.
+  * Registers update (using previous cycle's $R_1 = 2$, $R_2 = 1$):
+    * $R_2 = 2$
+    * $R_1 = R_2_{prev} + 4 = 1 + 4 = 5$
+    * $R_0 = R_1_{prev} + 2 = 2 + 2 = 4$
+  * Output: $y[1] = R_0 = 4$.
+* **Cycle 2 ($x[2] = 1$):**
+  * Multipliers compute: $1 \cdot 1 = 1$, $1 \cdot 2 = 2$, $1 \cdot 1 = 1$.
+  * Registers update (using previous $R_1 = 5$, $R_2 = 2$):
+    * $R_2 = 1$
+    * $R_1 = R_2_{prev} + 2 = 2 + 2 = 4$
+    * $R_0 = R_1_{prev} + 1 = 5 + 1 = 6$
+  * Output: $y[2] = R_0 = 6$.
+* **Cycle 3 ($x[3] = 0$):**
+  * Multipliers compute: 0.
+  * Registers update (using previous $R_1 = 4$, $R_2 = 1$):
+    * $R_2 = 0$
+    * $R_1 = 1 + 0 = 1$
+    * $R_0 = 4 + 0 = 4$
+  * Output: $y[3] = R_0 = 4$.
+* **Cycle 4 ($x[4] = 0$):**
+  * Registers update (using previous $R_1 = 1$, $R_2 = 0$):
+    * $R_2 = 0$
+    * $R_1 = 0$
+    * $R_0 = 1 + 0 = 1$
+  * Output: $y[4] = R_0 = 1$.
+
+Final output sequence is $y[n] = \{1, 4, 6, 4, 1\}$, which perfectly matches the mathematical convolution of $\{1, 2, 1\} * \{1, 2, 1\}$! This hardware architecture processes one input sample per clock cycle, making it ideal for pipelined DSP execution.
+
 ---
 
 ## 7. Detailed Worked Examples

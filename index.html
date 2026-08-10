@@ -1074,6 +1074,84 @@
                         </div>
                     </section>
 
+                    <!-- L2 Section 3.5: Parallel Systolic Convolution Simulator -->
+                    <section class="card">
+                        <div class="card-title">Parallel Systolic Convolution (MAC Cascade) Simulator</div>
+                        <p class="theory-text">
+                            In hardware (FPGAs/ASICs), sequential convolution $y[n] = \sum x[k]h[n-k]$ is too slow. Instead, we use a **Systolic MAC (Multiply-Accumulate) Cascade**.
+                            As each input $x[n]$ arrives, it is broadcast to all multiplier cells in parallel. The products are added to delayed accumulators. This reduces the time complexity from $O(L_x L_h)$ to $O(L_x)$!
+                        </p>
+                        <div class="sandbox-grid" style="grid-template-columns: 1fr 280px; gap: 20px;">
+                            <div>
+                                <div class="plot-container" style="padding: 15px; background: rgba(13, 18, 30, 0.6); border-radius: 8px;">
+                                    <h4 style="font-size: 0.85rem; margin-bottom: 15px; color: var(--color-teal); text-align: center;">Systolic Register Array (Parallel Processing Pipeline)</h4>
+                                    
+                                    <!-- Visual blocks of registers -->
+                                    <div style="display: flex; justify-content: space-around; align-items: center; margin-bottom: 25px; gap: 10px;" id="systolic-array-visual">
+                                        <!-- Stage 2 -->
+                                        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); padding: 12px; border-radius: 8px; width: 30%; text-align: center;">
+                                            <div style="font-size: 0.65rem; color: var(--text-dim); font-weight: 700; text-transform: uppercase;">Stage 2 (Cell \(h[2]\))</div>
+                                            <div style="font-size: 1.1rem; color: #a78bfa; font-weight: 800; margin: 6px 0;">h[2] = 1</div>
+                                            <div style="font-size: 0.65rem; color: var(--text-dim); margin-top: 4px;">Mult Product:</div>
+                                            <div id="systolic-p2" style="font-family: monospace; font-size: 0.85rem; color: var(--color-teal); font-weight: 700;">0</div>
+                                            <div style="border-top: 1px solid var(--border-color); margin: 6px 0;"></div>
+                                            <div style="font-size: 0.65rem; color: var(--text-dim);">Register \(R_2\):</div>
+                                            <div id="systolic-r2" style="font-family: 'Fira Code', monospace; font-size: 1.2rem; color: white; font-weight: 700;">0.0</div>
+                                        </div>
+                                        <!-- Arrow -->
+                                        <div style="color: var(--text-dim); font-weight: 700;">&rarr;</div>
+                                        <!-- Stage 1 -->
+                                        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); padding: 12px; border-radius: 8px; width: 30%; text-align: center;">
+                                            <div style="font-size: 0.65rem; color: var(--text-dim); font-weight: 700; text-transform: uppercase;">Stage 1 (Cell \(h[1]\))</div>
+                                            <div style="font-size: 1.1rem; color: #a78bfa; font-weight: 800; margin: 6px 0;">h[1] = 2</div>
+                                            <div style="font-size: 0.65rem; color: var(--text-dim); margin-top: 4px;">Mult Product:</div>
+                                            <div id="systolic-p1" style="font-family: monospace; font-size: 0.85rem; color: var(--color-teal); font-weight: 700;">0</div>
+                                            <div style="border-top: 1px solid var(--border-color); margin: 6px 0;"></div>
+                                            <div style="font-size: 0.65rem; color: var(--text-dim);">Register \(R_1\):</div>
+                                            <div id="systolic-r1" style="font-family: 'Fira Code', monospace; font-size: 1.2rem; color: white; font-weight: 700;">0.0</div>
+                                        </div>
+                                        <!-- Arrow -->
+                                        <div style="color: var(--text-dim); font-weight: 700;">&rarr;</div>
+                                        <!-- Stage 0 -->
+                                        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); padding: 12px; border-radius: 8px; width: 30%; text-align: center;">
+                                            <div style="font-size: 0.65rem; color: var(--text-dim); font-weight: 700; text-transform: uppercase;">Stage 0 (Cell \(h[0]\))</div>
+                                            <div style="font-size: 1.1rem; color: #a78bfa; font-weight: 800; margin: 6px 0;">h[0] = 1</div>
+                                            <div style="font-size: 0.65rem; color: var(--text-dim); margin-top: 4px;">Mult Product:</div>
+                                            <div id="systolic-p0" style="font-family: monospace; font-size: 0.85rem; color: var(--color-teal); font-weight: 700;">0</div>
+                                            <div style="border-top: 1px solid var(--border-color); margin: 6px 0;"></div>
+                                            <div style="font-size: 0.65rem; color: var(--text-dim);">Register \(R_0\):</div>
+                                            <div id="systolic-r0" style="font-family: 'Fira Code', monospace; font-size: 1.2rem; color: white; font-weight: 700;">0.0</div>
+                                        </div>
+                                    </div>
+                                    <h4 style="font-size: 0.75rem; color: var(--text-dim); margin-bottom: 6px;">Output Waveform Stream</h4>
+                                    <canvas id="canvas-systolic-conv" style="width: 100%; height: 110px;"></canvas>
+                                </div>
+                            </div>
+                            <div class="controls-panel">
+                                <h3>Hardware Controls</h3>
+                                <hr style="border-color: var(--border-color); margin: 10px 0 15px 0;">
+                                <div class="control-group">
+                                    <label>Input Sample \(x[n]\) Stream:</label>
+                                    <div style="font-family: monospace; font-size: 0.85rem; background: #0f172a; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); margin-bottom: 12px; text-align: center; color: var(--color-teal); letter-spacing: 2px;">
+                                        [1, 2, 1, 0, 0, 0, 0, 0]
+                                    </div>
+                                    <button class="btn btn-primary" style="width: 100%; justify-content: center; margin-bottom: 8px;" id="btn-systolic-step">
+                                        ⚙️ Trigger Clock Cycle
+                                    </button>
+                                    <button class="btn" style="width: 100%; justify-content: center;" id="btn-systolic-reset">
+                                        🔄 Reset Pipeline
+                                    </button>
+                                </div>
+                                <div class="math-card" style="font-size: 0.75rem; line-height: 1.6;">
+                                    <strong>Register Values:</strong>
+                                    <div style="margin-top: 5px;">Clock Tick (n): <span id="val-systolic-clk" class="control-val" style="color: var(--color-teal);">0</span></div>
+                                    <div>Current Broadcast Input: <span id="val-systolic-in" class="control-val" style="color: var(--color-teal);">0.0</span></div>
+                                    <div>Systolic Output \(y[n]\): <span id="val-systolic-out" class="control-val" style="color: #ef4444; font-weight: 700;">0.0</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
                     <!-- L2 Section 4: Checkpoints / Quiz -->
                     <section class="card">
                         <div class="card-title">Interactive Lecture Checkpoints</div>

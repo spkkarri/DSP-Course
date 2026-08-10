@@ -178,6 +178,31 @@ y_h[n] = \sum_{k=1}^{N} C_k \lambda_k^n
 \subsection{Particular Solution $y_p[n]$}
 Represented by trial functions corresponding to the inputs, e.g., $y_p[n] = K_p$ for constant inputs, or $y_p[n] = K_p \beta^n$ for exponential inputs $x[n] = A \beta^n$.
 
+\section{Hardware Implementation: Parallelization \& Systolic MAC Arrays}
+In real-time digital signal processing systems (FPGAs, ASICs, and dedicated DSP processors), computing convolution sequentially is often too slow. Instead, the computation is parallelized using a \textbf{Systolic MAC (Multiply-Accumulate) Array} in the \textbf{Transposed Direct Form FIR} structure. This reduces the time complexity from $O(L_x \cdot L_h)$ to $O(L_x)$ overall, yielding $O(1)$ output throughput (one output sample per clock cycle).
+
+\subsection{Transposed Direct Form FIR Structure}
+Instead of storing input history and summing them via a large adder tree, the input sample $x[n]$ is broadcast to all processing cells simultaneously. Registers are placed along the accumulation path.
+
+For a 3-tap ($L_h = 3$) filter:
+\begin{center}
+\begin{tabular}{ccccccc}
+Broadcast Input $x[n]$ & $\rightarrow$ & $\downarrow$ & & $\downarrow$ & & $\downarrow$ \\
+& & \boxed{\times h[0]} & & \boxed{\times h[1]} & & \boxed{\times h[2]} \\
+& & $\downarrow$ & & $\downarrow$ & & $\downarrow$ \\
+$y[n]$ & $\leftarrow$ & \boxed{+} $\leftarrow$ & \boxed{\text{Reg } R_0} $\leftarrow$ & \boxed{+} $\leftarrow$ & \boxed{\text{Reg } R_1} $\leftarrow$ & \boxed{\text{Reg } R_2}
+\end{tabular}
+\end{center}
+
+\subsection{Register Update Equations}
+At each clock cycle $n$, all registers update simultaneously based on the previous cycle's states:
+\begin{align}
+R_0[n] &= R_1[n-1] + x[n] \cdot h[0] \\
+R_1[n] &= R_2[n-1] + x[n] \cdot h[1] \\
+R_2[n] &= x[n] \cdot h[2]
+\end{align}
+The output is read directly from the accumulator: $y[n] = R_0[n]$. For $x[n] = \{1, 2, 1\}$ convolved with $h[n] = \{1, 2, 1\}$, the systolic execution matches the algebraic convolution $y[n] = \{1, 4, 6, 4, 1\}$.
+
 \section{Detailed Worked Numerical Examples}
 
 \subsection{Example 1: Convolution of Finite Sequences}
