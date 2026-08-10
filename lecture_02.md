@@ -84,6 +84,33 @@ $$x[n-n_1] * h[n-n_2] = y[n - n_1 - n_2]$$
   Let $m = k - n_1 \Rightarrow k = m + n_1$.
   $$\sum_{m=-\infty}^{\infty} x[m] h[n - n_2 - m - n_1] = \sum_{m=-\infty}^{\infty} x[m] h[(n - n_1 - n_2) - m] = y[n - n_1 - n_2]$$
 
+### E. Complex Exponentials as Eigenfunctions (Frequency Response Theorem)
+A complex exponential sequence $x[n] = e^{j\omega n}$ is an **eigenfunction** of any LTI system. That is, passing it through an LTI system results in the same complex exponential scaled by a complex constant (the eigenvalue), which is the **frequency response** $H(e^{j\omega})$ of the system:
+$$e^{j\omega n} * h[n] = H(e^{j\omega}) e^{j\omega n}$$
+where $H(e^{j\omega}) = \sum_{k=-\infty}^{\infty} h[k] e^{-j\omega k}$ is the DTFT of the impulse response.
+
+* **Proof:**
+  Apply the convolution sum to $x[n] = e^{j\omega n}$ and impulse response $h[n]$:
+  $$y[n] = \sum_{k=-\infty}^{\infty} h[k] x[n-k] = \sum_{k=-\infty}^{\infty} h[k] e^{j\omega(n-k)}$$
+  Since $e^{j\omega(n-k)} = e^{j\omega n} \cdot e^{-j\omega k}$, we can factor out the term $e^{j\omega n}$ (which does not depend on the dummy variable $k$):
+  $$y[n] = \left( \sum_{k=-\infty}^{\infty} h[k] e^{-j\omega k} \right) e^{j\omega n} = H(e^{j\omega}) e^{j\omega n}$$
+  This proves that convolving with $e^{j\omega n}$ scales the input by the system's frequency response $H(e^{j\omega})$.
+
+### F. Duality: Complex Exponential System as a Frequency Extractor
+If the LTI system itself is a complex oscillator with impulse response $h[n] = e^{j\omega_0 n}$, then convolving it with an arbitrary input sequence $x[n]$ extracts the frequency component of $x[n]$ at the frequency $\omega_0$.
+Specifically, the output is:
+$$x[n] * e^{j\omega_0 n} = X(e^{j\omega_0}) e^{j\omega_0 n}$$
+where $X(e^{j\omega_0}) = \sum_{k=-\infty}^{\infty} x[k] e^{-j\omega_0 k}$ is the DTFT of the input evaluated at $\omega_0$.
+
+* **Proof:**
+  Evaluate the convolution sum:
+  $$y[n] = \sum_{k=-\infty}^{\infty} x[k] h[n-k] = \sum_{k=-\infty}^{\infty} x[k] e^{j\omega_0(n-k)}$$
+  Using the exponential identity $e^{j\omega_0(n-k)} = e^{j\omega_0 n} \cdot e^{-j\omega_0 k}$, factor out $e^{j\omega_0 n}$:
+  $$y[n] = \left( \sum_{k=-\infty}^{\infty} x[k] e^{-j\omega_0 k} \right) e^{j\omega_0 n} = X(e^{j\omega_0}) e^{j\omega_0 n}$$
+* **Special Case ($n = 0$):** At index $n=0$, the output is exactly the frequency component of the input at $\omega_0$:
+  $$y[0] = X(e^{j\omega_0})$$
+  This is the foundation of digital demodulators, phase-locked loops, and sliding DFT channelizers in telecommunications and power systems!
+
 ---
 
 ## 4. Causality & BIBO Stability of LTI Systems

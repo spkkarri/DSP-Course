@@ -94,6 +94,31 @@ If $y[n] = x[n] * h[n]$, then:
 x[n-n_1] * h[n-n_2] = y[n - n_1 - n_2]
 \end{equation}
 
+\subsection{Complex Exponentials as Eigenfunctions (Frequency Response Theorem)}
+A complex exponential sequence $x[n] = e^{j\omega n}$ is an \textbf{eigenfunction} of any LTI system. That is, convolving it with an impulse response $h[n]$ yields:
+\begin{equation}
+e^{j\omega n} * h[n] = H(e^{j\omega}) e^{j\omega n}
+\end{equation}
+where $H(e^{j\omega}) = \sum_{k=-\infty}^{\infty} h[k] e^{-j\omega k}$ is the frequency response of the system.
+\\
+\textit{Proof:}
+\begin{equation}
+y[n] = \sum_{k=-\infty}^{\infty} h[k] e^{j\omega(n-k)} = \left( \sum_{k=-\infty}^{\infty} h[k] e^{-j\omega k} \right) e^{j\omega n} = H(e^{j\omega}) e^{j\omega n}
+\end{equation}
+
+\subsection{Duality: Complex Exponential System as a Frequency Extractor}
+If the system itself is a complex oscillator with impulse response $h[n] = e^{j\omega_0 n}$, then convolving it with an arbitrary input sequence $x[n]$ extracts the frequency component of $x[n]$ at $\omega_0$:
+\begin{equation}
+x[n] * e^{j\omega_0 n} = X(e^{j\omega_0}) e^{j\omega_0 n}
+\end{equation}
+where $X(e^{j\omega_0}) = \sum_{k=-\infty}^{\infty} x[k] e^{-j\omega_0 k}$ is the DTFT of the input.
+\\
+\textit{Proof:}
+\begin{equation}
+y[n] = \sum_{k=-\infty}^{\infty} x[k] e^{j\omega_0(n-k)} = \left( \sum_{k=-\infty}^{\infty} x[k] e^{-j\omega_0 k} \right) e^{j\omega_0 n} = X(e^{j\omega_0}) e^{j\omega_0 n}
+\end{equation}
+At $n=0$, the output is exactly $y[0] = X(e^{j\omega_0})$, representing the frequency component at $\omega_0$.
+
 \section{Causality, BIBO Stability \& Step Response}
 \subsection{Causality}
 An LTI system is causal if and only if:
