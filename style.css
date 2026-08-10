@@ -70,6 +70,7 @@ body {
     flex-direction: column;
     flex-shrink: 0;
     z-index: 10;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .sidebar-header {
@@ -666,4 +667,66 @@ input:checked + .slider-toggle {
 
 input:checked + .slider-toggle:before {
     transform: translateX(22px);
+}
+
+/* Collapsible Sidebar Styles for Student Portal */
+body.sidebar-collapsed .sidebar {
+    width: 0;
+    margin-left: calc(-1 * var(--sidebar-width));
+    border-right: none;
+}
+
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    left: 0; right: 0; top: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 99;
+}
+body.sidebar-active .sidebar-overlay {
+    display: block;
+}
+
+.sidebar-toggle-btn {
+    background: none;
+    border: none;
+    color: var(--text-main);
+    font-size: 1.5rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    margin-right: 16px;
+    transition: background 0.15s, color 0.15s;
+    flex-shrink: 0;
+}
+.sidebar-toggle-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--color-teal);
+}
+
+@media (max-width: 1024px) {
+    .sidebar {
+        position: fixed;
+        left: 0; top: 0; bottom: 0;
+        z-index: 100;
+        width: var(--sidebar-width);
+        margin-left: calc(-1 * var(--sidebar-width)); /* hidden by default */
+        box-shadow: 20px 0 40px rgba(0,0,0,0.5);
+    }
+    body.sidebar-active .sidebar {
+        margin-left: 0;
+    }
+    body.sidebar-collapsed .sidebar {
+        margin-left: calc(-1 * var(--sidebar-width));
+    }
+    .main-header {
+        padding: 16px 20px;
+    }
+    .header-actions {
+        display: none; /* Hide download PDF on small screens to save space */
+    }
 }

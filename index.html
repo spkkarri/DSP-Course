@@ -12,6 +12,7 @@
 </head>
 <body>
     <div class="app-container">
+        <div class="sidebar-overlay" id="studentSidebarOverlay" onclick="toggleStudentSidebar()"></div>
         <!-- Sidebar Navigation -->
         <aside class="sidebar">
             <div class="sidebar-header">
@@ -253,6 +254,7 @@
         <main class="main-content">
             <!-- Header -->
             <header class="main-header">
+                <button class="sidebar-toggle-btn" id="studentSidebarToggle" onclick="toggleStudentSidebar()" title="Toggle Sidebar">☰</button>
                 <div class="header-title">
                     <h2 id="current-lecture-title">Lecture 1: Course Introduction &amp; DT Signals</h2>
                     <p id="current-lecture-subtitle">Unit I: Basic Elements of DSP &bull; Recommended Duration: 40 Minutes</p>

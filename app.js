@@ -1,3 +1,13 @@
+// Sidebar toggle for student portal
+function toggleStudentSidebar() {
+    const isMobile = window.innerWidth <= 1024;
+    if (isMobile) {
+        document.body.classList.toggle('sidebar-active');
+    } else {
+        document.body.classList.toggle('sidebar-collapsed');
+    }
+}
+
 // Ensure math renders once KaTeX is loaded
 document.addEventListener("DOMContentLoaded", () => {
     try {
@@ -1381,6 +1391,11 @@ function initTabSwitching() {
 
             // Force resize trigger to redraw canvases on the newly active page
             window.dispatchEvent(new Event('resize'));
+
+            // Auto-close sidebar on mobile after selecting a lecture
+            if (window.innerWidth <= 1024) {
+                document.body.classList.remove('sidebar-active');
+            }
         });
     });
 }
