@@ -178,6 +178,47 @@ y_h[n] = \sum_{k=1}^{N} C_k \lambda_k^n
 \subsection{Particular Solution $y_p[n]$}
 Represented by trial functions corresponding to the inputs, e.g., $y_p[n] = K_p$ for constant inputs, or $y_p[n] = K_p \beta^n$ for exponential inputs $x[n] = A \beta^n$.
 
+\subsection{Analytical Solution Concrete Walkthrough}
+Solve the difference equation $y[n] - 0.5 y[n-1] = x[n]$ for $x[n] = 2^n u[n]$ under initial rest conditions ($y[-1] = 0$).
+\begin{enumerate}
+    \item \textbf{Homogeneous Solution $y_h[n]$:} Set input $x[n] = 0$. Substitute $y_h[n] = C \lambda^n$:
+    \begin{equation}
+    C \lambda^n - 0.5 C \lambda^{n-1} = 0 \Rightarrow \lambda - 0.5 = 0 \Rightarrow \lambda = 0.5
+    \end{equation}
+    Thus, the natural response shape is:
+    \begin{equation}
+    y_h[n] = C (0.5)^n
+    \end{equation}
+    
+    \item \textbf{Particular Solution $y_p[n]$:} Since input is $x[n] = 2^n u[n]$, assume $y_p[n] = K \cdot 2^n$ for $n \ge 0$. Substitute into difference equation:
+    \begin{equation}
+    K \cdot 2^n - 0.5 K \cdot 2^{n-1} = 2^n
+    \end{equation}
+    Divide by $2^{n-1}$ to solve for $K$:
+    \begin{equation}
+    2K - 0.5K = 2 \Rightarrow 1.5K = 2 \Rightarrow K = \frac{4}{3}
+    \end{equation}
+    Thus, $y_p[n] = \frac{4}{3} 2^n$ for $n \ge 0$.
+    
+    \item \textbf{Complete Solution $y[n]$:} Combine the components:
+    \begin{equation}
+    y[n] = C (0.5)^n + \frac{4}{3} 2^n \quad (n \ge 0)
+    \end{equation}
+    
+    \item \textbf{Solve for Constant $C$:} Under initial rest $y[-1] = 0$. Direct evaluation of difference equation at $n=0$:
+    \begin{equation}
+    y[0] = 0.5 y[-1] + x[0] = 0.5(0) + 2^0 = 1
+    \end{equation}
+    Substitute $n=0$ into complete solution:
+    \begin{equation}
+    y[0] = C + \frac{4}{3} \Rightarrow C + \frac{4}{3} = 1 \Rightarrow C = -\frac{1}{3}
+    \end{equation}
+    Thus, the final complete solution is:
+    \begin{equation}
+    y[n] = \left[ -\frac{1}{3} (0.5)^n + \frac{4}{3} 2^n \right] u[n]
+    \end{equation}
+\end{enumerate}
+
 \section{Hardware Implementation: Parallelization \& Systolic MAC Arrays}
 In real-time digital signal processing systems (FPGAs, ASICs, and dedicated DSP processors), computing convolution sequentially is often too slow. Instead, the computation is parallelized using a \textbf{Systolic MAC (Multiply-Accumulate) Array} in the \textbf{Transposed Direct Form FIR} structure. This reduces the time complexity from $O(L_x \cdot L_h)$ to $O(L_x)$ overall, yielding $O(1)$ output throughput (one output sample per clock cycle).
 

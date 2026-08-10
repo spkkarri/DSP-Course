@@ -169,6 +169,40 @@ $$y[n] = y_h[n] + y_p[n]$$
    The roots $\lambda_i$ determine the natural response terms $C_i \lambda_i^n$.
 2. **Particular Solution ($y_p[n]$):** The response of the system to the specific input excitation $x[n]$. We assume a form similar to the input (e.g., constant for step inputs, exponential for exponential inputs).
 
+#### Concrete Walkthrough Example
+Let's solve the difference equation $y[n] - 0.5 y[n-1] = x[n]$ for an input $x[n] = 2^n u[n]$ under initial rest conditions ($y[-1] = 0$):
+
+1. **Find the Homogeneous Solution ($y_h[n]$):**
+   Set the input to zero: $y[n] - 0.5 y[n-1] = 0$.
+   Substitute $y_h[n] = C \lambda^n$:
+   $$C \lambda^n - 0.5 C \lambda^{n-1} = 0 \Rightarrow \lambda - 0.5 = 0 \Rightarrow \lambda = 0.5$$
+   Thus, the natural response shape is determined by the pole:
+   $$y_h[n] = C (0.5)^n$$
+
+2. **Find the Particular Solution ($y_p[n]$):**
+   Since the input is $x[n] = 2^n$ (for $n \ge 0$), we assume a particular solution of the same exponential form:
+   $$y_p[n] = K \cdot 2^n$$
+   Substitute this into the difference equation:
+   $$K \cdot 2^n - 0.5 K \cdot 2^{n-1} = 2^n$$
+   Divide the entire equation by $2^{n-1}$ to solve for $K$:
+   $$2K - 0.5K = 2 \Rightarrow 1.5K = 2 \Rightarrow K = \frac{4}{3}$$
+   Thus:
+   $$y_p[n] = \frac{4}{3} 2^n \quad (n \ge 0)$$
+
+3. **Form the Complete Solution:**
+   Combine the components:
+   $$y[n] = y_h[n] + y_p[n] = C (0.5)^n + \frac{4}{3} 2^n \quad (n \ge 0)$$
+
+4. **Solve for the constant $C$:**
+   Under initial rest, $y[-1] = 0$. We calculate $y[0]$ from the difference equation directly:
+   $$y[0] = 0.5 y[-1] + x[0] = 0.5(0) + 2^0 = 1$$
+   Now, substitute $n=0$ into our complete solution expression:
+   $$y[0] = C(0.5)^0 + \frac{4}{3} 2^0 = C + \frac{4}{3}$$
+   Equating the two:
+   $$C + \frac{4}{3} = 1 \Rightarrow C = -\frac{1}{3}$$
+   Thus, the final complete solution for $n \ge 0$ is:
+   $$y[n] = \left[ -\frac{1}{3} (0.5)^n + \frac{4}{3} 2^n \right] u[n]$$
+
 ---
 
 ## 6. Step Response vs. Impulse Response
