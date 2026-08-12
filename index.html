@@ -857,7 +857,7 @@
 
                         <div class="math-card">
                             <strong>Convolution Sum</strong>
-                            \[y[n] = \\sum_{k=-\\infty}^{\\infty} x[k] h[n-k] = x[n] * h[n]\]
+                            \[y[n] = \sum_{k=-\infty}^{\infty} x[k] h[n-k] = x[n] * h[n]\]
                             <p>To calculate convolution graphically or analytically for each index \(n\), you follow four steps: 1. <span style="color: #0dd5c5;">Folding</span> (Time Reversal), 2. <span style="color: #0dd5c5;">Shifting</span>, 3. <span style="color: #0dd5c5;">Multiplication</span>, and 4. <span style="color: #0dd5c5;">Summation</span>.</p>
                         </div>
 
@@ -869,13 +869,13 @@
 
                         <div class="math-card">
                             <strong>BIBO Stability</strong>
-                            \[\\sum_{n=-\\infty}^{\\infty} |h[n]| < \\infty\]
+                            \[\sum_{n=-\infty}^{\infty} |h[n]| < \infty\]
                             <p>A system is Bounded-Input Bounded-Output (BIBO) stable if every bounded input produces a bounded output. For an LTI system, this requires the impulse response to be absolutely summable.</p>
                         </div>
 
                         <div class="math-card">
                             <strong>Step Response</strong>
-                            \[s[n] = \\sum_{k=-\\infty}^{n} h[k] \\quad \\text{and} \\quad h[n] = s[n] - s[n-1]\]
+                            \[s[n] = \sum_{k=-\infty}^{n} h[k] \quad \text{and} \quad h[n] = s[n] - s[n-1]\]
                             <p>The step response \(s[n]\) is the system's response to the unit step input \(u[n]\). The impulse response can be recovered from the step response by taking its first difference.</p>
                         </div>
 
@@ -895,7 +895,7 @@
                                 </tr>
                                 <tr style="background-color: #0f172a;">
                                     <td style="padding: 8px; border: 1px solid #334155;">Causality</td>
-                                    <td style="padding: 8px; border: 1px solid #334155;">\(h[n] = 0 \\; \\forall n < 0\)</td>
+                                    <td style="padding: 8px; border: 1px solid #334155;">\(h[n] = 0 \\; \forall n < 0\)</td>
                                     <td style="padding: 8px; border: 1px solid #334155;">Depends only on past/present inputs</td>
                                 </tr>
                                 <tr style="background-color: #1e293b;">
@@ -919,7 +919,7 @@
                                 <span class="accordion-title">Q1: An LTI system has impulse response \(h[n] = (1.2)^n u[n]\). Is the system BIBO stable?</span>
                             </div>
                             <div class="accordion-content">
-                                <p>Check absolute sum: \[\\sum_{n=-\\infty}^{\\infty} |h[n]| = \\sum_{n=0}^{\\infty} (1.2)^n\] Since the base \(|1.2| \\ge 1\), this geometric series diverges to \(\\infty\). The system is <strong>unstable</strong> (its impulse response grows exponentially).</p>
+                                <p>Check absolute sum: \[\sum_{n=-\infty}^{\infty} |h[n]| = \sum_{n=0}^{\infty} (1.2)^n\] Since the base \(|1.2| \ge 1\), this geometric series diverges to \(\infty\). The system is <strong>unstable</strong> (its impulse response grows exponentially).</p>
                             </div>
                         </div>
 
@@ -930,8 +930,8 @@
                             </div>
                             <div class="accordion-content">
                                 <ol>
-                                    <li>Set \(x[n] = 0 \\Rightarrow y[n] - 0.5 y[n-1] = 0\).</li>
-                                    <li>Assume \(y_h[n] = C \\lambda^n \\Rightarrow C \\lambda^n - 0.5 C \\lambda^{n-1} = 0 \\Rightarrow \\lambda - 0.5 = 0 \\Rightarrow \\lambda = 0.5\).</li>
+                                    <li>Set \(x[n] = 0 \Rightarrow y[n] - 0.5 y[n-1] = 0\).</li>
+                                    <li>Assume \(y_h[n] = C \lambda^n \Rightarrow C \lambda^n - 0.5 C \lambda^{n-1} = 0 \Rightarrow \lambda - 0.5 = 0 \Rightarrow \lambda = 0.5\).</li>
                                     <li>Thus, the homogeneous solution is: \[y_h[n] = C (0.5)^n\]</li>
                                 </ol>
                             </div>
@@ -1246,29 +1246,29 @@
 
                         <div class="math-card">
                             <h4 style="margin-bottom: 0.5rem;">Forward DTFT (Analysis Equation)</h4>
-                            \[ X(e^{j\\omega}) = \\sum_{n=-\\infty}^{\\infty} x[n] e^{-j\\omega n} \]
-                            <p>The DTFT is always periodic in digital frequency \(\\omega\) with a period of \(2\\pi\) due to the periodicity of the complex exponential.</p>
+                            \[ X(e^{j\omega}) = \sum_{n=-\infty}^{\infty} x[n] e^{-j\omega n} \]
+                            <p>The DTFT is always periodic in digital frequency \(\omega\) with a period of \(2\pi\) due to the periodicity of the complex exponential.</p>
                         </div>
 
                         <div class="math-card">
                             <h4 style="margin-bottom: 0.5rem;">Inverse DTFT (Synthesis Equation)</h4>
-                            \[ x[n] = \\frac{1}{2\\pi} \\int_{-\\pi}^{\\pi} X(e^{j\\omega}) e^{j\\omega n} d\\omega \]
-                            <p>This equation reconstructs the original discrete sequence from its continuous frequency spectrum by integrating over a single \(2\\pi\) period.</p>
+                            \[ x[n] = \frac{1}{2\pi} \int_{-\pi}^{\pi} X(e^{j\omega}) e^{j\omega n} d\omega \]
+                            <p>This equation reconstructs the original discrete sequence from its continuous frequency spectrum by integrating over a single \(2\pi\) period.</p>
                         </div>
 
                         <div class="math-card">
                             <h4 style="margin-bottom: 0.5rem;">DTFT of a Rectangular Pulse</h4>
-                            <p>For a pulse of length \(M\) (where \(x[n]=1\) for \(0 \\le n \\le M-1\)):</p>
+                            <p>For a pulse of length \(M\) (where \(x[n]=1\) for \(0 \le n \le M-1\)):</p>
                             <ol>
-                                <li>Use the finite geometric series: \( X(e^{j\\omega}) = \\sum_{n=0}^{M-1} e^{-j\\omega n} = \\frac{1 - e^{-j\\omega M}}{1 - e^{-j\\omega}} \)</li>
-                                <li>Factor out half-angles: \( X(e^{j\\omega}) = \\frac{e^{-j\\omega M/2} ( e^{j\\omega M/2} - e^{-j\\omega M/2} )}{e^{-j\\omega/2} ( e^{j\\omega/2} - e^{-j\\omega/2} )} \)</li>
-                                <li>Simplify to the Dirichlet kernel: \( X(e^{j\\omega}) = e^{-j\\omega(M-1)/2} \\frac{\\sin(\\omega M/2)}{\\sin(\\omega/2)} \)</li>
+                                <li>Use the finite geometric series: \( X(e^{j\omega}) = \sum_{n=0}^{M-1} e^{-j\omega n} = \frac{1 - e^{-j\omega M}}{1 - e^{-j\omega}} \)</li>
+                                <li>Factor out half-angles: \( X(e^{j\omega}) = \frac{e^{-j\omega M/2} ( e^{j\omega M/2} - e^{-j\omega M/2} )}{e^{-j\omega/2} ( e^{j\omega/2} - e^{-j\omega/2} )} \)</li>
+                                <li>Simplify to the Dirichlet kernel: \( X(e^{j\omega}) = e^{-j\omega(M-1)/2} \frac{\sin(\omega M/2)}{\sin(\omega/2)} \)</li>
                             </ol>
                         </div>
 
                         <div class="math-card">
                             <h4 style="margin-bottom: 0.5rem;">Parseval's Theorem</h4>
-                            \[ \\sum_{n=-\\infty}^{\\infty} |x[n]|^2 = \\frac{1}{2\\pi} \\int_{-\\pi}^{\\pi} |X(e^{j\\omega})|^2 d\\omega \]
+                            \[ \sum_{n=-\infty}^{\infty} |x[n]|^2 = \frac{1}{2\pi} \int_{-\pi}^{\pi} |X(e^{j\omega})|^2 d\omega \]
                             <p>This <span style="color: #0dd5c5;">Energy Conservation</span> relation proves that the total energy computed in the time domain equals the total energy in the frequency domain.</p>
                         </div>
 
@@ -1285,27 +1285,27 @@
                                 <tr style="background: #1e293b; border-bottom: 1px solid #334155;">
                                     <td style="padding: 0.75rem;">Linearity</td>
                                     <td style="padding: 0.75rem;">\(a x[n] + b y[n]\)</td>
-                                    <td style="padding: 0.75rem;">\(a X(e^{j\\omega}) + b Y(e^{j\\omega})\)</td>
+                                    <td style="padding: 0.75rem;">\(a X(e^{j\omega}) + b Y(e^{j\omega})\)</td>
                                 </tr>
                                 <tr style="background: #0f172a; border-bottom: 1px solid #334155;">
                                     <td style="padding: 0.75rem;">Time Shifting</td>
                                     <td style="padding: 0.75rem;">\(x[n - n_0]\)</td>
-                                    <td style="padding: 0.75rem;">\(X(e^{j\\omega}) e^{-j\\omega n_0}\)</td>
+                                    <td style="padding: 0.75rem;">\(X(e^{j\omega}) e^{-j\omega n_0}\)</td>
                                 </tr>
                                 <tr style="background: #1e293b; border-bottom: 1px solid #334155;">
                                     <td style="padding: 0.75rem;">Frequency Shifting</td>
-                                    <td style="padding: 0.75rem;">\(x[n] e^{j\\omega_0 n}\)</td>
-                                    <td style="padding: 0.75rem;">\(X(e^{j(\\omega - \\omega_0)})\)</td>
+                                    <td style="padding: 0.75rem;">\(x[n] e^{j\omega_0 n}\)</td>
+                                    <td style="padding: 0.75rem;">\(X(e^{j(\omega - \omega_0)})\)</td>
                                 </tr>
                                 <tr style="background: #0f172a; border-bottom: 1px solid #334155;">
                                     <td style="padding: 0.75rem;">Differentiation</td>
                                     <td style="padding: 0.75rem;">\(n x[n]\)</td>
-                                    <td style="padding: 0.75rem;">\(j \\frac{d X(e^{j\\omega})}{d\\omega}\)</td>
+                                    <td style="padding: 0.75rem;">\(j \frac{d X(e^{j\omega})}{d\omega}\)</td>
                                 </tr>
                                 <tr style="background: #1e293b; border-bottom: 1px solid #334155;">
                                     <td style="padding: 0.75rem;">Convolution</td>
                                     <td style="padding: 0.75rem;">\(x[n] * h[n]\)</td>
-                                    <td style="padding: 0.75rem;">\(X(e^{j\\omega}) \\cdot H(e^{j\\omega})\)</td>
+                                    <td style="padding: 0.75rem;">\(X(e^{j\omega}) \cdot H(e^{j\omega})\)</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -1313,12 +1313,12 @@
                         <h4 style="margin-top: 1.5rem; margin-bottom: 0.75rem; color: #f8fafc;">Knowledge Checkpoints</h4>
                         <div class="accordion">
                             <div class="accordion-header">
-                                <div class="accordion-title">Q: What is the DTFT of the unit impulse sequence \(x[n] = \\delta[n-n_0]\)?</div>
+                                <div class="accordion-title">Q: What is the DTFT of the unit impulse sequence \(x[n] = \delta[n-n_0]\)?</div>
                                 <div class="accordion-icon">+</div>
                             </div>
                             <div class="accordion-content">
                                 <p>By definition:</p>
-                                \[ X(e^{j\\omega}) = \\sum_{n=-\\infty}^{\\infty} \\delta[n-n_0] e^{-j\\omega n} = e^{-j\\omega n_0} \]
+                                \[ X(e^{j\omega}) = \sum_{n=-\infty}^{\infty} \delta[n-n_0] e^{-j\omega n} = e^{-j\omega n_0} \]
                                 <p>For \(n_0 = 0\), the DTFT is simply \(1\), demonstrating a flat spectrum containing all frequencies equally.</p>
                             </div>
                         </div>
@@ -1329,10 +1329,10 @@
                             </div>
                             <div class="accordion-content">
                                 <ol>
-                                    <li>Let \(x[n] = a^n u[n]\), its DTFT is \(X(e^{j\\omega}) = \\frac{1}{1 - a e^{-j\\omega}}\).</li>
-                                    <li>By frequency differentiation property: \(n x[n] \\longleftrightarrow j \\frac{d X(e^{j\\omega})}{d\\omega}\).</li>
-                                    <li>Derivative: \(\\frac{d}{d\\omega} (1 - a e^{-j\\omega})^{-1} = \\frac{-j a e^{-j\\omega}}{(1 - a e^{-j\\omega})^2}\).</li>
-                                    <li>Multiply by \(j\): \(G(e^{j\\omega}) = \\frac{a e^{-j\\omega}}{(1 - a e^{-j\\omega})^2}\).</li>
+                                    <li>Let \(x[n] = a^n u[n]\), its DTFT is \(X(e^{j\omega}) = \frac{1}{1 - a e^{-j\omega}}\).</li>
+                                    <li>By frequency differentiation property: \(n x[n] \longleftrightarrow j \frac{d X(e^{j\omega})}{d\omega}\).</li>
+                                    <li>Derivative: \(\frac{d}{d\omega} (1 - a e^{-j\omega})^{-1} = \frac{-j a e^{-j\omega}}{(1 - a e^{-j\omega})^2}\).</li>
+                                    <li>Multiply by \(j\): \(G(e^{j\omega}) = \frac{a e^{-j\omega}}{(1 - a e^{-j\omega})^2}\).</li>
                                 </ol>
                             </div>
                         </div>
@@ -2016,33 +2016,33 @@
 
                         <div class="math-card">
                             <strong>Partial Fraction Expansion (Distinct Poles)</strong>
-                            \[ \\frac{X(z)}{z} = \\frac{A_1}{z-p_1} + \\frac{A_2}{z-p_2} + \\dots + \\frac{A_N}{z-p_N} \]
+                            \[ \frac{X(z)}{z} = \frac{A_1}{z-p_1} + \frac{A_2}{z-p_2} + \dots + \frac{A_N}{z-p_N} \]
                             For a rational system function with distinct poles, we expand \(X(z)/z\) into simpler fractions. The residue <span style="color: #8b5cf6;">\(A_k\)</span> for each pole \(p_k\) is found using the cover-up method:
-                            \[ A_k = \\left[ (z - p_k) \\frac{X(z)}{z} \\right]_{z = p_k} \]
+                            \[ A_k = \left[ (z - p_k) \frac{X(z)}{z} \right]_{z = p_k} \]
                         </div>
 
                         <div class="math-card">
                             <strong>Repeated Poles</strong>
                             If \(X(z)/z\) contains a pole \(p_1\) repeated \(m\) times, the coefficients for the repeated poles are computed using derivatives. The formula for the <span style="color: #0dd5c5;">\(k\)</span>-th coefficient is:
-                            \[ A_{1k} = \\frac{1}{(m-k)!} \\left[ \\frac{d^{m-k}}{dz^{m-k}} \\left( (z - p_1)^m \\frac{X(z)}{z} \\right) \\right]_{z = p_1} \]
+                            \[ A_{1k} = \frac{1}{(m-k)!} \left[ \frac{d^{m-k}}{dz^{m-k}} \left( (z - p_1)^m \frac{X(z)}{z} \right) \right]_{z = p_1} \]
                         </div>
 
                         <div class="math-card">
                             <strong>Power Series Expansion (Long Division)</strong>
-                            This method expands \(X(z)\) directly into a power series where coefficients of \(z^{-n}\) are the time samples \(x[n]\). For a <span style="color: #8b5cf6;">causal sequence</span>, arrange polynomials in descending powers of \(z\) to get \(x[0] + x[1]z^{-1} + \\dots\). For an <span style="color: #0dd5c5;">anti-causal sequence</span>, arrange in ascending powers of \(z\) to get \(x[-1]z^1 + x[-2]z^2 + \\dots\).
+                            This method expands \(X(z)\) directly into a power series where coefficients of \(z^{-n}\) are the time samples \(x[n]\). For a <span style="color: #8b5cf6;">causal sequence</span>, arrange polynomials in descending powers of \(z\) to get \(x[0] + x[1]z^{-1} + \dots\). For an <span style="color: #0dd5c5;">anti-causal sequence</span>, arrange in ascending powers of \(z\) to get \(x[-1]z^1 + x[-2]z^2 + \dots\).
                         </div>
 
                         <div class="math-card">
                             <strong>Contour Integration (Residue Method)</strong>
                             The formal definition of the inverse Z-transform uses a contour integral in the complex plane along a closed path \(C\) in the ROC:
-                            \[ x[n] = \\frac{1}{2\\pi j} \\oint_{C} X(z) z^{n-1} dz \]
+                            \[ x[n] = \frac{1}{2\pi j} \oint_{C} X(z) z^{n-1} dz \]
                             Using Cauchy's Residue Theorem, this evaluates to the sum of residues of \(X(z) z^{n-1}\) at the poles inside the contour.
                         </div>
 
                         <div class="math-card">
                             <strong>Stability & Causality</strong>
                             A causal LTI system (ROC \(|z| > p_{max}\)) is BIBO stable if and only if the ROC contains the unit circle (\(|z| = 1\)). This means <span style="color: #8b5cf6;">all poles must lie strictly inside the unit circle</span>:
-                            \[ |p_i| < 1 \\quad \\forall i \]
+                            \[ |p_i| < 1 \quad \forall i \]
                         </div>
 
                         <table style="width:100%; border-collapse:collapse; font-size:0.8rem;">
@@ -2056,17 +2056,17 @@
                             <tbody>
                                 <tr style="background-color: #1e293b;">
                                     <td style="padding: 8px; border: 1px solid #334155;">Inverse Z-Transform Definition</td>
-                                    <td style="padding: 8px; border: 1px solid #334155;">\( x[n] = \\mathcal{Z}^{-1}\\{X(z)\\} \)</td>
+                                    <td style="padding: 8px; border: 1px solid #334155;">\( x[n] = \mathcal{Z}^{-1}\{X(z)\} \)</td>
                                     <td style="padding: 8px; border: 1px solid #334155;">Requires ROC to be unique.</td>
                                 </tr>
                                 <tr style="background-color: #0f172a;">
                                     <td style="padding: 8px; border: 1px solid #334155;">Distinct Pole Residue</td>
-                                    <td style="padding: 8px; border: 1px solid #334155;">\( A_i = \\left[ (z - p_i) \\frac{X(z)}{z} \\right]_{z = p_i} \)</td>
+                                    <td style="padding: 8px; border: 1px solid #334155;">\( A_i = \left[ (z - p_i) \frac{X(z)}{z} \right]_{z = p_i} \)</td>
                                     <td style="padding: 8px; border: 1px solid #334155;">Used in Partial Fraction Expansion.</td>
                                 </tr>
                                 <tr style="background-color: #1e293b;">
                                     <td style="padding: 8px; border: 1px solid #334155;">Contour Integral</td>
-                                    <td style="padding: 8px; border: 1px solid #334155;">\( x[n] = \\frac{1}{2\\pi j} \\oint_{C} X(z) z^{n-1} dz \)</td>
+                                    <td style="padding: 8px; border: 1px solid #334155;">\( x[n] = \frac{1}{2\pi j} \oint_{C} X(z) z^{n-1} dz \)</td>
                                     <td style="padding: 8px; border: 1px solid #334155;">Formal definition via Cauchy's Residue Theorem.</td>
                                 </tr>
                                 <tr style="background-color: #0f172a;">
@@ -2083,16 +2083,16 @@
                                 <span class="accordion-icon">+</span>
                             </div>
                             <div class="accordion-content">
-                                <p><strong>Find the inverse Z-transform of \(H(z) = \\frac{z^2}{(z - 0.5)(z - 2)}\) for the ROC \(0.5 < |z| < 2\):</strong></p>
+                                <p><strong>Find the inverse Z-transform of \(H(z) = \frac{z^2}{(z - 0.5)(z - 2)}\) for the ROC \(0.5 < |z| < 2\):</strong></p>
                                 <ol>
-                                    <li>Divide by \(z\): \( \\frac{H(z)}{z} = \\frac{z}{(z-0.5)(z-2)} = \\frac{A}{z-0.5} + \\frac{B}{z-2} \)</li>
+                                    <li>Divide by \(z\): \( \frac{H(z)}{z} = \frac{z}{(z-0.5)(z-2)} = \frac{A}{z-0.5} + \frac{B}{z-2} \)</li>
                                     <li>Calculate residues:<br>
-                                        \( A = \\left[ \\frac{z}{z-2} \\right]_{z=0.5} = \\frac{0.5}{0.5-2} = -\\frac{1}{3} \)<br>
-                                        \( B = \\left[ \\frac{z}{z-0.5} \\right]_{z=2} = \\frac{2}{2-0.5} = \\frac{4}{3} \)
+                                        \( A = \left[ \frac{z}{z-2} \right]_{z=0.5} = \frac{0.5}{0.5-2} = -\frac{1}{3} \)<br>
+                                        \( B = \left[ \frac{z}{z-0.5} \right]_{z=2} = \frac{2}{2-0.5} = \frac{4}{3} \)
                                     </li>
-                                    <li>Reconstruct \(H(z)\): \( H(z) = -\\frac{1}{3} \\frac{z}{z-0.5} + \\frac{4}{3} \\frac{z}{z-2} \)</li>
+                                    <li>Reconstruct \(H(z)\): \( H(z) = -\frac{1}{3} \frac{z}{z-0.5} + \frac{4}{3} \frac{z}{z-2} \)</li>
                                     <li>Apply ROC \(0.5 < |z| < 2\): Pole at 0.5 is causal, pole at 2 is anti-causal.</li>
-                                    <li>Final sequence: \( h[n] = -\\frac{1}{3} (0.5)^n u[n] - \\frac{4}{3} (2)^n u[-n-1] \)</li>
+                                    <li>Final sequence: \( h[n] = -\frac{1}{3} (0.5)^n u[n] - \frac{4}{3} (2)^n u[-n-1] \)</li>
                                 </ol>
                             </div>
                         </div>
@@ -2103,13 +2103,13 @@
                                 <span class="accordion-icon">+</span>
                             </div>
                             <div class="accordion-content">
-                                <p><strong>Find the first three terms of the causal sequence corresponding to \(X(z) = \\frac{1}{1 - 0.5 z^{-1}}\):</strong></p>
+                                <p><strong>Find the first three terms of the causal sequence corresponding to \(X(z) = \frac{1}{1 - 0.5 z^{-1}}\):</strong></p>
                                 <ol>
                                     <li>Perform long division of \(1\) by \(1 - 0.5 z^{-1}\).</li>
                                     <li>Step 1: \(1 / (1 - 0.5 z^{-1})\) yields quotient \(1\), remainder \(0.5 z^{-1}\).</li>
                                     <li>Step 2: \(0.5 z^{-1} / (1 - 0.5 z^{-1})\) yields quotient \(0.5 z^{-1}\), remainder \(0.25 z^{-2}\).</li>
                                     <li>Step 3: \(0.25 z^{-2} / (1 - 0.5 z^{-1})\) yields quotient \(0.25 z^{-2}\), remainder \(0.125 z^{-3}\).</li>
-                                    <li>Result: \(X(z) = 1 + 0.5 z^{-1} + 0.25 z^{-2} + \\dots\)</li>
+                                    <li>Result: \(X(z) = 1 + 0.5 z^{-1} + 0.25 z^{-2} + \dots\)</li>
                                     <li>Thus, \( x[0] = 1 \), \( x[1] = 0.5 \), and \( x[2] = 0.25 \).</li>
                                 </ol>
                             </div>
@@ -2252,35 +2252,35 @@
 
                         <div class="math-card">
                             <strong>DFT Definition</strong>
-                            \[X[k] = \\sum_{n=0}^{N-1} x[n] W_N^{kn}, \\quad 0 \\le k \\le N-1\]
-                            where the twiddle factor is \(W_N = e^{-j\\frac{2\\pi}{N}}\).
+                            \[X[k] = \sum_{n=0}^{N-1} x[n] W_N^{kn}, \quad 0 \le k \le N-1\]
+                            where the twiddle factor is \(W_N = e^{-j\frac{2\pi}{N}}\).
                         </div>
 
                         <div class="math-card">
                             <strong>IDFT Definition</strong>
-                            \[x[n] = \\frac{1}{N} \\sum_{k=0}^{N-1} X[k] W_N^{-kn}, \\quad 0 \\le n \\le N-1\]
+                            \[x[n] = \frac{1}{N} \sum_{k=0}^{N-1} X[k] W_N^{-kn}, \quad 0 \le n \le N-1\]
                             This formula reconstructs the original time-domain sequence from its frequency bins.
                         </div>
 
                         <div class="math-card">
                             <strong>IDFT Derivation from Orthogonality</strong>
-                            \[\\sum_{n=0}^{N-1} W_N^{kn} W_N^{-ln} = N \\delta[k-l]\]
+                            \[\sum_{n=0}^{N-1} W_N^{kn} W_N^{-ln} = N \delta[k-l]\]
                             <ol>
                                 <li>The summation is a geometric series with common ratio \(r = W_N^{k-l}\).</li>
                                 <li>If \(k = l\), \(r = 1\) and the sum evaluates to \(N\).</li>
-                                <li>If \(k \\neq l\), \(r \\neq 1\) and the sum evaluates to 0.</li>
+                                <li>If \(k \neq l\), \(r \neq 1\) and the sum evaluates to 0.</li>
                             </ol>
                         </div>
 
                         <div class="math-card">
                             <strong>Matrix Formulation</strong>
-                            \[\\mathbf{X} = \\mathbf{W}_N \\mathbf{x}\]
-                            The DFT can be expressed as a linear transformation using the \(N \\times N\) DFT matrix \(\\mathbf{W}_N\), where the element at row \(k\) and column \(n\) is \(\\mathbf{W}_N[k, n] = W_N^{kn}\).
+                            \[\mathbf{X} = \mathbf{W}_N \mathbf{x}\]
+                            The DFT can be expressed as a linear transformation using the \(N \times N\) DFT matrix \(\mathbf{W}_N\), where the element at row \(k\) and column \(n\) is \(\mathbf{W}_N[k, n] = W_N^{kn}\).
                         </div>
 
                         <div class="math-card">
                             <strong>Twiddle Factor Properties</strong>
-                            \[W_N^{kN} = 1, \\quad W_N^{k+N} = W_N^k\]
+                            \[W_N^{kN} = 1, \quad W_N^{k+N} = W_N^k\]
                             The twiddle factor exhibits periodicity and conjugate symmetry (\(W_N^{k(N-n)} = (W_N^{kn})^*\)), which are crucial for fast algorithms like the FFT.
                         </div>
 
@@ -2293,7 +2293,7 @@
                             <tr style="background-color: #1e293b;">
                                 <td style="padding: 8px; border: 1px solid #334155;">Circular Time Shift</td>
                                 <td style="padding: 8px; border: 1px solid #334155;">\(X[k] W_N^{km}\)</td>
-                                <td style="padding: 8px; border: 1px solid #334155;">Shift in time \(x[(n-m)\\pmod N]\)</td>
+                                <td style="padding: 8px; border: 1px solid #334155;">Shift in time \(x[(n-m)\pmod N]\)</td>
                             </tr>
                             <tr style="background-color: #0f172a;">
                                 <td style="padding: 8px; border: 1px solid #334155;">Circular Convolution</td>
@@ -2302,12 +2302,12 @@
                             </tr>
                             <tr style="background-color: #1e293b;">
                                 <td style="padding: 8px; border: 1px solid #334155;">Parseval's Theorem</td>
-                                <td style="padding: 8px; border: 1px solid #334155;">\(\\sum |x[n]|^2 = \\frac{1}{N} \\sum |X[k]|^2\)</td>
+                                <td style="padding: 8px; border: 1px solid #334155;">\(\sum |x[n]|^2 = \frac{1}{N} \sum |X[k]|^2\)</td>
                                 <td style="padding: 8px; border: 1px solid #334155;">Energy conservation between domains</td>
                             </tr>
                             <tr style="background-color: #0f172a;">
                                 <td style="padding: 8px; border: 1px solid #334155;">Conjugate Symmetry</td>
-                                <td style="padding: 8px; border: 1px solid #334155;">\(X[k] = X^*[-k \\pmod N]\)</td>
+                                <td style="padding: 8px; border: 1px solid #334155;">\(X[k] = X^*[-k \pmod N]\)</td>
                                 <td style="padding: 8px; border: 1px solid #334155;">For real-valued time sequences</td>
                             </tr>
                         </table>
@@ -2324,7 +2324,7 @@
                                 \(X[1] = 1 + (-j)^1 = 1 - j\) <br>
                                 \(X[2] = 1 + (-j)^2 = 0\) <br>
                                 \(X[3] = 1 + (-j)^3 = 1 + j\) <br>
-                                Result: \(X[k] = \\{2, 1-j, 0, 1+j\\}\).
+                                Result: \(X[k] = \{2, 1-j, 0, 1+j\}\).
                             </div>
                         </div>
 
@@ -2988,18 +2988,18 @@
                         <div class="math-card">
                             <strong>Ideal LPF Impulse Response</strong>
                             <p>Derived via the inverse DTFT of an ideal lowpass brickwall frequency response.</p>
-                            \[ h_d[n] = \\frac{\\sin(\\omega_c \\cdot n)}{\\pi \\cdot n} \]
+                            \[ h_d[n] = \frac{\sin(\omega_c \cdot n)}{\pi \cdot n} \]
                         </div>
 
                         <div class="math-card">
                             <strong>Causality and Realizability</strong>
-                            <p>The ideal response extends to \(\\pm\\infty\). To make it causal, we must delay it by \(\\frac{M-1}{2}\) samples and truncate it.</p>
+                            <p>The ideal response extends to \(\pm\infty\). To make it causal, we must delay it by \(\frac{M-1}{2}\) samples and truncate it.</p>
                         </div>
 
                         <div class="math-card">
                             <strong>The Windowing Operation</strong>
                             <p>The final causal FIR filter coefficients are obtained by multiplying the delayed ideal response by the window function \(w[n]\).</p>
-                            \[ h[n] = h_d\\left[n - \\frac{M-1}{2}\\right] \\cdot w[n] \]
+                            \[ h[n] = h_d\left[n - \frac{M-1}{2}\right] \cdot w[n] \]
                         </div>
 
                         <div class="math-card">
@@ -3013,36 +3013,36 @@
                                 <tr style="background-color: #0f172a;">
                                     <td style="padding: 8px; border: 1px solid #334155;">Rectangular</td>
                                     <td style="padding: 8px; border: 1px solid #334155;">-13 dB</td>
-                                    <td style="padding: 8px; border: 1px solid #334155;">\(\\frac{4\\pi}{M}\)</td>
+                                    <td style="padding: 8px; border: 1px solid #334155;">\(\frac{4\pi}{M}\)</td>
                                 </tr>
                                 <tr style="background-color: #1e293b;">
                                     <td style="padding: 8px; border: 1px solid #334155;">Hanning</td>
                                     <td style="padding: 8px; border: 1px solid #334155;">-31 dB</td>
-                                    <td style="padding: 8px; border: 1px solid #334155;">\(\\frac{8\\pi}{M}\)</td>
+                                    <td style="padding: 8px; border: 1px solid #334155;">\(\frac{8\pi}{M}\)</td>
                                 </tr>
                                 <tr style="background-color: #0f172a;">
                                     <td style="padding: 8px; border: 1px solid #334155;">Hamming</td>
                                     <td style="padding: 8px; border: 1px solid #334155;">-41 dB</td>
-                                    <td style="padding: 8px; border: 1px solid #334155;">\(\\frac{8\\pi}{M}\)</td>
+                                    <td style="padding: 8px; border: 1px solid #334155;">\(\frac{8\pi}{M}\)</td>
                                 </tr>
                                 <tr style="background-color: #1e293b;">
                                     <td style="padding: 8px; border: 1px solid #334155;">Blackman</td>
                                     <td style="padding: 8px; border: 1px solid #334155;">-57 dB</td>
-                                    <td style="padding: 8px; border: 1px solid #334155;">\(\\frac{12\\pi}{M}\)</td>
+                                    <td style="padding: 8px; border: 1px solid #334155;">\(\frac{12\pi}{M}\)</td>
                                 </tr>
                             </table>
                         </div>
 
                         <div class="math-card">
                             <strong>Kaiser Window</strong>
-                            <p>Allows continuous trade-off between mainlobe width and sidelobe level via parameter \(\\beta\).</p>
-                            \[ M \\ge \\frac{A_s - 7.95}{2.285 \\Delta\\omega} + 1 \]
+                            <p>Allows continuous trade-off between mainlobe width and sidelobe level via parameter \(\beta\).</p>
+                            \[ M \ge \frac{A_s - 7.95}{2.285 \Delta\omega} + 1 \]
                         </div>
 
                         <div class="math-card">
                             <strong>Linear Phase Condition</strong>
                             <p>Exact linear phase is achieved when the impulse response is symmetric or antisymmetric.</p>
-                            \[ h[n] = h[M-1-n] \\implies \\text{group delay } = \\frac{M-1}{2} \]
+                            \[ h[n] = h[M-1-n] \implies \text{group delay } = \frac{M-1}{2} \]
                         </div>
 
                         <div class="accordion">
@@ -3054,7 +3054,7 @@
                                 <ol style="padding-left: 20px; color: #cbd5e1; margin-top: 10px;">
                                     <li>Calculate required stopband attenuation \(A_s\).</li>
                                     <li>Choose a window with a peak sidelobe level better than \(-A_s\).</li>
-                                    <li>Use the window's mainlobe width formula with transition bandwidth \(\\Delta\\omega\) to find filter length \(M\).</li>
+                                    <li>Use the window's mainlobe width formula with transition bandwidth \(\Delta\omega\) to find filter length \(M\).</li>
                                 </ol>
                             </div>
                         </div>
@@ -3066,10 +3066,10 @@
                             </div>
                             <div class="accordion-content">
                                 <ol style="padding-left: 20px; color: #cbd5e1; margin-top: 10px;">
-                                    <li>Start with \(H(e^{j\\omega}) = \\sum_{n=0}^{M-1} h[n] e^{-j\\omega n}\).</li>
-                                    <li>Factor out \(e^{-j\\omega (M-1)/2}\).</li>
+                                    <li>Start with \(H(e^{j\omega}) = \sum_{n=0}^{M-1} h[n] e^{-j\omega n}\).</li>
+                                    <li>Factor out \(e^{-j\omega (M-1)/2}\).</li>
                                     <li>Group terms using \(h[n] = h[M-1-n]\).</li>
-                                    <li>Use Euler's formula to get purely real cosine terms multiplied by linear phase factor \(e^{-j\\omega (M-1)/2}\).</li>
+                                    <li>Use Euler's formula to get purely real cosine terms multiplied by linear phase factor \(e^{-j\omega (M-1)/2}\).</li>
                                 </ol>
                             </div>
                         </div>
@@ -3227,13 +3227,13 @@
 
                         <div class="math-card">
                             <strong>Frequency Sampling Method</strong>
-                            \[ h[n] = \\frac{1}{N} \\sum_{k=0}^{N-1} H[k] W_N^{-kn} \]
+                            \[ h[n] = \frac{1}{N} \sum_{k=0}^{N-1} H[k] W_N^{-kn} \]
                             This direct method evaluates the inverse discrete Fourier transform (IDFT) of a sampled frequency response. While it perfectly matches the specified frequency points, it can suffer from severe ripples between samples without transition sample optimization.
                         </div>
 
                         <div class="math-card">
                             <strong>Parks-McClellan Algorithm (Remez Exchange)</strong>
-                            \[ \\min_{h[n]} \\max_{\\omega \\in A} W(\\omega) |H_d(\\omega) - H(\\omega)| \]
+                            \[ \min_{h[n]} \max_{\omega \in A} W(\omega) |H_d(\omega) - H(\omega)| \]
                             This algorithm solves the Chebyshev (minimax) approximation problem to produce an equiripple design. According to the <strong>Alternation Theorem</strong>, the optimal error curve must exhibit at least \( L+2 \) alternations. The Remez exchange algorithm iteratively finds these peak error frequencies to construct the optimal polynomial.
                             <ol>
                                 <li>Guess extremal frequencies in the bands of interest.</li>
@@ -3247,10 +3247,10 @@
                             <strong>Linear Phase Conditions (Types I–IV)</strong>
                             Linear phase is achieved by enforcing symmetric or antisymmetric constraints on the impulse response \( h[n] \).
                             <ul>
-                                <li><span style="color: #8b5cf6;">Type I:</span> Symmetric, odd length. No constraints at \( \\omega = 0, \\pi \).</li>
-                                <li><span style="color: #8b5cf6;">Type II:</span> Symmetric, even length. Must have zero at \( \\omega = \\pi \).</li>
-                                <li><span style="color: #8b5cf6;">Type III:</span> Antisymmetric, odd length. Zeros at \( \\omega = 0 \) and \( \\omega = \\pi \).</li>
-                                <li><span style="color: #8b5cf6;">Type IV:</span> Antisymmetric, even length. Zero at \( \\omega = 0 \).</li>
+                                <li><span style="color: #8b5cf6;">Type I:</span> Symmetric, odd length. No constraints at \( \omega = 0, \pi \).</li>
+                                <li><span style="color: #8b5cf6;">Type II:</span> Symmetric, even length. Must have zero at \( \omega = \pi \).</li>
+                                <li><span style="color: #8b5cf6;">Type III:</span> Antisymmetric, odd length. Zeros at \( \omega = 0 \) and \( \omega = \pi \).</li>
+                                <li><span style="color: #8b5cf6;">Type IV:</span> Antisymmetric, even length. Zero at \( \omega = 0 \).</li>
                             </ul>
                         </div>
 
@@ -3265,22 +3265,22 @@
                             <tbody>
                                 <tr style="background-color: #1e293b;">
                                     <td style="padding: 8px; border: 1px solid #334155;">Frequency Sample IDFT</td>
-                                    <td style="padding: 8px; border: 1px solid #334155;">\( h[n] = \\frac{1}{N}\\sum_{k=0}^{N-1} H[k] W_N^{-kn} \)</td>
+                                    <td style="padding: 8px; border: 1px solid #334155;">\( h[n] = \frac{1}{N}\sum_{k=0}^{N-1} H[k] W_N^{-kn} \)</td>
                                     <td style="padding: 8px; border: 1px solid #334155;">Direct derivation of FIR coefficients</td>
                                 </tr>
                                 <tr style="background-color: #0f172a;">
                                     <td style="padding: 8px; border: 1px solid #334155;">Chebyshev Error</td>
-                                    <td style="padding: 8px; border: 1px solid #334155;">\( E(\\omega) = W(\\omega) [H_d(\\omega) - H(\\omega)] \)</td>
+                                    <td style="padding: 8px; border: 1px solid #334155;">\( E(\omega) = W(\omega) [H_d(\omega) - H(\omega)] \)</td>
                                     <td style="padding: 8px; border: 1px solid #334155;">Weighted error for optimization</td>
                                 </tr>
                                 <tr style="background-color: #1e293b;">
                                     <td style="padding: 8px; border: 1px solid #334155;">Kaiser N Estimate</td>
-                                    <td style="padding: 8px; border: 1px solid #334155;">\( N \\approx \\frac{-20 \\log_{10}(\\sqrt{\\delta_p \\delta_s}) - 13}{14.6 \\Delta f} + 1 \)</td>
+                                    <td style="padding: 8px; border: 1px solid #334155;">\( N \approx \frac{-20 \log_{10}(\sqrt{\delta_p \delta_s}) - 13}{14.6 \Delta f} + 1 \)</td>
                                     <td style="padding: 8px; border: 1px solid #334155;">Empirical calculation of filter length</td>
                                 </tr>
                                 <tr style="background-color: #0f172a;">
                                     <td style="padding: 8px; border: 1px solid #334155;">Free Parameters (Type I)</td>
-                                    <td style="padding: 8px; border: 1px solid #334155;">\( L = \\frac{N+1}{2} \)</td>
+                                    <td style="padding: 8px; border: 1px solid #334155;">\( L = \frac{N+1}{2} \)</td>
                                     <td style="padding: 8px; border: 1px solid #334155;">Defines required alternations</td>
                                 </tr>
                             </tbody>
@@ -3321,7 +3321,7 @@
                                 <span class="accordion-icon">▼</span>
                             </div>
                             <div class="accordion-content">
-                                <p>A Type II filter has an even number of taps and symmetric coefficients, forcing a zero at \( \\omega = \\pi \) (the highest digital frequency). Since a highpass filter must pass \( \\omega = \\pi \), a Type II design is mathematically incompatible.</p>
+                                <p>A Type II filter has an even number of taps and symmetric coefficients, forcing a zero at \( \omega = \pi \) (the highest digital frequency). Since a highpass filter must pass \( \omega = \pi \), a Type II design is mathematically incompatible.</p>
                             </div>
                         </div>
 
@@ -4108,7 +4108,7 @@
 
                         <div class="math-card">
                             <strong>Autocorrelation</strong>
-                            \[R_{xx}[m] = E\\{x[n]x^*[n-m]\\}\]
+                            \[R_{xx}[m] = E\{x[n]x^*[n-m]\}\]
                             The autocorrelation measures self-similarity over a lag \(m\). Key properties include the average power \(R_{xx}[0] = P_{avg}\) and the bounded magnitude <span style="color: #8b5cf6;">\(|R_{xx}[m]| \leq R_{xx}[0]\)</span>.
                         </div>
 
@@ -4249,28 +4249,28 @@
                         <div class="math-card">
                             <h4 style="margin-top:0; color:#8b5cf6;">1. Autocorrelation & Power</h4>
                             <p>The autocorrelation sequence measures self-similarity at lag \(m\):</p>
-                            \[R_{xx}[m] = E\\{x[n]x^*[n-m]\\}\]
-                            <p>The total average power is given by the zero lag value \(R_{xx}[0]\), which bounds the correlation magnitude: \(|R_{xx}[m]| \\leq R_{xx}[0]\).</p>
+                            \[R_{xx}[m] = E\{x[n]x^*[n-m]\}\]
+                            <p>The total average power is given by the zero lag value \(R_{xx}[0]\), which bounds the correlation magnitude: \(|R_{xx}[m]| \leq R_{xx}[0]\).</p>
                         </div>
 
                         <div class="math-card">
                             <h4 style="margin-top:0; color:#8b5cf6;">2. Wiener-Khinchin Theorem</h4>
                             <p>The PSD is defined as the Discrete-Time Fourier Transform (DTFT) of the autocorrelation sequence:</p>
-                            \[S_{xx}(e^{j\\omega}) = \\sum_{m=-\\infty}^{\\infty} R_{xx}[m] e^{-j\\omega m}\]
-                            <p>For an LTI system with frequency response \(H(e^{j\\omega})\) and WSS input \(x[n]\), the output PSD is shaped entirely by the system's squared magnitude:</p>
+                            \[S_{xx}(e^{j\omega}) = \sum_{m=-\infty}^{\infty} R_{xx}[m] e^{-j\omega m}\]
+                            <p>For an LTI system with frequency response \(H(e^{j\omega})\) and WSS input \(x[n]\), the output PSD is shaped entirely by the system's squared magnitude:</p>
                             <ol>
                                 <li>\[R_{yy}[m] = h[m] * h^*[-m] * R_{xx}[m]\]</li>
-                                <li>Taking the DTFT: \[S_{yy}(e^{j\\omega}) = |H(e^{j\\omega})|^2 S_{xx}(e^{j\\omega})\]</li>
+                                <li>Taking the DTFT: \[S_{yy}(e^{j\omega}) = |H(e^{j\omega})|^2 S_{xx}(e^{j\omega})\]</li>
                             </ol>
                         </div>
 
                         <div class="math-card">
                             <h4 style="margin-top:0; color:#0dd5c5;">3. Wiener Filter & Orthogonality</h4>
                             <p>The Wiener filter extracts a desired signal \(d[n]\) from a noisy observation \(x[n]\). To minimize Mean Square Error (MSE), the error \(e[n]\) must be orthogonal to the input data:</p>
-                            \[E\\{e[n]x^*[n-k]\\} = 0 \\quad \\text{for all } k\]
-                            <p>This Orthogonality Principle leads to the Wiener-Hopf equations (\(\\mathbf{R}\\mathbf{w} = \\mathbf{r}\)). In the frequency domain, the optimal unconstrained filter is:</p>
-                            \[W_{opt}(e^{j\\omega}) = \\frac{S_{dx}(e^{j\\omega})}{S_{xx}(e^{j\\omega})}\]
-                            <p>The Minimum Mean Square Error (MMSE) achieved by the optimal FIR filter is \(\\xi_{min} = R_{dd}[0] - \\mathbf{w}^T\\mathbf{r}\).</p>
+                            \[E\{e[n]x^*[n-k]\} = 0 \quad \text{for all } k\]
+                            <p>This Orthogonality Principle leads to the Wiener-Hopf equations (\(\mathbf{R}\mathbf{w} = \mathbf{r}\)). In the frequency domain, the optimal unconstrained filter is:</p>
+                            \[W_{opt}(e^{j\omega}) = \frac{S_{dx}(e^{j\omega})}{S_{xx}(e^{j\omega})}\]
+                            <p>The Minimum Mean Square Error (MMSE) achieved by the optimal FIR filter is \(\xi_{min} = R_{dd}[0] - \mathbf{w}^T\mathbf{r}\).</p>
                         </div>
 
                         <h4 style="margin-top:1.5rem; color:#f8fafc;">Key Formulas</h4>
@@ -4282,22 +4282,22 @@
                             </tr>
                             <tr style="background-color:#1e293b;">
                                 <td style="padding:0.5rem; border:1px solid #334155;">Wiener-Khinchin</td>
-                                <td style="padding:0.5rem; border:1px solid #334155;">\(S_{xx}(e^{j\\omega}) = \\sum R_{xx}[m] e^{-j\\omega m}\)</td>
+                                <td style="padding:0.5rem; border:1px solid #334155;">\(S_{xx}(e^{j\omega}) = \sum R_{xx}[m] e^{-j\omega m}\)</td>
                                 <td style="padding:0.5rem; border:1px solid #334155;">Links autocorrelation to PSD</td>
                             </tr>
                             <tr style="background-color:#0f172a;">
                                 <td style="padding:0.5rem; border:1px solid #334155;">LTI Output PSD</td>
-                                <td style="padding:0.5rem; border:1px solid #334155;">\(S_{yy}(e^{j\\omega}) = |H(e^{j\\omega})|^2 S_{xx}(e^{j\\omega})\)</td>
+                                <td style="padding:0.5rem; border:1px solid #334155;">\(S_{yy}(e^{j\omega}) = |H(e^{j\omega})|^2 S_{xx}(e^{j\omega})\)</td>
                                 <td style="padding:0.5rem; border:1px solid #334155;">Phase response has no effect on PSD</td>
                             </tr>
                             <tr style="background-color:#1e293b;">
                                 <td style="padding:0.5rem; border:1px solid #334155;">Wiener-Hopf Eq</td>
-                                <td style="padding:0.5rem; border:1px solid #334155;">\(\\mathbf{R}\\mathbf{w} = \\mathbf{r}\)</td>
+                                <td style="padding:0.5rem; border:1px solid #334155;">\(\mathbf{R}\mathbf{w} = \mathbf{r}\)</td>
                                 <td style="padding:0.5rem; border:1px solid #334155;">FIR optimal filter coefficients</td>
                             </tr>
                             <tr style="background-color:#0f172a;">
                                 <td style="padding:0.5rem; border:1px solid #334155;">MMSE</td>
-                                <td style="padding:0.5rem; border:1px solid #334155;">\(\\xi_{min} = R_{dd}[0] - \\mathbf{w}^T\\mathbf{r}\)</td>
+                                <td style="padding:0.5rem; border:1px solid #334155;">\(\xi_{min} = R_{dd}[0] - \mathbf{w}^T\mathbf{r}\)</td>
                                 <td style="padding:0.5rem; border:1px solid #334155;">Error variance using optimal filter</td>
                             </tr>
                         </table>
@@ -4308,8 +4308,8 @@
                                 <span class="accordion-icon">▼</span>
                             </div>
                             <div class="accordion-content">
-                                <p><strong>Q:</strong> If white noise \(v[n]\) with variance \(\\sigma_v^2\) is passed through an ideal lowpass filter with cutoff \(\\pi/4\) and unity gain, what is the output power?</p>
-                                <p><strong>A:</strong> The input PSD is flat at \(\\sigma_v^2\). The output PSD is \(\\sigma_v^2\) for \(|\\omega| \\leq \\pi/4\) and \(0\) elsewhere. Integrating this over \([-\\pi, \\pi]\) and dividing by \(2\\pi\) yields an output power of \(\\frac{\\sigma_v^2}{4}\).</p>
+                                <p><strong>Q:</strong> If white noise \(v[n]\) with variance \(\sigma_v^2\) is passed through an ideal lowpass filter with cutoff \(\pi/4\) and unity gain, what is the output power?</p>
+                                <p><strong>A:</strong> The input PSD is flat at \(\sigma_v^2\). The output PSD is \(\sigma_v^2\) for \(|\omega| \leq \pi/4\) and \(0\) elsewhere. Integrating this over \([-\pi, \pi]\) and dividing by \(2\pi\) yields an output power of \(\frac{\sigma_v^2}{4}\).</p>
                             </div>
                         </div>
 
@@ -4671,19 +4671,19 @@
 
                         <div class="math-card">
                             <strong>STFT Definition & Spectrogram</strong>
-                            \[ X[n, k] = \\sum_{m=-\\infty}^{\\infty} x[m] w[m-n] e^{-j\\frac{2\\pi}{N}km} \]
+                            \[ X[n, k] = \sum_{m=-\infty}^{\infty} x[m] w[m-n] e^{-j\frac{2\pi}{N}km} \]
                             The STFT multiplies the signal \(x[m]\) by a shifted window \(w[m-n]\) and computes its DFT. The <strong>Spectrogram</strong> visualizes this local spectrum as energy over time and frequency: \(S(n, k) = |X[n, k]|^2\). Its properties depend heavily on the window length \(M\), hop size \(H\), and FFT size \(N\).
                         </div>
 
                         <div class="math-card">
                             <strong>Time-Frequency Resolution & Windowing</strong>
-                            \[ \\Delta t \\cdot \\Delta f \\geq \\frac{1}{4\\pi} \]
+                            \[ \Delta t \cdot \Delta f \geq \frac{1}{4\pi} \]
                             The Heisenberg uncertainty principle dictates a fundamental trade-off: a wide window (large \(M\)) gives excellent frequency resolution but poor time localization, whereas a narrow window provides sharp time resolution at the expense of frequency precision. Furthermore, <span style="color: #0dd5c5;">window shapes</span> matter: rectangular windows cause spectral leakage, while Hanning/Hamming windows taper smoothly to reduce it.
                         </div>
 
                         <div class="math-card">
                             <strong>Overlap-Add (OLA) & Filterbank Interpretation</strong>
-                            \[ x[n] = \\frac{\\sum_{r=-\\infty}^{\\infty} y_r[n]}{\\sum_{r=-\\infty}^{\\infty} w[n-rH]} \]
+                            \[ x[n] = \frac{\sum_{r=-\infty}^{\infty} y_r[n]}{\sum_{r=-\infty}^{\infty} w[n-rH]} \]
                             To perfectly reconstruct the original signal after modifying its STFT, overlapping frames must be summed. Perfect reconstruction requires the sum of shifted windows to be a constant. Alternatively, the STFT can be viewed as a <strong>DFT-bank</strong>: a uniform bank of modulated bandpass filters.
                         </div>
 
@@ -4695,7 +4695,7 @@
                             </tr>
                             <tr style="background-color: #1e293b;">
                                 <td style="padding: 8px; border-bottom: 1px solid #334155;">STFT Definition</td>
-                                <td style="padding: 8px; border-bottom: 1px solid #334155;">\( X[n, k] = \\sum_{m} x[m] w[m-n] e^{-j\\frac{2\\pi}{N}km} \)</td>
+                                <td style="padding: 8px; border-bottom: 1px solid #334155;">\( X[n, k] = \sum_{m} x[m] w[m-n] e^{-j\frac{2\pi}{N}km} \)</td>
                                 <td style="padding: 8px; border-bottom: 1px solid #334155;">Local spectrum at time \(n\)</td>
                             </tr>
                             <tr style="background-color: #0f172a;">
@@ -4705,12 +4705,12 @@
                             </tr>
                             <tr style="background-color: #1e293b;">
                                 <td style="padding: 8px; border-bottom: 1px solid #334155;">Uncertainty Principle</td>
-                                <td style="padding: 8px; border-bottom: 1px solid #334155;">\( \\Delta t \\cdot \\Delta f \\geq \\frac{1}{4\\pi} \)</td>
+                                <td style="padding: 8px; border-bottom: 1px solid #334155;">\( \Delta t \cdot \Delta f \geq \frac{1}{4\pi} \)</td>
                                 <td style="padding: 8px; border-bottom: 1px solid #334155;">Bandwidth-duration trade-off</td>
                             </tr>
                             <tr style="background-color: #0f172a;">
                                 <td style="padding: 8px; border-bottom: 1px solid #334155;">OLA Reconstruction</td>
-                                <td style="padding: 8px; border-bottom: 1px solid #334155;">\( x[n] = \\frac{\\sum_r y_r[n]}{\\sum_r w[n-rH]} \)</td>
+                                <td style="padding: 8px; border-bottom: 1px solid #334155;">\( x[n] = \frac{\sum_r y_r[n]}{\sum_r w[n-rH]} \)</td>
                                 <td style="padding: 8px; border-bottom: 1px solid #334155;">Rebuilding signal from overlapping frames</td>
                             </tr>
                         </table>
@@ -4896,16 +4896,16 @@
                         <div class="math-card">
                             <strong>Continuous Wavelet Transform (CWT)</strong><br>
                             The CWT of a signal \(x(t)\) with scale \(a\) and translation \(b\) is:
-                            \[W_x(a,b) = \\frac{1}{\\sqrt{|a|}} \\int_{-\\infty}^{\\infty} x(t) \\psi^*\\left(\\frac{t-b}{a}\\right) dt\]
+                            \[W_x(a,b) = \frac{1}{\sqrt{|a|}} \int_{-\infty}^{\infty} x(t) \psi^*\left(\frac{t-b}{a}\right) dt\]
                             The admissibility condition for reconstruction requires a zero-mean wavelet:
-                            \[C_\\psi = \\int_{-\\infty}^{\\infty} \\frac{|\\Psi(\\omega)|^2}{\\omega} d\\omega < \\infty\]
+                            \[C_\psi = \int_{-\infty}^{\infty} \frac{|\Psi(\omega)|^2}{\omega} d\omega < \infty\]
                         </div>
 
                         <div class="math-card">
                             <strong>Multiresolution Analysis (MRA)</strong><br>
-                            MRA decomposes \(L^2(\\mathbb{R})\) into a nested sequence of approximation subspaces <span style="color: #8b5cf6;">\(V_j \\subset V_{j-1}\)</span> and detail subspaces <span style="color: #0dd5c5;">\(W_j\)</span>. The basis functions satisfy two-scale relations:
-                            \[\\phi(t) = \\sqrt{2} \\sum_n h_0[n] \\phi(2t-n) \\quad \\text{(Scaling function)}\]
-                            \[\\psi(t) = \\sqrt{2} \\sum_n h_1[n] \\phi(2t-n) \\quad \\text{(Wavelet function)}\]
+                            MRA decomposes \(L^2(\mathbb{R})\) into a nested sequence of approximation subspaces <span style="color: #8b5cf6;">\(V_j \subset V_{j-1}\)</span> and detail subspaces <span style="color: #0dd5c5;">\(W_j\)</span>. The basis functions satisfy two-scale relations:
+                            \[\phi(t) = \sqrt{2} \sum_n h_0[n] \phi(2t-n) \quad \text{(Scaling function)}\]
+                            \[\psi(t) = \sqrt{2} \sum_n h_1[n] \phi(2t-n) \quad \text{(Wavelet function)}\]
                         </div>
 
                         <div class="math-card">
@@ -4915,10 +4915,10 @@
                         
                         <div class="math-card">
                             <strong>Haar DWT Example</strong><br>
-                            Let \(x = [4, 6, 8, 2]\) with Haar filters \(h_0 = [\\frac{1}{\\sqrt{2}}, \\frac{1}{\\sqrt{2}}]\) and \(h_1 = [\\frac{1}{\\sqrt{2}}, -\\frac{1}{\\sqrt{2}}]\).
+                            Let \(x = [4, 6, 8, 2]\) with Haar filters \(h_0 = [\frac{1}{\sqrt{2}}, \frac{1}{\sqrt{2}}]\) and \(h_1 = [\frac{1}{\sqrt{2}}, -\frac{1}{\sqrt{2}}]\).
                             <ol>
-                                <li><strong>Approximation (cA):</strong> Average adjacent pairs and multiply by \(\\sqrt{2}\). \(cA = [\\frac{4+6}{\\sqrt{2}}, \\frac{8+2}{\\sqrt{2}}] = [5\\sqrt{2}, 5\\sqrt{2}]\).</li>
-                                <li><strong>Detail (cD):</strong> Difference adjacent pairs and multiply by \(\\sqrt{2}\). \(cD = [\\frac{4-6}{\\sqrt{2}}, \\frac{8-2}{\\sqrt{2}}] = [-\\sqrt{2}, 3\\sqrt{2}]\).</li>
+                                <li><strong>Approximation (cA):</strong> Average adjacent pairs and multiply by \(\sqrt{2}\). \(cA = [\frac{4+6}{\sqrt{2}}, \frac{8+2}{\sqrt{2}}] = [5\sqrt{2}, 5\sqrt{2}]\).</li>
+                                <li><strong>Detail (cD):</strong> Difference adjacent pairs and multiply by \(\sqrt{2}\). \(cD = [\frac{4-6}{\sqrt{2}}, \frac{8-2}{\sqrt{2}}] = [-\sqrt{2}, 3\sqrt{2}]\).</li>
                             </ol>
                         </div>
 
@@ -4930,17 +4930,17 @@
                             </tr>
                             <tr style="background-color: #1e293b;">
                                 <td style="padding: 8px; border: 1px solid #334155;">CWT Definition</td>
-                                <td style="padding: 8px; border: 1px solid #334155;">\[W_x(a,b) = \\frac{1}{\\sqrt{|a|}} \\int x(t) \\psi^*\\left(\\frac{t-b}{a}\\right) dt\]</td>
+                                <td style="padding: 8px; border: 1px solid #334155;">\[W_x(a,b) = \frac{1}{\sqrt{|a|}} \int x(t) \psi^*\left(\frac{t-b}{a}\right) dt\]</td>
                                 <td style="padding: 8px; border: 1px solid #334155;">Inner product with scaled/translated mother wavelet.</td>
                             </tr>
                             <tr style="background-color: #0f172a;">
                                 <td style="padding: 8px; border: 1px solid #334155;">Admissibility Condition</td>
-                                <td style="padding: 8px; border: 1px solid #334155;">\[C_\\psi = \\int \\frac{|\\Psi(\\omega)|^2}{\\omega} d\\omega < \\infty\]</td>
-                                <td style="padding: 8px; border: 1px solid #334155;">Implies \(\\Psi(0) = 0\) (zero mean).</td>
+                                <td style="padding: 8px; border: 1px solid #334155;">\[C_\psi = \int \frac{|\Psi(\omega)|^2}{\omega} d\omega < \infty\]</td>
+                                <td style="padding: 8px; border: 1px solid #334155;">Implies \(\Psi(0) = 0\) (zero mean).</td>
                             </tr>
                             <tr style="background-color: #1e293b;">
                                 <td style="padding: 8px; border: 1px solid #334155;">Mallat's Filter Bank</td>
-                                <td style="padding: 8px; border: 1px solid #334155;">\(cA[n] = \\sum h_0[k-2n] cA_{j-1}[k]\)</td>
+                                <td style="padding: 8px; border: 1px solid #334155;">\(cA[n] = \sum h_0[k-2n] cA_{j-1}[k]\)</td>
                                 <td style="padding: 8px; border: 1px solid #334155;">O(N) recursive complexity.</td>
                             </tr>
                             <tr style="background-color: #0f172a;">
@@ -4957,7 +4957,7 @@
                                 <span class="accordion-title">Is the Haar wavelet admissible?</span>
                             </div>
                             <div class="accordion-content">
-                                Yes. The Haar wavelet is defined as \(1\) for \(0 \\le t < 0.5\) and \(-1\) for \(0.5 \\le t < 1\). Its integral over all time is zero (it has a zero mean). Thus, \(\\Psi(0) = 0\), which satisfies the admissibility condition \(C_\\psi < \\infty\), allowing perfect reconstruction.
+                                Yes. The Haar wavelet is defined as \(1\) for \(0 \le t < 0.5\) and \(-1\) for \(0.5 \le t < 1\). Its integral over all time is zero (it has a zero mean). Thus, \(\Psi(0) = 0\), which satisfies the admissibility condition \(C_\psi < \infty\), allowing perfect reconstruction.
                             </div>
                         </div>
                         <div class="accordion">
@@ -5298,8 +5298,8 @@
                         <div class="math-card">
                             <strong>Periodogram & Non-Parametric Methods</strong>
                             <p>The standard periodogram computes the squared magnitude of the DFT of the windowed signal:</p>
-                            \[ P_{PER}(e^{j\\omega}) = \\frac{1}{N} \\left| \\sum_{n=0}^{N-1} x[n]e^{-j\\omega n} \\right|^2 \]
-                            <p>It is asymptotically unbiased but <span style="color: #8b5cf6;">inconsistent</span> because its variance does not approach zero as \(N \\to \\infty\). 
+                            \[ P_{PER}(e^{j\omega}) = \frac{1}{N} \left| \sum_{n=0}^{N-1} x[n]e^{-j\omega n} \right|^2 \]
+                            <p>It is asymptotically unbiased but <span style="color: #8b5cf6;">inconsistent</span> because its variance does not approach zero as \(N \to \infty\). 
                             <strong>Bartlett's method</strong> averages \(K\) non-overlapping segments to reduce variance by a factor of \(K\), but degrades resolution by \(K\). 
                             <strong>Welch's method</strong> generalizes this by using overlapping segments and windowing (e.g., Hamming), offering the best practical trade-off.</p>
                         </div>
@@ -5307,14 +5307,14 @@
                         <div class="math-card">
                             <strong>Parametric (AR) Estimation & Levinson-Durbin</strong>
                             <p>Parametric methods model the signal as the output of an LTI system driven by white noise. For an Autoregressive AR(\(p\)) model, the PSD is:</p>
-                            \[ P_{AR}(e^{j\\omega}) = \\frac{\\sigma_w^2}{\\left| 1 + \\sum_{k=1}^p a_k e^{-j\\omega k} \\right|^2} \]
-                            <p>The AR coefficients \(a_k\) are found by solving the <strong>Yule-Walker equations</strong> (\(\\mathbf{R}\\mathbf{a} = -\\mathbf{r}\)). The <span style="color: #0dd5c5;">Levinson-Durbin recursion</span> efficiently solves this Toeplitz system in \(\\mathcal{O}(p^2)\) operations instead of \(\\mathcal{O}(p^3)\).</p>
+                            \[ P_{AR}(e^{j\omega}) = \frac{\sigma_w^2}{\left| 1 + \sum_{k=1}^p a_k e^{-j\omega k} \right|^2} \]
+                            <p>The AR coefficients \(a_k\) are found by solving the <strong>Yule-Walker equations</strong> (\(\mathbf{R}\mathbf{a} = -\mathbf{r}\)). The <span style="color: #0dd5c5;">Levinson-Durbin recursion</span> efficiently solves this Toeplitz system in \(\mathcal{O}(p^2)\) operations instead of \(\mathcal{O}(p^3)\).</p>
                         </div>
 
                         <div class="math-card">
                             <strong>Subspace Methods: MUSIC</strong>
-                            <p>MUltiple SIgnal Classification (MUSIC) separates the autocorrelation matrix \(\\mathbf{R}\) into signal and noise subspaces via eigendecomposition: \(\\mathbf{R} = \\mathbf{V}_s \\mathbf{\\Lambda}_s \\mathbf{V}_s^H + \\mathbf{V}_n \\mathbf{\\Lambda}_n \\mathbf{V}_n^H\). The MUSIC pseudospectrum is derived from the orthogonality of the noise subspace to the signal steering vectors \(\\mathbf{a}(\\omega)\):</p>
-                            \[ P_{MUSIC}(\\omega) = \\frac{1}{||\\mathbf{V}_n^H \\mathbf{a}(\\omega)||^2} \]
+                            <p>MUltiple SIgnal Classification (MUSIC) separates the autocorrelation matrix \(\mathbf{R}\) into signal and noise subspaces via eigendecomposition: \(\mathbf{R} = \mathbf{V}_s \mathbf{\Lambda}_s \mathbf{V}_s^H + \mathbf{V}_n \mathbf{\Lambda}_n \mathbf{V}_n^H\). The MUSIC pseudospectrum is derived from the orthogonality of the noise subspace to the signal steering vectors \(\mathbf{a}(\omega)\):</p>
+                            \[ P_{MUSIC}(\omega) = \frac{1}{||\mathbf{V}_n^H \mathbf{a}(\omega)||^2} \]
                             <p>This provides extremely high resolution for identifying closely spaced sinusoids in noise, not limited by the Fourier Rayleigh resolution limit.</p>
                         </div>
 
@@ -5333,14 +5333,14 @@
                                     <td style="padding: 0.5rem; border-bottom: 1px solid #334155;">Periodogram</td>
                                     <td style="padding: 0.5rem; border-bottom: 1px solid #334155;">Low (asymptotic)</td>
                                     <td style="padding: 0.5rem; border-bottom: 1px solid #334155;">High (Inconsistent)</td>
-                                    <td style="padding: 0.5rem; border-bottom: 1px solid #334155;">High (\(\\approx 2\\pi/N\))</td>
-                                    <td style="padding: 0.5rem; border-bottom: 1px solid #334155;">\(\\mathcal{O}(N \\log N)\)</td>
+                                    <td style="padding: 0.5rem; border-bottom: 1px solid #334155;">High (\(\approx 2\pi/N\))</td>
+                                    <td style="padding: 0.5rem; border-bottom: 1px solid #334155;">\(\mathcal{O}(N \log N)\)</td>
                                 </tr>
                                 <tr style="background-color: #0f172a;">
                                     <td style="padding: 0.5rem; border-bottom: 1px solid #334155;">Bartlett</td>
                                     <td style="padding: 0.5rem; border-bottom: 1px solid #334155;">Higher</td>
-                                    <td style="padding: 0.5rem; border-bottom: 1px solid #334155;">Reduced (\(\\sim 1/K\))</td>
-                                    <td style="padding: 0.5rem; border-bottom: 1px solid #334155;">Degraded (\(\\approx 2\\pi K/N\))</td>
+                                    <td style="padding: 0.5rem; border-bottom: 1px solid #334155;">Reduced (\(\sim 1/K\))</td>
+                                    <td style="padding: 0.5rem; border-bottom: 1px solid #334155;">Degraded (\(\approx 2\pi K/N\))</td>
                                     <td style="padding: 0.5rem; border-bottom: 1px solid #334155;">Low</td>
                                 </tr>
                                 <tr style="background-color: #1e293b;">
@@ -5355,14 +5355,14 @@
                                     <td style="padding: 0.5rem; border-bottom: 1px solid #334155;">Depends on \(p\)</td>
                                     <td style="padding: 0.5rem; border-bottom: 1px solid #334155;">Lower than non-parametric</td>
                                     <td style="padding: 0.5rem; border-bottom: 1px solid #334155;">Very High</td>
-                                    <td style="padding: 0.5rem; border-bottom: 1px solid #334155;">\(\\mathcal{O}(p^2)\)</td>
+                                    <td style="padding: 0.5rem; border-bottom: 1px solid #334155;">\(\mathcal{O}(p^2)\)</td>
                                 </tr>
                                 <tr style="background-color: #1e293b;">
                                     <td style="padding: 0.5rem; border-bottom: 1px solid #334155;">MUSIC</td>
                                     <td style="padding: 0.5rem; border-bottom: 1px solid #334155;">Very Low</td>
                                     <td style="padding: 0.5rem; border-bottom: 1px solid #334155;">Moderate</td>
                                     <td style="padding: 0.5rem; border-bottom: 1px solid #334155;">Extremely High (Super-res)</td>
-                                    <td style="padding: 0.5rem; border-bottom: 1px solid #334155;">\(\\mathcal{O}(M^3)\) (EVD)</td>
+                                    <td style="padding: 0.5rem; border-bottom: 1px solid #334155;">\(\mathcal{O}(M^3)\) (EVD)</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -5378,22 +5378,22 @@
                             <tbody>
                                 <tr style="background-color: #1e293b;">
                                     <td style="padding: 0.5rem; border-bottom: 1px solid #334155;">Periodogram</td>
-                                    <td style="padding: 0.5rem; border-bottom: 1px solid #334155;">\[ \\frac{1}{N}|X(e^{j\\omega})|^2 \]</td>
+                                    <td style="padding: 0.5rem; border-bottom: 1px solid #334155;">\[ \frac{1}{N}|X(e^{j\omega})|^2 \]</td>
                                     <td style="padding: 0.5rem; border-bottom: 1px solid #334155;">Inconsistent estimator.</td>
                                 </tr>
                                 <tr style="background-color: #0f172a;">
                                     <td style="padding: 0.5rem; border-bottom: 1px solid #334155;">AR PSD</td>
-                                    <td style="padding: 0.5rem; border-bottom: 1px solid #334155;">\[ \\frac{\\sigma_w^2}{|A(e^{j\\omega})|^2} \]</td>
+                                    <td style="padding: 0.5rem; border-bottom: 1px solid #334155;">\[ \frac{\sigma_w^2}{|A(e^{j\omega})|^2} \]</td>
                                     <td style="padding: 0.5rem; border-bottom: 1px solid #334155;">All-pole model.</td>
                                 </tr>
                                 <tr style="background-color: #1e293b;">
                                     <td style="padding: 0.5rem; border-bottom: 1px solid #334155;">Yule-Walker</td>
-                                    <td style="padding: 0.5rem; border-bottom: 1px solid #334155;">\[ \\mathbf{R}\\mathbf{a} = -\\mathbf{r} \]</td>
+                                    <td style="padding: 0.5rem; border-bottom: 1px solid #334155;">\[ \mathbf{R}\mathbf{a} = -\mathbf{r} \]</td>
                                     <td style="padding: 0.5rem; border-bottom: 1px solid #334155;">Solves for AR coefficients.</td>
                                 </tr>
                                 <tr style="background-color: #0f172a;">
                                     <td style="padding: 0.5rem; border-bottom: 1px solid #334155;">MUSIC</td>
-                                    <td style="padding: 0.5rem; border-bottom: 1px solid #334155;">\[ P(\\omega) = \\frac{1}{||\\mathbf{V}_n^H \\mathbf{a}(\\omega)||^2} \]</td>
+                                    <td style="padding: 0.5rem; border-bottom: 1px solid #334155;">\[ P(\omega) = \frac{1}{||\mathbf{V}_n^H \mathbf{a}(\omega)||^2} \]</td>
                                     <td style="padding: 0.5rem; border-bottom: 1px solid #334155;">Peaks at signal frequencies.</td>
                                 </tr>
                             </tbody>
@@ -5793,30 +5793,30 @@
                         <div class="math-card">
                             <strong>Nyquist-Shannon Sampling Theorem</strong>
                             <p>To perfectly reconstruct a bandlimited signal, the sampling rate must satisfy \(f_s > 2f_{max}\). The spectrum of the sampled signal can be derived using the Poisson sum formula.</p>
-                            \[X_s(f) = f_s \\sum_{k=-\\infty}^{\\infty} X(f - kf_s)\]
+                            \[X_s(f) = f_s \sum_{k=-\infty}^{\infty} X(f - kf_s)\]
                         </div>
 
                         <div class="math-card">
                             <strong>Aliasing</strong>
                             <p>If the Nyquist criterion is violated, high-frequency components overlap into the baseband. The apparent frequency in the baseband is computed by finding the nearest integer multiple of \(f_s\).</p>
-                            \[f_a = |f - \\text{round}(f/f_s)f_s|\]
-                            <p>For example, a 3 kHz tone sampled at 4 kHz aliases to 1 kHz: \(|3 - 1 \\times 4| = 1\\text{ kHz}\).</p>
+                            \[f_a = |f - \text{round}(f/f_s)f_s|\]
+                            <p>For example, a 3 kHz tone sampled at 4 kHz aliases to 1 kHz: \(|3 - 1 \times 4| = 1\text{ kHz}\).</p>
                         </div>
 
                         <div class="math-card">
                             <strong>Ideal Reconstruction</strong>
                             <p>To recover the continuous-time signal, we pass the samples through an ideal lowpass filter, which corresponds to interpolation with sinc functions in the time domain.</p>
-                            \[x(t) = \\sum_{n=-\\infty}^{\\infty} x[n] \\text{sinc}(f_s t - n)\]
+                            \[x(t) = \sum_{n=-\infty}^{\infty} x[n] \text{sinc}(f_s t - n)\]
                         </div>
 
                         <div class="math-card">
                             <strong>Zero-Order Hold (ZOH)</strong>
                             <p>Practical DACs hold the sample value constant, introducing a <span style="color: #8b5cf6;">droop</span> in the frequency response that attenuates higher baseband frequencies.</p>
-                            \[H_{ZOH}(f) = T \\text{sinc}(fT) e^{-j\\pi fT}\]
+                            \[H_{ZOH}(f) = T \text{sinc}(fT) e^{-j\pi fT}\]
                         </div>
 
                         <div class="math-card">
-                            <strong>Sigma-Delta (\(\\Sigma\\Delta\)) ADC</strong>
+                            <strong>Sigma-Delta (\(\Sigma\Delta\)) ADC</strong>
                             <p>Combines massive oversampling with <span style="color: #0dd5c5;">noise shaping</span> using a 1-bit quantizer. Second-order noise shaping provides a 15 dB SQNR improvement per octave.</p>
                         </div>
 
@@ -5831,27 +5831,27 @@
                             <tbody>
                                 <tr style="background-color: #1e293b;">
                                     <td style="padding: 8px; border: 1px solid #334155;">Sampled Spectrum</td>
-                                    <td style="padding: 8px; border: 1px solid #334155;">\(X_s(f) = f_s \\sum_k X(f - kf_s)\)</td>
+                                    <td style="padding: 8px; border: 1px solid #334155;">\(X_s(f) = f_s \sum_k X(f - kf_s)\)</td>
                                     <td style="padding: 8px; border: 1px solid #334155;">Spectral copies at multiples of \(f_s\)</td>
                                 </tr>
                                 <tr style="background-color: #0f172a;">
                                     <td style="padding: 8px; border: 1px solid #334155;">Nyquist Criterion</td>
-                                    <td style="padding: 8px; border: 1px solid #334155;">\(f_s \\geq 2f_{max}\)</td>
+                                    <td style="padding: 8px; border: 1px solid #334155;">\(f_s \geq 2f_{max}\)</td>
                                     <td style="padding: 8px; border: 1px solid #334155;">Prevents spectral overlap</td>
                                 </tr>
                                 <tr style="background-color: #1e293b;">
                                     <td style="padding: 8px; border: 1px solid #334155;">Aliased Frequency</td>
-                                    <td style="padding: 8px; border: 1px solid #334155;">\(f_a = |f - \\text{round}(f/f_s)f_s|\)</td>
+                                    <td style="padding: 8px; border: 1px solid #334155;">\(f_a = |f - \text{round}(f/f_s)f_s|\)</td>
                                     <td style="padding: 8px; border: 1px solid #334155;">Apparent baseband frequency</td>
                                 </tr>
                                 <tr style="background-color: #0f172a;">
                                     <td style="padding: 8px; border: 1px solid #334155;">ZOH Response</td>
-                                    <td style="padding: 8px; border: 1px solid #334155;">\(H_{ZOH}(f) = T\\text{sinc}(fT)e^{-j\\pi fT}\)</td>
+                                    <td style="padding: 8px; border: 1px solid #334155;">\(H_{ZOH}(f) = T\text{sinc}(fT)e^{-j\pi fT}\)</td>
                                     <td style="padding: 8px; border: 1px solid #334155;">Causes droop at Nyquist</td>
                                 </tr>
                                 <tr style="background-color: #1e293b;">
                                     <td style="padding: 8px; border: 1px solid #334155;">Oversampling Gain</td>
-                                    <td style="padding: 8px; border: 1px solid #334155;">\(\\Delta\\text{SQNR} = 10\\log_{10}(k)\) dB</td>
+                                    <td style="padding: 8px; border: 1px solid #334155;">\(\Delta\text{SQNR} = 10\log_{10}(k)\) dB</td>
                                     <td style="padding: 8px; border: 1px solid #334155;">Improves resolution</td>
                                 </tr>
                             </tbody>
@@ -5879,7 +5879,7 @@
                                 <span class="accordion-icon"><i class="fas fa-chevron-down"></i></span>
                             </div>
                             <div class="accordion-content">
-                                <p>Why use a 1-bit quantizer in a \(\\Sigma\\Delta\) ADC?</p>
+                                <p>Why use a 1-bit quantizer in a \(\Sigma\Delta\) ADC?</p>
                                 <ol>
                                     <li>A 1-bit quantizer is perfectly linear, avoiding differential non-linearity errors.</li>
                                     <li>Although 1-bit adds large quantization noise, the feedback loop shapes this noise, pushing it to high frequencies.</li>
@@ -6016,14 +6016,14 @@
                         <div class="math-card">
                             <strong>Recursive Oscillator (IIR Approach)</strong>
                             <p>A sinusoid can be generated by placing poles exactly on the unit circle. The time-domain difference equation is:</p>
-                            \[ y[n] = 2\\cos(\\omega_0)y[n-1] - y[n-2] \]
-                            <p>The poles are located at \(e^{\\pm j\\omega_0}\) on the unit circle.</p>
+                            \[ y[n] = 2\cos(\omega_0)y[n-1] - y[n-2] \]
+                            <p>The poles are located at \(e^{\pm j\omega_0}\) on the unit circle.</p>
                         </div>
 
                         <div class="math-card">
                             <strong>Transfer Function &amp; Stability</strong>
                             <p>Taking the Z-transform yields the transfer function:</p>
-                            \[ H(z) = \\frac{z^2}{z^2 - 2\\cos(\\omega_0)z + 1} \]
+                            \[ H(z) = \frac{z^2}{z^2 - 2\cos(\omega_0)z + 1} \]
                             <p>Because the poles are strictly on the unit circle, the system is <span style="color: #0dd5c5;">marginally stable</span>.</p>
                         </div>
 
@@ -6034,21 +6034,21 @@
 
                         <div class="math-card">
                             <strong>Numerically Controlled Oscillator (NCO) / DDS</strong>
-                            <p>An NCO tracks phase explicitly to avoid instability. The phase accumulator updates via a tuning word \(\\Delta\\phi\) (or \(W\)) using a lookup table (LUT) for amplitude:</p>
-                            \[ \\theta[n] = \\theta[n-1] + \\Delta\\phi \]
-                            \[ \\Delta\\phi = \\frac{f_{out} \\cdot 2^N}{f_{clk}} \]
+                            <p>An NCO tracks phase explicitly to avoid instability. The phase accumulator updates via a tuning word \(\Delta\phi\) (or \(W\)) using a lookup table (LUT) for amplitude:</p>
+                            \[ \theta[n] = \theta[n-1] + \Delta\phi \]
+                            \[ \Delta\phi = \frac{f_{out} \cdot 2^N}{f_{clk}} \]
                         </div>
 
                         <div class="math-card">
                             <strong>Phase Truncation Spurs</strong>
                             <p>Truncating the accumulator output for the LUT introduces periodic phase errors, causing spurious tones. The Spurious-Free Dynamic Range (SFDR) is approximately:</p>
-                            \[ \\text{SFDR} \\approx 6.02 \\cdot P \\text{ dB} \]
+                            \[ \text{SFDR} \approx 6.02 \cdot P \text{ dB} \]
                             <p>where \(P\) is the number of phase bits kept. <span style="color: #0dd5c5;">Phase dithering</span> breaks the periodicity, spreading spur energy as noise and improving SFDR.</p>
                         </div>
 
                         <div class="math-card">
                             <strong>Chirp Signal Generation</strong>
-                            <p>A chirp has an instantaneous frequency that changes linearly with time: \(f(t) = f_0 + \\mu t\). In an NCO, this is implemented using a phase accumulator with a linearly increasing tuning word step.</p>
+                            <p>A chirp has an instantaneous frequency that changes linearly with time: \(f(t) = f_0 + \mu t\). In an NCO, this is implemented using a phase accumulator with a linearly increasing tuning word step.</p>
                         </div>
 
                         <table style="width:100%; border-collapse:collapse; font-size:0.8rem; margin: 15px 0;">
@@ -6059,22 +6059,22 @@
                             </tr>
                             <tr style="background-color: #1e293b;">
                                 <td style="padding: 8px;">Recursive Oscillator</td>
-                                <td style="padding: 8px;">\(y[n] = 2\\cos(\\omega_0)y[n-1] - y[n-2]\)</td>
+                                <td style="padding: 8px;">\(y[n] = 2\cos(\omega_0)y[n-1] - y[n-2]\)</td>
                                 <td style="padding: 8px;">Marginally stable</td>
                             </tr>
                             <tr style="background-color: #0f172a;">
                                 <td style="padding: 8px;">Coupled Form</td>
-                                <td style="padding: 8px;">\(c[n] = 2\\cos(\\omega_0)c[n-1] - c[n-2]\)</td>
+                                <td style="padding: 8px;">\(c[n] = 2\cos(\omega_0)c[n-1] - c[n-2]\)</td>
                                 <td style="padding: 8px;">Quadrature generation</td>
                             </tr>
                             <tr style="background-color: #1e293b;">
                                 <td style="padding: 8px;">NCO Output Freq</td>
-                                <td style="padding: 8px;">\(f_{out} = \\frac{\\Delta\\phi \\cdot f_{clk}}{2^N}\)</td>
+                                <td style="padding: 8px;">\(f_{out} = \frac{\Delta\phi \cdot f_{clk}}{2^N}\)</td>
                                 <td style="padding: 8px;">\(N\) is accumulator width</td>
                             </tr>
                             <tr style="background-color: #0f172a;">
                                 <td style="padding: 8px;">Chirp Phase</td>
-                                <td style="padding: 8px;">\(\\phi[n] = \\omega_0 n + \\frac{\\mu}{2}n^2\)</td>
+                                <td style="padding: 8px;">\(\phi[n] = \omega_0 n + \frac{\mu}{2}n^2\)</td>
                                 <td style="padding: 8px;">Linearly sweeping frequency</td>
                             </tr>
                         </table>
@@ -6087,9 +6087,9 @@
                             <div class="accordion-content">
                                 <p>Using the NCO frequency equation:</p>
                                 <ol>
-                                    <li>Start with the formula: \( \\Delta\\phi = \\frac{f_{out} \\cdot 2^N}{f_{clk}} \)</li>
-                                    <li>Substitute the given values: \( \\Delta\\phi = \\frac{10^6 \\cdot 2^{32}}{100 \\cdot 10^6} \)</li>
-                                    <li>Simplify: \( \\Delta\\phi = \\frac{4,294,967,296}{100} \\approx 42,949,673 \)</li>
+                                    <li>Start with the formula: \( \Delta\phi = \frac{f_{out} \cdot 2^N}{f_{clk}} \)</li>
+                                    <li>Substitute the given values: \( \Delta\phi = \frac{10^6 \cdot 2^{32}}{100 \cdot 10^6} \)</li>
+                                    <li>Simplify: \( \Delta\phi = \frac{4,294,967,296}{100} \approx 42,949,673 \)</li>
                                 </ol>
                                 <p>The tuning word is exactly 42,949,673.</p>
                             </div>
@@ -6237,33 +6237,33 @@
                         
                         <div class="math-card">
                             <strong>Speech Production Model</strong>
-                            \[H(z) = \\frac{G}{1 + \\sum_{k=1}^{p} a_k z^{-k}} = \\frac{G}{A(z)}\]
+                            \[H(z) = \frac{G}{1 + \sum_{k=1}^{p} a_k z^{-k}} = \frac{G}{A(z)}\]
                             The vocal tract is modeled as an all-pole filter <span style="color: #8b5cf6;">\(H(z)\)</span>, where the poles correspond to resonant frequencies known as formants. The source excitation <span style="color: #0dd5c5;">\(E(z)\)</span> is either a quasi-periodic impulse train (voiced) or random white noise (unvoiced). The resulting speech is given by \(S(z) = H(z)E(z)\).
                         </div>
 
                         <div class="math-card">
                             <strong>LPC Prediction Model</strong>
-                            \[\\hat{x}[n] = -\\sum_{k=1}^{p} a_k x[n-k]\]
-                            \[e[n] = x[n] - \\hat{x}[n]\]
+                            \[\hat{x}[n] = -\sum_{k=1}^{p} a_k x[n-k]\]
+                            \[e[n] = x[n] - \hat{x}[n]\]
                             Linear prediction assumes a speech sample \(x[n]\) can be approximated as a linear combination of its past <span style="color: #8b5cf6;">\(p\)</span> samples. The difference between the actual sample and the predicted value is the prediction error or residual <span style="color: #0dd5c5;">\(e[n]\)</span>.
                         </div>
 
                         <div class="math-card">
                             <strong>Normal (Yule-Walker) Equations</strong>
-                            \[\\sum_{k=1}^{p} a_k R_{xx}[m-k] = -R_{xx}[m] \\quad \\text{for } m = 1, \\dots, p\]
-                            To find the optimal coefficients \(a_k\), we minimize the mean squared prediction error \(E[e^2[n]]\). This yields a set of linear equations called the Yule-Walker equations, represented in matrix form as \(\\mathbf{R}\\mathbf{a} = -\\mathbf{r}\). The autocorrelation matrix \(\\mathbf{R}\) has a Toeplitz structure, allowing efficient solutions via the Levinson-Durbin algorithm in \(\\mathcal{O}(p^2)\) time.
+                            \[\sum_{k=1}^{p} a_k R_{xx}[m-k] = -R_{xx}[m] \quad \text{for } m = 1, \dots, p\]
+                            To find the optimal coefficients \(a_k\), we minimize the mean squared prediction error \(E[e^2[n]]\). This yields a set of linear equations called the Yule-Walker equations, represented in matrix form as \(\mathbf{R}\mathbf{a} = -\mathbf{r}\). The autocorrelation matrix \(\mathbf{R}\) has a Toeplitz structure, allowing efficient solutions via the Levinson-Durbin algorithm in \(\mathcal{O}(p^2)\) time.
                         </div>
                         
                         <div class="math-card">
                             <strong>Levinson-Durbin Recursion</strong>
-                            \[k_{m+1} = -\\frac{R_{xx}[m+1] + \\sum_{i=1}^{m} a_i^{(m)} R_{xx}[m+1-i]}{E_m}\]
+                            \[k_{m+1} = -\frac{R_{xx}[m+1] + \sum_{i=1}^{m} a_i^{(m)} R_{xx}[m+1-i]}{E_m}\]
                             \[E_{m+1} = (1 - k_{m+1}^2) E_m\]
                             The algorithm recursively computes the predictor coefficients by increasing the filter order. The variables \(k_m\) are the reflection or PARCOR coefficients. The all-pole filter is strictly stable if and only if \(|k_m| < 1\) for all \(m\).
                         </div>
                         
                         <div class="math-card">
                             <strong>Cepstrum & Homomorphic Analysis</strong>
-                            \[c[n] = \\mathcal{F}^{-1}\\{ \\log |X(e^{j\\omega})| \\}\]
+                            \[c[n] = \mathcal{F}^{-1}\{ \log |X(e^{j\omega})| \}\]
                             The cepstrum transforms the convolution of the excitation source and vocal tract filter into addition: \(c[n] = c_e[n] + c_h[n]\). The slowly varying vocal tract spectrum appears in the low-quefrency region, while the rapidly varying pitch excitation appears at high quefrencies, allowing separation.
                         </div>
                         
@@ -6280,22 +6280,22 @@
                             </tr>
                             <tr style="background-color:#1e293b;">
                             <td style="padding:8px; border-bottom:1px solid #334155;">Synthesis Filter</td>
-                            <td style="padding:8px; border-bottom:1px solid #334155;">\(H(z) = \\frac{G}{1 + \\sum_{k=1}^{p} a_k z^{-k}}\)</td>
+                            <td style="padding:8px; border-bottom:1px solid #334155;">\(H(z) = \frac{G}{1 + \sum_{k=1}^{p} a_k z^{-k}}\)</td>
                             <td style="padding:8px; border-bottom:1px solid #334155;">Models the vocal tract resonances</td>
                             </tr>
                             <tr style="background-color:#0f172a;">
                             <td style="padding:8px; border-bottom:1px solid #334155;">Prediction Error</td>
-                            <td style="padding:8px; border-bottom:1px solid #334155;">\(e[n] = x[n] + \\sum_{k=1}^{p} a_k x[n-k]\)</td>
+                            <td style="padding:8px; border-bottom:1px solid #334155;">\(e[n] = x[n] + \sum_{k=1}^{p} a_k x[n-k]\)</td>
                             <td style="padding:8px; border-bottom:1px solid #334155;">The difference between the actual and predicted sample</td>
                             </tr>
                             <tr style="background-color:#1e293b;">
                             <td style="padding:8px; border-bottom:1px solid #334155;">Yule-Walker Eqs</td>
-                            <td style="padding:8px; border-bottom:1px solid #334155;">\(\\sum_{k=1}^{p} a_k R_{xx}[m-k] = -R_{xx}[m]\)</td>
-                            <td style="padding:8px; border-bottom:1px solid #334155;">Matrix form: \(\\mathbf{R}\\mathbf{a} = -\\mathbf{r}\)</td>
+                            <td style="padding:8px; border-bottom:1px solid #334155;">\(\sum_{k=1}^{p} a_k R_{xx}[m-k] = -R_{xx}[m]\)</td>
+                            <td style="padding:8px; border-bottom:1px solid #334155;">Matrix form: \(\mathbf{R}\mathbf{a} = -\mathbf{r}\)</td>
                             </tr>
                             <tr style="background-color:#0f172a;">
                             <td style="padding:8px; border-bottom:1px solid #334155;">Real Cepstrum</td>
-                            <td style="padding:8px; border-bottom:1px solid #334155;">\(c[n] = \\mathcal{F}^{-1}\\{ \\log |X(e^{j\\omega})| \\}\)</td>
+                            <td style="padding:8px; border-bottom:1px solid #334155;">\(c[n] = \mathcal{F}^{-1}\{ \log |X(e^{j\omega})| \}\)</td>
                             <td style="padding:8px; border-bottom:1px solid #334155;">Separates source and filter</td>
                             </tr>
                             <tr style="background-color:#1e293b;">
@@ -6315,9 +6315,9 @@
                             <div class="accordion-content">
                             <ol>
                                 <li>For \(p=1\), the Yule-Walker equation is: \(a_1 R_{xx}[0] = -R_{xx}[1]\)</li>
-                                <li>Solve for the optimal coefficient: \(a_1 = -\\frac{R_{xx}[1]}{R_{xx}[0]}\)</li>
+                                <li>Solve for the optimal coefficient: \(a_1 = -\frac{R_{xx}[1]}{R_{xx}[0]}\)</li>
                                 <li>The minimum error \(E_1\) is given by: \(E_1 = R_{xx}[0] + a_1 R_{xx}[1]\)</li>
-                                <li>Substituting \(a_1\), we get \(E_1 = R_{xx}[0] \\left( 1 - \\left(\\frac{R_{xx}[1]}{R_{xx}[0]}\\right)^2 \\right)\). Since \(k_1 = -R_{xx}[1]/R_{xx}[0]\), this simplifies to \(E_1 = R_{xx}[0](1 - k_1^2)\).</li>
+                                <li>Substituting \(a_1\), we get \(E_1 = R_{xx}[0] \left( 1 - \left(\frac{R_{xx}[1]}{R_{xx}[0]}\right)^2 \right)\). Since \(k_1 = -R_{xx}[1]/R_{xx}[0]\), this simplifies to \(E_1 = R_{xx}[0](1 - k_1^2)\).</li>
                             </ol>
                             </div>
                         </div>
@@ -6330,10 +6330,10 @@
                             <div class="accordion-content">
                             <ol>
                                 <li>Speech is modeled as a convolution of the source and filter: \(x[n] = e[n] * h[n]\).</li>
-                                <li>In the frequency domain, this becomes a multiplication: \(X(e^{j\\omega}) = E(e^{j\\omega})H(e^{j\\omega})\).</li>
-                                <li>Taking the magnitude and logarithm converts this into addition: \(\\log|X| = \\log|E| + \\log|H|\).</li>
+                                <li>In the frequency domain, this becomes a multiplication: \(X(e^{j\omega}) = E(e^{j\omega})H(e^{j\omega})\).</li>
+                                <li>Taking the magnitude and logarithm converts this into addition: \(\log|X| = \log|E| + \log|H|\).</li>
                                 <li>Applying the inverse Fourier transform, we obtain the cepstrum: \(c[n] = c_e[n] + c_h[n]\).</li>
-                                <li>The slowly varying vocal tract spectrum \(H(e^{j\\omega})\) concentrates at low quefrencies, while the rapidly varying glottal pulse (pitch) \(E(e^{j\\omega})\) forms a peak at high quefrencies (around the pitch period \(T_0\)), allowing for easy separation using a lifter.</li>
+                                <li>The slowly varying vocal tract spectrum \(H(e^{j\omega})\) concentrates at low quefrencies, while the rapidly varying glottal pulse (pitch) \(E(e^{j\omega})\) forms a peak at high quefrencies (around the pitch period \(T_0\)), allowing for easy separation using a lifter.</li>
                             </ol>
                             </div>
                         </div>
@@ -6463,22 +6463,22 @@
 
                         <div class="math-card">
                             <strong>Raised Cosine & Nyquist Criterion</strong><br>
-                            To achieve zero-ISI, the pulse shape must satisfy the Nyquist condition: \( p(nT) = \\delta[n] \).
+                            To achieve zero-ISI, the pulse shape must satisfy the Nyquist condition: \( p(nT) = \delta[n] \).
                             The Raised Cosine filter meets this criteria with a bandwidth given by:
-                            \[ B = \\frac{1+\\alpha}{2T} \]
+                            \[ B = \frac{1+\alpha}{2T} \]
                         </div>
 
                         <div class="math-card">
                             <strong>Matched Filter</strong><br>
                             The matched filter maximizes the Signal-to-Noise Ratio (SNR) at the sampling instant. 
-                            Derived using the Cauchy-Schwarz inequality, the maximum SNR is \( \\text{SNR}_{\\max} = \\frac{2E_s}{N_0} \) and the optimal discrete filter is:
+                            Derived using the Cauchy-Schwarz inequality, the maximum SNR is \( \text{SNR}_{\max} = \frac{2E_s}{N_0} \) and the optimal discrete filter is:
                             \[ h[n] = s^*[L-n] \]
                         </div>
 
                         <div class="math-card">
                             <strong>MMSE Equalizer</strong><br>
                             To combat channel ISI without excessive noise enhancement, the Minimum Mean Square Error (MMSE) equalizer is used:
-                            \[ H_{MMSE}(f) = \\frac{H^*(f)}{|H(f)|^2 + N_0/E_s} \]
+                            \[ H_{MMSE}(f) = \frac{H^*(f)}{|H(f)|^2 + N_0/E_s} \]
                             It acts as a Zero-Forcing equalizer at high SNR and as a matched filter at low SNR.
                         </div>
 
@@ -6508,13 +6508,13 @@
                             </tr>
                             <tr style="background-color:#1e293b;">
                                 <td style="padding: 8px; border: 1px solid #334155;">Nyquist Zero-ISI Condition</td>
-                                <td style="padding: 8px; border: 1px solid #334155;">\( p(nT) = \\delta[n] \)</td>
+                                <td style="padding: 8px; border: 1px solid #334155;">\( p(nT) = \delta[n] \)</td>
                                 <td style="padding: 8px; border: 1px solid #334155;">Impulse at sampling instants</td>
                             </tr>
                             <tr style="background-color:#0f172a;">
                                 <td style="padding: 8px; border: 1px solid #334155;">Raised Cosine Bandwidth</td>
-                                <td style="padding: 8px; border: 1px solid #334155;">\( B = \\frac{1+\\alpha}{2T} \)</td>
-                                <td style="padding: 8px; border: 1px solid #334155;">\( \\alpha \\in [0,1] \)</td>
+                                <td style="padding: 8px; border: 1px solid #334155;">\( B = \frac{1+\alpha}{2T} \)</td>
+                                <td style="padding: 8px; border: 1px solid #334155;">\( \alpha \in [0,1] \)</td>
                             </tr>
                             <tr style="background-color:#1e293b;">
                                 <td style="padding: 8px; border: 1px solid #334155;">Matched Filter (Discrete)</td>
@@ -6523,12 +6523,12 @@
                             </tr>
                             <tr style="background-color:#0f172a;">
                                 <td style="padding: 8px; border: 1px solid #334155;">Matched Filter Max SNR</td>
-                                <td style="padding: 8px; border: 1px solid #334155;">\( \\text{SNR} = \\frac{2E_s}{N_0} \)</td>
+                                <td style="padding: 8px; border: 1px solid #334155;">\( \text{SNR} = \frac{2E_s}{N_0} \)</td>
                                 <td style="padding: 8px; border: 1px solid #334155;">Maximum at sampling instant</td>
                             </tr>
                             <tr style="background-color:#1e293b;">
                                 <td style="padding: 8px; border: 1px solid #334155;">MMSE Equalizer</td>
-                                <td style="padding: 8px; border: 1px solid #334155;">\( H_{MMSE}(f) = \\frac{H^*(f)}{|H(f)|^2 + N_0/E_s} \)</td>
+                                <td style="padding: 8px; border: 1px solid #334155;">\( H_{MMSE}(f) = \frac{H^*(f)}{|H(f)|^2 + N_0/E_s} \)</td>
                                 <td style="padding: 8px; border: 1px solid #334155;">Balances ISI and noise</td>
                             </tr>
                         </table>
@@ -6539,15 +6539,15 @@
                                 <div class="accordion-icon">▼</div>
                             </div>
                             <div class="accordion-content">
-                                <strong>Question:</strong> A system transmits at 25 Msymbols/s with a bandwidth limitation of 16 MHz. What is the maximum roll-off factor \( \\alpha \)?
+                                <strong>Question:</strong> A system transmits at 25 Msymbols/s with a bandwidth limitation of 16 MHz. What is the maximum roll-off factor \( \alpha \)?
                                 <br><br>
                                 <strong>Answer:</strong>
                                 <ol>
-                                    <li>Symbol rate \( R_s = 25 \\times 10^6 \) symbols/s. Symbol period \( T = 1/R_s \).</li>
-                                    <li>Available bandwidth \( B = 16 \\times 10^6 \) Hz.</li>
-                                    <li>Formula: \( B = \\frac{1+\\alpha}{2T} = \\frac{(1+\\alpha)R_s}{2} \).</li>
-                                    <li>Isolating \( \\alpha \): \( \\alpha = \\frac{2B}{R_s} - 1 \).</li>
-                                    <li>Substituting values: \( \\alpha = \\frac{2 \\times 16 \\times 10^6}{25 \\times 10^6} - 1 = \\frac{32}{25} - 1 = 1.28 - 1 = 0.28 \).</li>
+                                    <li>Symbol rate \( R_s = 25 \times 10^6 \) symbols/s. Symbol period \( T = 1/R_s \).</li>
+                                    <li>Available bandwidth \( B = 16 \times 10^6 \) Hz.</li>
+                                    <li>Formula: \( B = \frac{1+\alpha}{2T} = \frac{(1+\alpha)R_s}{2} \).</li>
+                                    <li>Isolating \( \alpha \): \( \alpha = \frac{2B}{R_s} - 1 \).</li>
+                                    <li>Substituting values: \( \alpha = \frac{2 \times 16 \times 10^6}{25 \times 10^6} - 1 = \frac{32}{25} - 1 = 1.28 - 1 = 0.28 \).</li>
                                 </ol>
                                 The maximum roll-off factor is <strong>0.28</strong>.
                             </div>
@@ -6563,11 +6563,11 @@
                                 <br><br>
                                 <strong>Answer:</strong>
                                 <ol>
-                                    <li>Signal \( s(t) = A \) for \( 0 \\le t \\le T \), else 0.</li>
-                                    <li>Matched filter impulse response \( h(t) = s(T-t) = A \) for \( 0 \\le t \\le T \), else 0.</li>
-                                    <li>Output is the convolution: \( y(t) = \\int_{-\\infty}^{\\infty} s(\\tau) h(t-\\tau) d\\tau \).</li>
+                                    <li>Signal \( s(t) = A \) for \( 0 \le t \le T \), else 0.</li>
+                                    <li>Matched filter impulse response \( h(t) = s(T-t) = A \) for \( 0 \le t \le T \), else 0.</li>
+                                    <li>Output is the convolution: \( y(t) = \int_{-\infty}^{\infty} s(\tau) h(t-\tau) d\tau \).</li>
                                     <li>This represents the overlap of two sliding rectangles. The maximum overlap occurs exactly at \( t=T \).</li>
-                                    <li>At \( t=T \), \( y(T) = \\int_0^T A \\cdot A d\\tau = A^2 T \).</li>
+                                    <li>At \( t=T \), \( y(T) = \int_0^T A \cdot A d\tau = A^2 T \).</li>
                                 </ol>
                                 The peak value is \( A^2 T \), which is the total energy \( E_s \) of the original signal.
                             </div>
@@ -6899,13 +6899,13 @@
 
                         <div class="math-card">
                             <strong>2D DFT &amp; Separability</strong>
-                            \[ F[k,l] = \\sum_{m=0}^{M-1} \\sum_{n=0}^{N-1} f[m,n] e^{-j2\\pi(km/M + ln/N)} \]
+                            \[ F[k,l] = \sum_{m=0}^{M-1} \sum_{n=0}^{N-1} f[m,n] e^{-j2\pi(km/M + ln/N)} \]
                             The 2D DFT is separable, meaning it can be computed extremely efficiently. By performing 1D DFTs along the rows first, followed by 1D DFTs along the columns, the computational complexity is vastly reduced compared to direct 2D summation.
                         </div>
 
                         <div class="math-card">
                             <strong>2D Convolution &amp; Separable Filters</strong>
-                            \[ g[m,n] = \\sum_{k} \\sum_{l} f[k,l] h[m-k, n-l] \]
+                            \[ g[m,n] = \sum_{k} \sum_{l} f[k,l] h[m-k, n-l] \]
                             A 2D filter is <span style="color: #8b5cf6;">separable</span> if its kernel can be written as an outer product of two 1D filters: \(h[m,n] = h_1[m] h_2[n]\). Applying separable filters equates to two consecutive 1D convolutions, providing massive computational savings in image processing.
                         </div>
 
@@ -6916,14 +6916,14 @@
 
                         <div class="math-card">
                             <strong>Gaussian Smoothing Filter</strong>
-                            \[ h[m,n] = \\exp\\left( -\\frac{m^2 + n^2}{2\\sigma^2} \\right) \]
+                            \[ h[m,n] = \exp\left( -\frac{m^2 + n^2}{2\sigma^2} \right) \]
                             The Gaussian filter is an optimal, separable low-pass filter used to reduce high-frequency noise and blur images without introducing the ringing artifacts associated with ideal brick-wall filters.
                         </div>
 
                         <div class="math-card">
                             <strong>Sobel Edge Detection &amp; Canny Pipeline</strong>
-                            \[ G_x = \\begin{bmatrix} -1 &amp; 0 &amp; 1 \\\\ -2 &amp; 0 &amp; 2 \\\\ -1 &amp; 0 &amp; 1 \\end{bmatrix} \]
-                            The Sobel operators approximate the spatial gradient. The gradient magnitude is \( |\\nabla f| = \\sqrt{G_x^2 + G_y^2} \). The Canny edge detector builds upon this by smoothing the image with a Gaussian, finding gradients, applying non-maximum suppression, and utilizing double threshold hysteresis to trace continuous edges.
+                            \[ G_x = \begin{bmatrix} -1 &amp; 0 &amp; 1 \\\ -2 &amp; 0 &amp; 2 \\\ -1 &amp; 0 &amp; 1 \end{bmatrix} \]
+                            The Sobel operators approximate the spatial gradient. The gradient magnitude is \( |\nabla f| = \sqrt{G_x^2 + G_y^2} \). The Canny edge detector builds upon this by smoothing the image with a Gaussian, finding gradients, applying non-maximum suppression, and utilizing double threshold hysteresis to trace continuous edges.
                         </div>
 
                         <table style="width:100%; border-collapse:collapse; font-size:0.8rem; margin: 15px 0;">
@@ -6937,7 +6937,7 @@
                             <tbody>
                                 <tr style="background-color: #1e293b;">
                                     <td style="padding: 8px; border: 1px solid #334155;">2D DFT</td>
-                                    <td style="padding: 8px; border: 1px solid #334155;">\( F[k,l] = \\sum\\sum f[m,n] W_M^{km} W_N^{ln} \)</td>
+                                    <td style="padding: 8px; border: 1px solid #334155;">\( F[k,l] = \sum\sum f[m,n] W_M^{km} W_N^{ln} \)</td>
                                     <td style="padding: 8px; border: 1px solid #334155;">Decomposes image into spatial frequencies</td>
                                 </tr>
                                 <tr style="background-color: #0f172a;">
@@ -6947,12 +6947,12 @@
                                 </tr>
                                 <tr style="background-color: #1e293b;">
                                     <td style="padding: 8px; border: 1px solid #334155;">Gaussian Kernel</td>
-                                    <td style="padding: 8px; border: 1px solid #334155;">\( G_\\sigma[m,n] = \\frac{1}{2\\pi\\sigma^2} e^{-(m^2+n^2)/(2\\sigma^2)} \)</td>
+                                    <td style="padding: 8px; border: 1px solid #334155;">\( G_\sigma[m,n] = \frac{1}{2\pi\sigma^2} e^{-(m^2+n^2)/(2\sigma^2)} \)</td>
                                     <td style="padding: 8px; border: 1px solid #334155;">Optimal smooth low-pass</td>
                                 </tr>
                                 <tr style="background-color: #0f172a;">
                                     <td style="padding: 8px; border: 1px solid #334155;">Gradient Magnitude</td>
-                                    <td style="padding: 8px; border: 1px solid #334155;">\( |\\nabla f| = \\sqrt{G_x^2 + G_y^2} \)</td>
+                                    <td style="padding: 8px; border: 1px solid #334155;">\( |\nabla f| = \sqrt{G_x^2 + G_y^2} \)</td>
                                     <td style="padding: 8px; border: 1px solid #334155;">Measures edge strength</td>
                                 </tr>
                             </tbody>
@@ -6966,10 +6966,10 @@
                             <div class="accordion-content">
                                 <p>The 2D DFT separates because the complex exponential kernel can be factored:</p>
                                 <ol>
-                                    <li>Start with \( F[k,l] = \\sum_{m=0}^{M-1} \\sum_{n=0}^{N-1} f[m,n] e^{-j\\frac{2\\pi}{M}km} e^{-j\\frac{2\\pi}{N}ln} \)</li>
-                                    <li>Pull out the \( m \)-dependent term: \( F[k,l] = \\sum_{m=0}^{M-1} e^{-j\\frac{2\\pi}{M}km} \\left[ \\sum_{n=0}^{N-1} f[m,n] e^{-j\\frac{2\\pi}{N}ln} \\right] \)</li>
+                                    <li>Start with \( F[k,l] = \sum_{m=0}^{M-1} \sum_{n=0}^{N-1} f[m,n] e^{-j\frac{2\pi}{M}km} e^{-j\frac{2\pi}{N}ln} \)</li>
+                                    <li>Pull out the \( m \)-dependent term: \( F[k,l] = \sum_{m=0}^{M-1} e^{-j\frac{2\pi}{M}km} \left[ \sum_{n=0}^{N-1} f[m,n] e^{-j\frac{2\pi}{N}ln} \right] \)</li>
                                     <li>The inner sum is exactly a 1D DFT across the columns for the \( m \)-th row. Call this \( G[m,l] \).</li>
-                                    <li>Substitute back: \( F[k,l] = \\sum_{m=0}^{M-1} G[m,l] e^{-j\\frac{2\\pi}{M}km} \), which is a 1D DFT along the columns of \( G \).</li>
+                                    <li>Substitute back: \( F[k,l] = \sum_{m=0}^{M-1} G[m,l] e^{-j\frac{2\pi}{M}km} \), which is a 1D DFT along the columns of \( G \).</li>
                                 </ol>
                             </div>
                         </div>
@@ -7107,15 +7107,15 @@
 
                         <div class="math-card">
                             <strong>Powerline Notch Filter Design</strong>
-                            <p>To eliminate 60 Hz (or 50 Hz) interference without distorting the signal, a narrow notch filter is used. Zeros are placed precisely on the unit circle at the interference frequency: \[ z = e^{\\pm j 2\\pi f_0 / f_s} \]</p>
+                            <p>To eliminate 60 Hz (or 50 Hz) interference without distorting the signal, a narrow notch filter is used. Zeros are placed precisely on the unit circle at the interference frequency: \[ z = e^{\pm j 2\pi f_0 / f_s} \]</p>
                             <p>To keep the notch narrow, poles are placed at the same angle but slightly inside the unit circle (radius \( r < 1 \)), producing pole-zero cancellation everywhere except near the notch.</p>
                         </div>
 
                         <div class="math-card">
                             <strong>Notch Filter Transfer Function</strong>
-                            <p>For a notch frequency \( \\omega_0 = 2\\pi f_0 / f_s \), the generic second-order transfer function is:</p>
-                            \[ H(z) = \\frac{1 - 2\\cos(\\omega_0)z^{-1} + z^{-2}}{1 - 2r\\cos(\\omega_0)z^{-1} + r^2 z^{-2}} \]
-                            <p>The parameter \( r \) controls the bandwidth of the notch; as \( r \\rightarrow 1 \), the notch becomes narrower.</p>
+                            <p>For a notch frequency \( \omega_0 = 2\pi f_0 / f_s \), the generic second-order transfer function is:</p>
+                            \[ H(z) = \frac{1 - 2\cos(\omega_0)z^{-1} + z^{-2}}{1 - 2r\cos(\omega_0)z^{-1} + r^2 z^{-2}} \]
+                            <p>The parameter \( r \) controls the bandwidth of the notch; as \( r \rightarrow 1 \), the notch becomes narrower.</p>
                         </div>
 
                         <div class="math-card">
@@ -7160,22 +7160,22 @@
                             </tr>
                             <tr style="background-color: #1e293b;">
                                 <td style="padding: 8px; border: 1px solid #334155;">Notch Zeros</td>
-                                <td style="padding: 8px; border: 1px solid #334155;">\( z_1, z_2 = e^{\\pm j \\omega_0} \)</td>
+                                <td style="padding: 8px; border: 1px solid #334155;">\( z_1, z_2 = e^{\pm j \omega_0} \)</td>
                                 <td style="padding: 8px; border: 1px solid #334155;">Forces exact zero gain at interference freq.</td>
                             </tr>
                             <tr style="background-color: #0f172a;">
                                 <td style="padding: 8px; border: 1px solid #334155;">Notch Poles</td>
-                                <td style="padding: 8px; border: 1px solid #334155;">\( p_1, p_2 = r e^{\\pm j \\omega_0} \)</td>
+                                <td style="padding: 8px; border: 1px solid #334155;">\( p_1, p_2 = r e^{\pm j \omega_0} \)</td>
                                 <td style="padding: 8px; border: 1px solid #334155;">Restores gain to 1 at adjacent frequencies.</td>
                             </tr>
                             <tr style="background-color: #1e293b;">
                                 <td style="padding: 8px; border: 1px solid #334155;">Pan-Tompkins Diff</td>
-                                <td style="padding: 8px; border: 1px solid #334155;">\( y[n] = \\frac{1}{8}(2x[n] + x[n-1] - x[n-3] - 2x[n-4]) \)</td>
+                                <td style="padding: 8px; border: 1px solid #334155;">\( y[n] = \frac{1}{8}(2x[n] + x[n-1] - x[n-3] - 2x[n-4]) \)</td>
                                 <td style="padding: 8px; border: 1px solid #334155;">Approximates derivative, amplifies QRS slopes.</td>
                             </tr>
                             <tr style="background-color: #0f172a;">
                                 <td style="padding: 8px; border: 1px solid #334155;">Moving Integrator</td>
-                                <td style="padding: 8px; border: 1px solid #334155;">\( y[n] = \\frac{1}{N} \\sum_{k=0}^{N-1} x^2[n-k] \)</td>
+                                <td style="padding: 8px; border: 1px solid #334155;">\( y[n] = \frac{1}{N} \sum_{k=0}^{N-1} x^2[n-k] \)</td>
                                 <td style="padding: 8px; border: 1px solid #334155;">Smooths squared signal for peak detection.</td>
                             </tr>
                         </table>
@@ -7187,7 +7187,7 @@
                             </div>
                             <div class="accordion-content">
                                 <strong>Question:</strong> How would you design a digital notch filter to remove 50 Hz powerline noise from an ECG signal sampled at 500 Hz?<br><br>
-                                <strong>Answer:</strong> First, find the normalized angular frequency: \( \\omega_0 = 2\\pi(50)/500 = 0.2\\pi \) rad/sample. Place zeros on the unit circle at \( e^{\\pm j0.2\\pi} \). To keep the notch narrow, place poles slightly inside the unit circle at \( r e^{\\pm j0.2\\pi} \), where \( r \) is close to 1 (e.g., \( r = 0.95 \)). The resulting transfer function will strongly attenuate exactly 50 Hz while leaving other frequencies mostly unaffected.
+                                <strong>Answer:</strong> First, find the normalized angular frequency: \( \omega_0 = 2\pi(50)/500 = 0.2\pi \) rad/sample. Place zeros on the unit circle at \( e^{\pm j0.2\pi} \). To keep the notch narrow, place poles slightly inside the unit circle at \( r e^{\pm j0.2\pi} \), where \( r \) is close to 1 (e.g., \( r = 0.95 \)). The resulting transfer function will strongly attenuate exactly 50 Hz while leaving other frequencies mostly unaffected.
                             </div>
                         </div>
 
