@@ -2694,16 +2694,21 @@ function initFrequencyResponseSimulator() {
     const valEq = document.getElementById("val-l4-eq");
     const valDelayDc = document.getElementById("val-l4-delay-dc");
     const valStatus = document.getElementById("val-l4-status");
+    const selectTestSig = document.getElementById("select-l4-test-sig");
     
     const canvasMag = document.getElementById("canvas-l4-mag");
     const canvasPhase = document.getElementById("canvas-l4-phase");
     const canvasDelay = document.getElementById("canvas-l4-delay");
+    const canvasTime = document.getElementById("canvas-l4-time");
+    const canvasZPlane = document.getElementById("canvas-l4-zplane");
     
-    if (!canvasMag || !canvasPhase || !canvasDelay) return;
+    if (!canvasMag || !canvasPhase || !canvasDelay || !canvasTime || !canvasZPlane) return;
     
     const ctxMag = canvasMag.getContext("2d");
     const ctxPhase = canvasPhase.getContext("2d");
     const ctxDelay = canvasDelay.getContext("2d");
+    const ctxTime = canvasTime.getContext("2d");
+    const ctxZPlane = canvasZPlane.getContext("2d");
 
     function resize() {
         canvasMag.width = canvasMag.parentElement.clientWidth * window.devicePixelRatio;
@@ -2712,6 +2717,10 @@ function initFrequencyResponseSimulator() {
         canvasPhase.height = 120 * window.devicePixelRatio;
         canvasDelay.width = canvasDelay.parentElement.clientWidth * window.devicePixelRatio;
         canvasDelay.height = 120 * window.devicePixelRatio;
+        canvasTime.width = canvasTime.parentElement.clientWidth * window.devicePixelRatio;
+        canvasTime.height = 120 * window.devicePixelRatio;
+        canvasZPlane.width = canvasZPlane.parentElement.clientWidth * window.devicePixelRatio;
+        canvasZPlane.height = 140 * window.devicePixelRatio;
         
         ctxMag.resetTransform();
         ctxMag.scale(window.devicePixelRatio, window.devicePixelRatio);
@@ -2719,16 +2728,24 @@ function initFrequencyResponseSimulator() {
         ctxPhase.scale(window.devicePixelRatio, window.devicePixelRatio);
         ctxDelay.resetTransform();
         ctxDelay.scale(window.devicePixelRatio, window.devicePixelRatio);
+        ctxTime.resetTransform();
+        ctxTime.scale(window.devicePixelRatio, window.devicePixelRatio);
+        ctxZPlane.resetTransform();
+        ctxZPlane.scale(window.devicePixelRatio, window.devicePixelRatio);
     }
     resize();
     window.addEventListener("resize", resize);
 
     function draw() {
         const type = selectFilter.value;
-        if (type === "lpf") {
+        if (type === "lpf" && selectFilter.dataset.lastVal !== "lpf") {
             sliderPole.value = 0.80;
-        } else if (type === "hpf") {
+            selectFilter.dataset.lastVal = "lpf";
+        } else if (type === "hpf" && selectFilter.dataset.lastVal !== "hpf") {
             sliderPole.value = -0.80;
+            selectFilter.dataset.lastVal = "hpf";
+        } else if (type === "custom") {
+            selectFilter.dataset.lastVal = "custom";
         }
         
         const r = parseFloat(sliderPole.value);
@@ -2895,16 +2912,168 @@ function initFrequencyResponseSimulator() {
         ctxDelay.fillText("-\u03c0", x_minus_pi, hDelay - 4);
         ctxDelay.fillText("0", x_zero, hDelay - 4);
         ctxDelay.fillText("\u03c0", x_plus_pi, hDelay - 4);
+
+        // --- Draw Canvas 4: Time-Domain Filtering Impact ---
+        const wTime = canvasTime.width / window.devicePixelRatio;
+        const hTime = canvasTime.height / window.devicePixelRatio;
+        ctxTime.clearRect(0, 0, wTime, hTime);
+
+        // Generate test input signal
+        const testSigType = selectTestSig.value;
+        const len = 50;
+        const X_sig = [];
+        const Y_sig = [];
+        let prevY = 0;
+
+        for (let n = 0; n < len; n++) {
+            let valX = 0;
+            if (testSigType === "sine_low") {
+                valX = Math.cos(0.08 * Math.PI * n);
+            } else if (testSigType === "sine_high") {
+                valX = Math.cos(0.40 * Math.PI * n);
+            } else if (testSigType === "step") {
+                valX = n >= 5 ? 1 : 0;
+            }
+            X_sig.push(valX);
+            
+            // Difference equation: y[n] = r * y[n-1] + x[n]
+            const valY = r * prevY + valX;
+            Y_sig.push(valY);
+            prevY = valY;
+        }
+
+        // Draw time axis
+        ctxTime.strokeStyle = "rgba(255, 255, 255, 0.08)";
+        ctxTime.lineWidth = 1;
+        ctxTime.beginPath();
+        ctxTime.moveTo(0, hTime / 2);
+        ctxTime.lineTo(wTime, hTime / 2);
+        ctxTime.stroke();
+
+        const xStart = 25;
+        const timeStep = (wTime - xStart - 10) / len;
+        const centerYTime = hTime / 2;
+
+        // Find max absolute values for scaling
+        let maxVal = Math.max(...X_sig.map(Math.abs), ...Y_sig.map(Math.abs));
+        if (maxVal < 1.0) maxVal = 1.0;
+        const scaleValY = (hTime / 2 - 15) / maxVal;
+
+        // Draw input signal x[n] (faint dashed line with stems)
+        ctxTime.strokeStyle = "rgba(13, 213, 197, 0.3)";
+        ctxTime.fillStyle = "rgba(13, 213, 197, 0.3)";
+        ctxTime.lineWidth = 1;
+        for (let n = 0; n < len; n++) {
+            const x = xStart + n * timeStep;
+            const y = centerYTime - X_sig[n] * scaleValY;
+            ctxTime.beginPath();
+            ctxTime.moveTo(x, centerYTime);
+            ctxTime.lineTo(x, y);
+            ctxTime.stroke();
+            ctxTime.beginPath();
+            ctxTime.arc(x, y, 2, 0, 2 * Math.PI);
+            ctxTime.fill();
+        }
+
+        // Draw output signal y[n] (thick solid line)
+        ctxTime.strokeStyle = "#a78bfa";
+        ctxTime.lineWidth = 2.2;
+        ctxTime.beginPath();
+        for (let n = 0; n < len; n++) {
+            const x = xStart + n * timeStep;
+            const y = centerYTime - Y_sig[n] * scaleValY;
+            if (n === 0) ctxTime.moveTo(x, y); else ctxTime.lineTo(x, y);
+        }
+        ctxTime.stroke();
+
+        // Dots on output signal
+        ctxTime.fillStyle = "#a78bfa";
+        for (let n = 0; n < len; n++) {
+            const x = xStart + n * timeStep;
+            const y = centerYTime - Y_sig[n] * scaleValY;
+            ctxTime.beginPath();
+            ctxTime.arc(x, y, 2.5, 0, 2 * Math.PI);
+            ctxTime.fill();
+        }
+
+        // Labels
+        ctxTime.font = "8px Fira Code";
+        ctxTime.textAlign = "left";
+        ctxTime.fillStyle = "rgba(13, 213, 197, 0.7)";
+        ctxTime.fillText("Input x[n]", 5, 12);
+        ctxTime.fillStyle = "#a78bfa";
+        ctxTime.fillText("Output y[n]", 5, 22);
+
+        // --- Draw Canvas 5: Z-Plane Pole-Zero Plot ---
+        const wZP = canvasZPlane.width / window.devicePixelRatio;
+        const hZP = canvasZPlane.height / window.devicePixelRatio;
+        ctxZPlane.clearRect(0, 0, wZP, hZP);
+
+        const cxZP = wZP / 2;
+        const cyZP = hZP / 2;
+        const radiusZP = 45; // Radius of unit circle
+
+        // Draw axes
+        ctxZPlane.strokeStyle = "rgba(255, 255, 255, 0.08)";
+        ctxZPlane.lineWidth = 1;
+        ctxZPlane.beginPath();
+        ctxZPlane.moveTo(0, cyZP); ctxZPlane.lineTo(wZP, cyZP);
+        ctxZPlane.moveTo(cxZP, 0); ctxZPlane.lineTo(cxZP, hZP);
+        ctxZPlane.stroke();
+
+        // Draw Unit Circle
+        ctxZPlane.strokeStyle = "rgba(255, 255, 255, 0.2)";
+        ctxZPlane.beginPath();
+        ctxZPlane.arc(cxZP, cyZP, radiusZP, 0, 2 * Math.PI);
+        ctxZPlane.stroke();
+
+        // Draw Zero at the origin (blue O)
+        ctxZPlane.strokeStyle = "#0dd5c5";
+        ctxZPlane.lineWidth = 2;
+        ctxZPlane.beginPath();
+        ctxZPlane.arc(cxZP, cyZP, 3, 0, 2 * Math.PI);
+        ctxZPlane.stroke();
+        ctxZPlane.fillStyle = "rgba(13, 213, 197, 0.1)";
+        ctxZPlane.fill();
+        
+        // Draw Pole (red cross X) at location z = r
+        const poleX = cxZP + r * radiusZP;
+        const poleY = cyZP;
+        ctxZPlane.strokeStyle = "#ef4444";
+        ctxZPlane.lineWidth = 2.5;
+        ctxZPlane.beginPath();
+        // Draw 'X'
+        ctxZPlane.moveTo(poleX - 4, poleY - 4);
+        ctxZPlane.lineTo(poleX + 4, poleY + 4);
+        ctxZPlane.moveTo(poleX - 4, poleY + 4);
+        ctxZPlane.lineTo(poleX + 4, poleY - 4);
+        ctxZPlane.stroke();
+
+        // Labels
+        ctxZPlane.fillStyle = "rgba(255, 255, 255, 0.4)";
+        ctxZPlane.font = "8px Fira Code";
+        ctxZPlane.textAlign = "center";
+        ctxZPlane.fillText("Re", wZP - 10, cyZP - 4);
+        ctxZPlane.fillText("Im", cxZP + 10, 10);
+        ctxZPlane.fillText("1.0", cxZP + radiusZP, cyZP + 12);
+        ctxZPlane.fillText("-1.0", cxZP - radiusZP, cyZP + 12);
     }
 
-    [selectFilter, sliderPole].forEach(ctrl => {
-        ctrl.addEventListener("input", () => {
-            // If slider was adjusted, force preset select to custom
-            if (ctrl === sliderPole) {
-                selectFilter.value = "custom";
-            }
-            draw();
-        });
+    [selectFilter, sliderPole, selectTestSig].forEach(ctrl => {
+        if (ctrl) {
+            ctrl.addEventListener("input", () => {
+                if (ctrl === sliderPole) {
+                    selectFilter.value = "custom";
+                }
+                draw();
+            });
+            ctrl.addEventListener("change", () => {
+                if (ctrl === sliderPole) {
+                    selectFilter.value = "custom";
+                }
+                draw();
+            });
+        }
     });
 
     draw();

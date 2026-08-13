@@ -161,6 +161,20 @@ A difference equation by itself does not uniquely define an LTI system; it requi
   $$\text{If } x[n] = 0 \quad \forall n < n_0, \quad \text{then } y[n] = 0 \quad \forall n < n_0$$
 * If the system is at initial rest, it is guaranteed to be linear, time-invariant, and causal.
 
+### ⚠️ Note on Sign Conventions and Pole Stability
+A common source of confusion in LTI difference equations is the sign convention of the feedback coefficients and how it relates to poles:
+1. **Left-Hand Side (LHS) Form:** If we write the first-order system with all terms on the LHS:
+   $$y[n] + a_1 y[n-1] = x[n]$$
+   Here, the coefficient of $y[n-1]$ is $+a_1$. The characteristic equation is $\lambda + a_1 = 0$, giving a pole at $z = -a_1$. For BIBO stability, we require the pole magnitude to be less than 1: $|-a_1| < 1 \implies |a_1| < 1$.
+2. **Right-Hand Side (RHS) Form (Feedback Form):** If we express the system with feedback on the RHS:
+   $$y[n] = r y[n-1] + x[n]$$
+   Here, the feedback coefficient is $r$ (which corresponds to $-a_1$ in the LHS form). The pole is located directly at $z = r$. For stability, we require $|r| < 1$.
+
+**Is there a conflict?** 
+No. If $r$ is positive (e.g., $r = 0.8$), the difference equation is $y[n] = 0.8 y[n-1] + x[n]$ (or $y[n] - 0.8 y[n-1] = x[n]$ on the LHS). The pole is at $z = 0.8$ (stable).
+If $r$ is negative (e.g., $r = -0.8$), the difference equation is $y[n] = -0.8 y[n-1] + x[n]$ (or $y[n] + 0.8 y[n-1] = x[n]$ on the LHS). The pole is at $z = -0.8$ (stable).
+Thus, stability does **not** restrict the coefficient to being strictly positive or negative; it only requires the feedback magnitude to be less than one ($|r| < 1$ or $|a_1| < 1$).
+
 ### Analytical Solution Components
 The complete solution to a difference equation consists of two parts:
 $$y[n] = y_h[n] + y_p[n]$$

@@ -163,6 +163,23 @@ Discrete-time LTI recursive systems are described by difference equations:
 \begin{equation}
 y[n] + \sum_{k=1}^{N} a_k y[n-k] = \sum_{m=0}^{M} b_m x[n-m]
 \end{equation}
+
+\subsection{Note on Sign Conventions \& Pole Stability}
+A common source of confusion in LTI difference equations is the sign convention of the feedback coefficients and how it relates to poles:
+\begin{enumerate}
+    \item \textbf{Left-Hand Side (LHS) Form:} If we write the first-order system with all terms on the LHS:
+    \begin{equation}
+    y[n] + a_1 y[n-1] = x[n]
+    \end{equation}
+    Here, the coefficient is $+a_1$. The pole is at $z = -a_1$. For stability, we require the pole magnitude to be less than 1: $|-a_1| < 1 \implies |a_1| < 1$.
+    \item \textbf{Right-Hand Side (RHS) Form (Feedback Form):} If we express the system with feedback on the RHS:
+    \begin{equation}
+    y[n] = r y[n-1] + x[n]
+    \end{equation}
+    Here, the feedback coefficient is $r$ (which corresponds to $-a_1$ in the LHS form). The pole is located directly at $z = r$. For stability, we require $|r| < 1$.
+\end{enumerate}
+Stability does not restrict the feedback coefficient to being strictly positive or negative; it only requires the feedback magnitude to be less than one ($|r| < 1$ or $|a_1| < 1$). For example, both $y[n] = 0.8y[n-1] + x[n]$ (pole at $0.8$) and $y[n] = -0.8y[n-1] + x[n]$ (pole at $-0.8$) are stable.
+
 The total solution is $y[n] = y_h[n] + y_p[n]$.
 
 \subsection{Homogeneous Solution $y_h[n]$}
