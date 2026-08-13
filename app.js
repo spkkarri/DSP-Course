@@ -36,6 +36,7 @@ document.addEventListener("DOMContentLoaded", () => {
         initLTIStabilitySimulator,
         initSystolicSimulator,
         initDTFTSimulator,
+        initPhasorSimulator,
         initFrequencyResponseSimulator,
         initZTransformSimulator,
         initInverseZSimulator,
@@ -2306,11 +2307,335 @@ function initDTFTSimulator() {
         ctxPhase.fillText("\u03c0", x_plus_pi, hPhase - 4);
     }
 
-    [selectSig, sliderParam, sliderShift, sliderMod].forEach(ctrl => {
-        if (ctrl) ctrl.addEventListener("input", draw);
+}
+
+// ============================================================================
+// 10.5. Phasor Rotations & Waveform Generation Simulator (Lecture 3)
+// ============================================================================
+function initPhasorSimulator() {
+    const selectMode = document.getElementById("select-phasor-mode");
+    const sliderW1 = document.getElementById("slider-phasor-w1");
+    const valW1 = document.getElementById("val-phasor-w1");
+    const sliderP1 = document.getElementById("slider-phasor-p1");
+    const valP1 = document.getElementById("val-phasor-p1");
+    
+    const groupCircle2 = document.getElementById("group-phasor-circle2");
+    const sliderW2 = document.getElementById("slider-phasor-w2");
+    const valW2 = document.getElementById("val-phasor-w2");
+
+    const btnPlay = document.getElementById("btn-phasor-play");
+    const btnReset = document.getElementById("btn-phasor-reset");
+
+    const canvasCircle = document.getElementById("canvas-phasor-circle");
+    const canvasWave = document.getElementById("canvas-phasor-wave");
+
+    if (!canvasCircle || !canvasWave) return;
+
+    const ctxCircle = canvasCircle.getContext("2d");
+    const ctxWave = canvasWave.getContext("2d");
+
+    let running = true;
+    let n = 0;
+    let waveHistory = []; // stores { real, imag }
+    const maxHistory = 100;
+    let animationId = null;
+
+    function resize() {
+        canvasCircle.width = canvasCircle.parentElement.clientWidth * window.devicePixelRatio;
+        canvasCircle.height = 210 * window.devicePixelRatio;
+        canvasWave.width = canvasWave.parentElement.clientWidth * window.devicePixelRatio;
+        canvasWave.height = 210 * window.devicePixelRatio;
+
+        ctxCircle.resetTransform();
+        ctxCircle.scale(window.devicePixelRatio, window.devicePixelRatio);
+        ctxWave.resetTransform();
+        ctxWave.scale(window.devicePixelRatio, window.devicePixelRatio);
+    }
+    resize();
+    window.addEventListener("resize", resize);
+
+    function updateLayout() {
+        const mode = selectMode.value;
+        if (mode === "superposition") {
+            groupCircle2.style.display = "block";
+        } else {
+            groupCircle2.style.display = "none";
+        }
+
+        valW1.innerText = parseFloat(sliderW1.value).toFixed(2);
+        valP1.innerText = parseFloat(sliderP1.value).toFixed(2);
+        valW2.innerText = parseFloat(sliderW2.value).toFixed(2);
+    }
+
+    function draw() {
+        updateLayout();
+        
+        const wCircle = canvasCircle.width / window.devicePixelRatio;
+        const hCircle = canvasCircle.height / window.devicePixelRatio;
+        const wWave = canvasWave.width / window.devicePixelRatio;
+        const hWave = canvasWave.height / window.devicePixelRatio;
+
+        const mode = selectMode.value;
+        const w1 = parseFloat(sliderW1.value);
+        const p1 = parseFloat(sliderP1.value);
+        const w2 = parseFloat(sliderW2.value);
+
+        // --- 1. Calculate Positions ---
+        const r1 = 55; // Radius of first circle
+        const r2 = 30; // Radius of second circle
+
+        const theta1 = w1 * n + p1;
+        const x1 = r1 * Math.cos(theta1);
+        const y1 = r1 * Math.sin(theta1);
+
+        let xTotal = x1;
+        let yTotal = y1;
+        let x2 = 0;
+        let y2 = 0;
+
+        if (mode === "counter") {
+            const theta2 = -w1 * n - p1;
+            x2 = r1 * Math.cos(theta2);
+            y2 = r1 * Math.sin(theta2);
+            xTotal = x1 + x2;
+            yTotal = y1 + y2;
+        } else if (mode === "superposition") {
+            const theta2 = w2 * n;
+            x2 = r2 * Math.cos(theta2);
+            y2 = r2 * Math.sin(theta2);
+            xTotal = x1 + x2;
+            yTotal = y1 + y2;
+        }
+
+        if (running) {
+            waveHistory.push({ real: xTotal, imag: yTotal });
+            if (waveHistory.length > maxHistory) {
+                waveHistory.shift();
+            }
+        }
+
+        // --- 2. Draw Circle Canvas (Complex Plane) ---
+        ctxCircle.clearRect(0, 0, wCircle, hCircle);
+        const cx = wCircle / 2;
+        const cy = hCircle / 2;
+
+        // Draw axes
+        ctxCircle.strokeStyle = "rgba(255, 255, 255, 0.08)";
+        ctxCircle.lineWidth = 1;
+        ctxCircle.beginPath();
+        ctxCircle.moveTo(0, cy); ctxCircle.lineTo(wCircle, cy);
+        ctxCircle.moveTo(cx, 0); ctxCircle.lineTo(cx, hCircle);
+        ctxCircle.stroke();
+
+        // Draw first circle
+        ctxCircle.strokeStyle = "rgba(255, 255, 255, 0.15)";
+        ctxCircle.beginPath();
+        ctxCircle.arc(cx, cy, r1, 0, 2 * Math.PI);
+        ctxCircle.stroke();
+
+        // Draw phasor 1 (green)
+        ctxCircle.strokeStyle = "#10b981";
+        ctxCircle.fillStyle = "#10b981";
+        ctxCircle.lineWidth = 2.5;
+        ctxCircle.beginPath();
+        ctxCircle.moveTo(cx, cy);
+        ctxCircle.lineTo(cx + x1, cy - y1);
+        ctxCircle.stroke();
+        // Dot at tip
+        ctxCircle.beginPath();
+        ctxCircle.arc(cx + x1, cy - y1, 4, 0, 2 * Math.PI);
+        ctxCircle.fill();
+
+        if (mode === "counter") {
+            // Draw counter phasor (faint green/blue)
+            ctxCircle.strokeStyle = "rgba(16, 185, 129, 0.4)";
+            ctxCircle.fillStyle = "rgba(16, 185, 129, 0.4)";
+            ctxCircle.beginPath();
+            ctxCircle.moveTo(cx, cy);
+            ctxCircle.lineTo(cx + x2, cy - y2);
+            ctxCircle.stroke();
+            ctxCircle.beginPath();
+            ctxCircle.arc(cx + x2, cy - y2, 3, 0, 2 * Math.PI);
+            ctxCircle.fill();
+
+            // Draw sum vector (orange)
+            ctxCircle.strokeStyle = "#f97316";
+            ctxCircle.fillStyle = "#f97316";
+            ctxCircle.lineWidth = 3;
+            ctxCircle.beginPath();
+            ctxCircle.moveTo(cx, cy);
+            ctxCircle.lineTo(cx + xTotal, cy - yTotal);
+            ctxCircle.stroke();
+            ctxCircle.beginPath();
+            ctxCircle.arc(cx + xTotal, cy - yTotal, 5, 0, 2 * Math.PI);
+            ctxCircle.fill();
+
+            // Dashed projection lines showing cancellation
+            ctxCircle.strokeStyle = "rgba(255,255,255,0.2)";
+            ctxCircle.lineWidth = 1;
+            ctxCircle.setLineDash([3, 3]);
+            ctxCircle.beginPath();
+            ctxCircle.moveTo(cx + x1, cy - y1);
+            ctxCircle.lineTo(cx + xTotal, cy - yTotal);
+            ctxCircle.moveTo(cx + x2, cy - y2);
+            ctxCircle.lineTo(cx + xTotal, cy - yTotal);
+            ctxCircle.stroke();
+            ctxCircle.setLineDash([]);
+        } else if (mode === "superposition") {
+            // Draw circle 2 centered at tip of phasor 1
+            ctxCircle.strokeStyle = "rgba(255, 255, 255, 0.1)";
+            ctxCircle.beginPath();
+            ctxCircle.arc(cx + x1, cy - y1, r2, 0, 2 * Math.PI);
+            ctxCircle.stroke();
+
+            // Draw phasor 2 (purple)
+            ctxCircle.strokeStyle = "#a78bfa";
+            ctxCircle.fillStyle = "#a78bfa";
+            ctxCircle.lineWidth = 2;
+            ctxCircle.beginPath();
+            ctxCircle.moveTo(cx + x1, cy - y1);
+            ctxCircle.lineTo(cx + xTotal, cy - yTotal);
+            ctxCircle.stroke();
+            ctxCircle.beginPath();
+            ctxCircle.arc(cx + xTotal, cy - yTotal, 3.5, 0, 2 * Math.PI);
+            ctxCircle.fill();
+
+            // Draw total sum vector (orange)
+            ctxCircle.strokeStyle = "#f97316";
+            ctxCircle.lineWidth = 2.5;
+            ctxCircle.beginPath();
+            ctxCircle.moveTo(cx, cy);
+            ctxCircle.lineTo(cx + xTotal, cy - yTotal);
+            ctxCircle.stroke();
+        } else {
+            // Single Mode projections to axes
+            ctxCircle.strokeStyle = "rgba(255, 255, 255, 0.2)";
+            ctxCircle.lineWidth = 1;
+            ctxCircle.setLineDash([2, 2]);
+            ctxCircle.beginPath();
+            ctxCircle.moveTo(cx + x1, cy - y1);
+            ctxCircle.lineTo(cx + x1, cy); // Real / Cosine projection
+            ctxCircle.moveTo(cx + x1, cy - y1);
+            ctxCircle.lineTo(cx, cy - y1); // Imag / Sine projection
+            ctxCircle.stroke();
+            ctxCircle.setLineDash([]);
+
+            // Draw labels
+            ctxCircle.fillStyle = "rgba(255, 255, 255, 0.6)";
+            ctxCircle.font = "8px Fira Code";
+            ctxCircle.fillText("Real (cos)", cx + r1 - 10, cy - 5);
+            ctxCircle.fillText("Imag (sin)", cx + 5, cy - r1 + 10);
+        }
+
+        // --- 3. Draw Waveform Canvas ---
+        ctxWave.clearRect(0, 0, wWave, hWave);
+        const wy = hWave / 2;
+
+        // Draw axes
+        ctxWave.strokeStyle = "rgba(255, 255, 255, 0.08)";
+        ctxWave.lineWidth = 1;
+        ctxWave.beginPath();
+        ctxWave.moveTo(0, wy);
+        ctxWave.lineTo(wWave, wy);
+        ctxWave.stroke();
+
+        const xStart = 20;
+        const waveStep = (wWave - xStart - 10) / maxHistory;
+
+        // Draw Real projection waveform (Teal)
+        ctxWave.strokeStyle = "#0dd5c5";
+        ctxWave.lineWidth = 2.5;
+        ctxWave.beginPath();
+        for (let i = 0; i < waveHistory.length; i++) {
+            const wx = xStart + i * waveStep;
+            const val = waveHistory[i].real;
+            // scale value to fit Y height
+            const valY = wy - val * 0.9;
+            if (i === 0) ctxWave.moveTo(wx, valY); else ctxWave.lineTo(wx, valY);
+        }
+        ctxWave.stroke();
+
+        // Draw Imaginary projection waveform (Magenta / Purple) - omit for Counter mode
+        if (mode !== "counter") {
+            ctxWave.strokeStyle = "#ec4899";
+            ctxWave.lineWidth = 1.5;
+            ctxWave.beginPath();
+            for (let i = 0; i < waveHistory.length; i++) {
+                const wx = xStart + i * waveStep;
+                const val = waveHistory[i].imag;
+                const valY = wy - val * 0.9;
+                if (i === 0) ctxWave.moveTo(wx, valY); else ctxWave.lineTo(wx, valY);
+            }
+            ctxWave.stroke();
+        }
+
+        // Current tip horizontal/vertical trackers
+        if (waveHistory.length > 0) {
+            const lastTip = waveHistory[waveHistory.length - 1];
+            // Dot at wave head
+            ctxWave.fillStyle = "#0dd5c5";
+            ctxWave.beginPath();
+            ctxWave.arc(xStart + (waveHistory.length - 1) * waveStep, wy - lastTip.real * 0.9, 4, 0, 2*Math.PI);
+            ctxWave.fill();
+
+            if (mode !== "counter") {
+                ctxWave.fillStyle = "#ec4899";
+                ctxWave.beginPath();
+                ctxWave.arc(xStart + (waveHistory.length - 1) * waveStep, wy - lastTip.imag * 0.9, 3, 0, 2*Math.PI);
+                ctxWave.fill();
+            }
+        }
+
+        // Wave labels
+        ctxWave.fillStyle = "#0dd5c5";
+        ctxWave.font = "8px Fira Code";
+        ctxWave.textAlign = "left";
+        ctxWave.fillText("Real / Cosine", 5, 12);
+        if (mode !== "counter") {
+            ctxWave.fillStyle = "#ec4899";
+            ctxWave.fillText("Imag / Sine", 5, 24);
+        }
+    }
+
+    function animate() {
+        if (running) {
+            n += 0.5; // Increment time
+            draw();
+        }
+        animationId = requestAnimationFrame(animate);
+    }
+
+    function togglePlay() {
+        running = !running;
+        btnPlay.innerText = running ? "⏸️ Pause" : "▶️ Play";
+    }
+
+    function resetPhasor() {
+        n = 0;
+        waveHistory = [];
+        draw();
+    }
+
+    // Set listeners
+    [sliderW1, sliderP1, sliderW2, selectMode].forEach(ctrl => {
+        if (ctrl) {
+            ctrl.addEventListener("input", () => {
+                updateLayout();
+                draw();
+            });
+            ctrl.addEventListener("change", () => {
+                updateLayout();
+                draw();
+            });
+        }
     });
 
-    draw();
+    btnPlay.addEventListener("click", togglePlay);
+    btnReset.addEventListener("click", resetPhasor);
+
+    // Startup
+    updateLayout();
+    animate();
 }
 
 // ============================================================================

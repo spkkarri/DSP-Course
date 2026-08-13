@@ -1425,6 +1425,71 @@
                         </p>
                     </section>
 
+                    <!-- L3 Section 3.5: Fourier Series & Phasor Circle Rotation Simulator -->
+                    <section class="card">
+                        <div class="card-title">Phasor Rotations &amp; Waveform Generation Simulator</div>
+                        <p class="theory-text">
+                            A complex exponential \(e^{j(\omega n + \phi)}\) represents a point rotating on a circle of radius \(A\) in the complex plane. 
+                            * **Frequency (Speed)** determines how fast the point rotates around the circle. Higher speed creates higher frequency sine and cosine waves.
+                            * **Phase (Starting Position)** determines the initial angle \(\phi\) at \(n = 0\).
+                            * **Duality/Superposition**: A real cosine wave \(2\cos(\omega n)\) is formed by the sum of two counter-rotating circles: \(e^{j\omega n} + e^{-j\omega n}\) (imaginary parts cancel out!).
+                            * **Complex Signals**: By chaining two circles (drawing an epicycle where the second circle's center rides on the tip of the first phasor), we can construct any complex waveform. Every complex signal is simply a weighted sum of these rotating phasor circles!
+                        </p>
+                        <div class="sandbox-grid" style="grid-template-columns: 1fr 280px; gap: 20px;">
+                            <div>
+                                <div style="display: flex; gap: 15px; margin-bottom: 12px;">
+                                    <div class="plot-container" style="flex: 1.2; padding: 10px; text-align: center; background: rgba(13, 18, 30, 0.6); position: relative;">
+                                        <h4 style="font-size: 0.8rem; margin-bottom: 10px; color: var(--color-teal);">Complex Plane (Rotating Phasors)</h4>
+                                        <canvas id="canvas-phasor-circle" style="width: 100%; height: 210px;"></canvas>
+                                    </div>
+                                    <div class="plot-container" style="flex: 1.8; padding: 10px; background: rgba(13, 18, 30, 0.6);">
+                                        <h4 style="font-size: 0.8rem; margin-bottom: 5px; color: var(--color-indigo);">Generated Waveform (Real/Imag Projection)</h4>
+                                        <canvas id="canvas-phasor-wave" style="width: 100%; height: 210px;"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="controls-panel">
+                                <h3>Visualizer Controls</h3>
+                                <hr style="border-color: var(--border-color); margin: 8px 0 12px 0;">
+
+                                <div class="control-group">
+                                    <label>Display Mode:</label>
+                                    <select id="select-phasor-mode" style="width: 100%; background: #111827; color: white; border: 1px solid var(--border-color); padding: 6px; border-radius: 6px; outline: none; cursor: pointer;">
+                                        <option value="single">Single Circle (cos &amp; sin projection)</option>
+                                        <option value="counter">Counter-Rotating Circles (Real Cosine)</option>
+                                        <option value="superposition">Two Combined Circles (Epicycle / Complex Signal)</option>
+                                    </select>
+                                </div>
+
+                                <div class="control-group">
+                                    <label>Speed / Freq 1 (\(\omega_1\)): 
+                                        <span id="val-phasor-w1" class="control-val">0.05</span>
+                                    </label>
+                                    <input type="range" id="slider-phasor-w1" min="0.01" max="0.25" value="0.05" step="0.01">
+                                </div>
+
+                                <div class="control-group">
+                                    <label>Phase 1 (\(\phi_1\)): 
+                                        <span id="val-phasor-p1" class="control-val">0.00</span>
+                                    </label>
+                                    <input type="range" id="slider-phasor-p1" min="-3.14" max="3.14" value="0.00" step="0.20">
+                                </div>
+
+                                <div class="control-group" id="group-phasor-circle2" style="display: none;">
+                                    <label>Speed / Freq 2 (\(\omega_2\)): 
+                                        <span id="val-phasor-w2" class="control-val">0.15</span>
+                                    </label>
+                                    <input type="range" id="slider-phasor-w2" min="-0.25" max="0.25" value="0.15" step="0.01">
+                                </div>
+
+                                <div style="display: flex; gap: 8px; margin-top: 15px;">
+                                    <button class="btn btn-primary" id="btn-phasor-play" style="flex: 1; justify-content: center;">⏸️ Pause</button>
+                                    <button class="btn" id="btn-phasor-reset" style="flex: 1; justify-content: center;">🔄 Reset</button>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
                     <!-- L3 Section 4: Checkpoints / Quiz -->
                     <section class="card">
                         <div class="card-title">Interactive Lecture Checkpoints</div>
