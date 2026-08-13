@@ -2307,6 +2307,11 @@ function initDTFTSimulator() {
         ctxPhase.fillText("\u03c0", x_plus_pi, hPhase - 4);
     }
 
+    [selectSig, sliderParam, sliderShift, sliderMod].forEach(ctrl => {
+        if (ctrl) ctrl.addEventListener("input", draw);
+    });
+
+    draw();
 }
 
 // ============================================================================
@@ -2408,7 +2413,12 @@ function initPhasorSimulator() {
         }
 
         if (running) {
-            waveHistory.push({ real: xTotal, imag: yTotal });
+            waveHistory.push({
+                real1: x1,
+                imag1: y1,
+                realTotal: xTotal,
+                imagTotal: yTotal
+            });
             if (waveHistory.length > maxHistory) {
                 waveHistory.shift();
             }
@@ -2542,46 +2552,82 @@ function initPhasorSimulator() {
         const xStart = 20;
         const waveStep = (wWave - xStart - 10) / maxHistory;
 
-        // Draw Real projection waveform (Teal)
+        // --- Draw Waveforms ---
+        // 1. Draw Individual Circle 1 Component Waveforms (Faint Dashed Lines)
+        if (mode === "counter" || mode === "superposition") {
+            // Real (cos1)
+            ctxWave.strokeStyle = "rgba(13, 213, 197, 0.4)";
+            ctxWave.lineWidth = 1.2;
+            ctxWave.setLineDash([4, 4]);
+            ctxWave.beginPath();
+            for (let i = 0; i < waveHistory.length; i++) {
+                const wx = xStart + i * waveStep;
+                const val = waveHistory[i].real1;
+                const valY = wy - val * 0.9;
+                if (i === 0) ctxWave.moveTo(wx, valY); else ctxWave.lineTo(wx, valY);
+            }
+            ctxWave.stroke();
+            ctxWave.setLineDash([]);
+
+            // Imag (sin1) - only for superposition
+            if (mode === "superposition") {
+                ctxWave.strokeStyle = "rgba(236, 72, 153, 0.4)";
+                ctxWave.lineWidth = 1.2;
+                ctxWave.setLineDash([4, 4]);
+                ctxWave.beginPath();
+                for (let i = 0; i < waveHistory.length; i++) {
+                    const wx = xStart + i * waveStep;
+                    const val = waveHistory[i].imag1;
+                    const valY = wy - val * 0.9;
+                    if (i === 0) ctxWave.moveTo(wx, valY); else ctxWave.lineTo(wx, valY);
+                }
+                ctxWave.stroke();
+                ctxWave.setLineDash([]);
+            }
+        }
+
+        // 2. Draw Combined / Total Waveforms (Solid Thick Lines)
+        // Combined Real (cos total)
         ctxWave.strokeStyle = "#0dd5c5";
-        ctxWave.lineWidth = 2.5;
+        ctxWave.lineWidth = 2.8;
         ctxWave.beginPath();
         for (let i = 0; i < waveHistory.length; i++) {
             const wx = xStart + i * waveStep;
-            const val = waveHistory[i].real;
-            // scale value to fit Y height
+            const val = waveHistory[i].realTotal;
             const valY = wy - val * 0.9;
             if (i === 0) ctxWave.moveTo(wx, valY); else ctxWave.lineTo(wx, valY);
         }
         ctxWave.stroke();
 
-        // Draw Imaginary projection waveform (Magenta / Purple) - omit for Counter mode
+        // Combined Imag (sin total)
         if (mode !== "counter") {
             ctxWave.strokeStyle = "#ec4899";
-            ctxWave.lineWidth = 1.5;
+            ctxWave.lineWidth = 1.8;
             ctxWave.beginPath();
             for (let i = 0; i < waveHistory.length; i++) {
                 const wx = xStart + i * waveStep;
-                const val = waveHistory[i].imag;
+                const val = waveHistory[i].imagTotal;
                 const valY = wy - val * 0.9;
                 if (i === 0) ctxWave.moveTo(wx, valY); else ctxWave.lineTo(wx, valY);
             }
             ctxWave.stroke();
         }
 
-        // Current tip horizontal/vertical trackers
+        // Current tip trackers (dots at wave heads)
         if (waveHistory.length > 0) {
             const lastTip = waveHistory[waveHistory.length - 1];
-            // Dot at wave head
+            
+            // Combined Real head dot
             ctxWave.fillStyle = "#0dd5c5";
             ctxWave.beginPath();
-            ctxWave.arc(xStart + (waveHistory.length - 1) * waveStep, wy - lastTip.real * 0.9, 4, 0, 2*Math.PI);
+            ctxWave.arc(xStart + (waveHistory.length - 1) * waveStep, wy - lastTip.realTotal * 0.9, 4, 0, 2*Math.PI);
             ctxWave.fill();
 
+            // Combined Imag head dot
             if (mode !== "counter") {
                 ctxWave.fillStyle = "#ec4899";
                 ctxWave.beginPath();
-                ctxWave.arc(xStart + (waveHistory.length - 1) * waveStep, wy - lastTip.imag * 0.9, 3, 0, 2*Math.PI);
+                ctxWave.arc(xStart + (waveHistory.length - 1) * waveStep, wy - lastTip.imagTotal * 0.9, 3, 0, 2*Math.PI);
                 ctxWave.fill();
             }
         }
