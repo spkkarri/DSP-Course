@@ -4,17 +4,37 @@
 \providecommand\HyField@AuxAddToCoFields[2]{}
 \@writefile{toc}{\contentsline {section}{\numberline {1}Lecture Plan \& Objectives (40 Minutes Breakdown)}{1}{section.1}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {2}Definition \& Mathematical Motivation}{1}{section.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {3}Properties of the Region of Convergence (ROC)}{2}{section.3}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces ROC shapes in the complex z-plane for causal and anti-causal exponential sequences.}}{2}{figure.1}\protected@file@percent }
-\newlabel{fig:roc_causal}{{1}{2}{ROC shapes in the complex z-plane for causal and anti-causal exponential sequences}{figure.1}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {4}Z-Transform Properties \& Proofs}{2}{section.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Time Shifting}{2}{subsection.4.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Scaling in the Z-domain}{2}{subsection.4.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Differentiation in the Z-domain}{3}{subsection.4.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.4}Initial Value Theorem}{3}{subsection.4.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {5}Common Pairs and Annular ROC}{3}{section.5}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Common Z-transform pairs.}}{3}{table.1}\protected@file@percent }
-\newlabel{tab:z_pairs}{{1}{3}{Common Z-transform pairs}{table.1}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces ROC of a stable two-sided sequence, forming an annular ring bounded by pole radii.}}{3}{figure.2}\protected@file@percent }
-\newlabel{fig:annular}{{2}{3}{ROC of a stable two-sided sequence, forming an annular ring bounded by pole radii}{figure.2}{}}
-\gdef \@abspage@last{3}
+\@writefile{toc}{\contentsline {section}{\numberline {3}Properties of the ROC \& Unit Circle Location Clarification}{2}{section.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Does the ROC Lie Inside the Unit Circle?}{2}{subsection.3.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces ROC geometries in the z-plane for causal ($|z| > 0.7$) vs. anti-causal ($|z| < 0.7$, inside unit circle) signals with explicit BIBO stability comments.}}{2}{figure.1}\protected@file@percent }
+\newlabel{fig:roc_causal}{{1}{2}{ROC geometries in the z-plane for causal ($|z| > 0.7$) vs. anti-causal ($|z| < 0.7$, inside unit circle) signals with explicit BIBO stability comments}{figure.1}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4}Worked Examples: Signal Variants \& Multi-Pole Multi-Zero Systems}{3}{section.4}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Demonstrative Pole-Zero plots and ROC regions for Causal Cosine, Damped Sinusoid, and Anti-Causal Exponential.}}{3}{figure.2}\protected@file@percent }
+\newlabel{fig:pole_zero_examples}{{2}{3}{Demonstrative Pole-Zero plots and ROC regions for Causal Cosine, Damped Sinusoid, and Anti-Causal Exponential}{figure.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Example 1: Impulse, Step, Cosine \& Damped Sinusoid}{3}{subsection.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Example 2: Multi-Pole Multi-Zero System (ROC, Magnitude \& Phase)}{3}{subsection.4.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Multi-pole multi-zero system pole-zero plot in z-plane (left), magnitude response $|H(e^{j\omega })|$ (center), and phase response $\angle H(e^{j\omega })$ (right).}}{3}{figure.3}\protected@file@percent }
+\newlabel{fig:multipole_system}{{3}{3}{Multi-pole multi-zero system pole-zero plot in z-plane (left), magnitude response $|H(e^{j\omega })|$ (center), and phase response $\angle H(e^{j\omega })$ (right)}{figure.3}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5}Geometric Vector Method: Magnitude \& Phase Computation}{4}{section.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}Case 1: Single Zero System ($H(z) = z - 0.6$)}{4}{subsection.5.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Single zero geometric vector evaluation along the unit circle from $0 \to 2\pi $.}}{4}{figure.4}\protected@file@percent }
+\newlabel{fig:single_zero_vector}{{4}{4}{Single zero geometric vector evaluation along the unit circle from $0 \to 2\pi $}{figure.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}Case 2: Single Pole System ($H(z) = \frac  {1}{z - 0.7}$)}{4}{subsection.5.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Single pole geometric vector evaluation showing resonance peak at $\omega =0$.}}{5}{figure.5}\protected@file@percent }
+\newlabel{fig:single_pole_vector}{{5}{5}{Single pole geometric vector evaluation showing resonance peak at $\omega =0$}{figure.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.3}Case 3: One Pole + One Zero System ($H(z) = \frac  {z - 0.8}{z - 0.5}$)}{5}{subsection.5.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces One pole and one zero geometric vector evaluation along unit circle.}}{5}{figure.6}\protected@file@percent }
+\newlabel{fig:one_pole_one_zero_vector}{{6}{5}{One pole and one zero geometric vector evaluation along unit circle}{figure.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.4}Case 4: Two Poles + Two Zeros System ($H(z) = \frac  {z^2 - 1}{z^2 - 0.8z + 0.25}$)}{5}{subsection.5.4}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces Two poles and two zeros geometric vector evaluation with notches and resonance.}}{6}{figure.7}\protected@file@percent }
+\newlabel{fig:two_poles_two_zeros_vector}{{7}{6}{Two poles and two zeros geometric vector evaluation with notches and resonance}{figure.7}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6}Z-Transform Properties \& Proofs}{6}{section.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.1}Time Shifting}{6}{subsection.6.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.2}Scaling in the Z-domain}{6}{subsection.6.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.3}Differentiation in the Z-domain}{6}{subsection.6.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {7}Comprehensive Common Z-Transform Pairs Table}{7}{section.7}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Comprehensive Z-transform pairs with ROC and Stability comments.}}{7}{table.1}\protected@file@percent }
+\newlabel{tab:z_pairs}{{1}{7}{Comprehensive Z-transform pairs with ROC and Stability comments}{table.1}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces ROC of a stable two-sided sequence, forming an annular ring bounded by pole radii.}}{7}{figure.8}\protected@file@percent }
+\newlabel{fig:annular}{{8}{7}{ROC of a stable two-sided sequence, forming an annular ring bounded by pole radii}{figure.8}{}}
+\gdef \@abspage@last{7}

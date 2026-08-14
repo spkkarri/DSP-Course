@@ -7,12 +7,12 @@
 \usepackage{booktabs}
 \usepackage{hyperref}
 \usepackage{float}
+\usepackage{xcolor}
 
 \title{\textbf{EE3621: Digital Signal Processing} \\ \Large Lecture 4: Frequency Response, Magnitude/Phase \& Group Delay of LTI Systems \\ \large (III B.Tech EEE)}
 \author{Lecture Notes (40-Minute Plan)}
 \date{}
 
-\usepackage{xcolor}
 \definecolor{darkbg}{HTML}{0d121f}
 \definecolor{lighttext}{HTML}{e2e8f0}
 \definecolor{primary}{HTML}{8b5cf6}
@@ -36,8 +36,9 @@
     \item \textbf{00:00 -- 08:00 (8 mins):} LTI Eigenfunctions: Why complex exponentials are unique. Derivation of $H(e^{j\omega})$.
     \item \textbf{08:00 -- 15:00 (7 mins):} Magnitude \& Phase responses, Rectangular vs. Polar forms.
     \item \textbf{15:00 -- 25:00 (10 mins):} Phase Delay vs. Group Delay. Narrowband input derivation (Carrier vs. Envelope delay).
-    \item \textbf{25:00 -- 35:00 (10 mins):} First-order IIR Filter Example: Detailed algebraic derivation of Group Delay.
-    \item \textbf{35:00 -- 40:00 (5 mins):} Checkpoints \& Concept Recap.
+    \item \textbf{25:00 -- 33:00 (8 mins):} Signal Impacts in Time/Frequency Domains \& Voltage Signal Characteristics.
+    \item \textbf{33:00 -- 38:00 (5 mins):} First-order IIR Filter Example: Detailed algebraic derivation of Group Delay.
+    \item \textbf{38:00 -- 40:00 (2 mins):} Checkpoints \& Concept Recap.
 \end{itemize}
 
 \noindent\rule{\textwidth}{0.5pt}
@@ -50,11 +51,7 @@ y[n] = \sum_{k=-\infty}^{\infty} h[k] x[n-k] = \sum_{k=-\infty}^{\infty} h[k] e^
 \end{equation}
 We define the complex scaling factor (eigenvalue) as the frequency response $H(e^{j\omega})$:
 \begin{equation}
-y[n] = H(e^{j\omega}) e^{j\omega n}
-\end{equation}
-where:
-\begin{equation}
-H(e^{j\omega}) = \sum_{k=-\infty}^{\infty} h[k] e^{-j\omega k}
+y[n] = H(e^{j\omega}) e^{j\omega n} \quad \text{where} \quad H(e^{j\omega}) = \sum_{k=-\infty}^{\infty} h[k] e^{-j\omega k}
 \end{equation}
 
 \section{Magnitude \& Phase Responses}
@@ -63,7 +60,7 @@ The frequency response can be written in polar form:
 H(e^{j\omega}) = |H(e^{j\omega})| e^{j\theta(\omega)}
 \end{equation}
 where $|H(e^{j\omega})|$ is the magnitude response and $\theta(\omega) = \angle H(e^{j\omega})$ is the phase response (Figure~\ref{fig:mag_phase_lpf_hpf}).
-For a sinusoidal input $x[n] = A \cos(\omega_0 n + \phi)$, the LTI output is:
+For a sinusoidal input $x[n] = A \cos(\omega_0 n + \phi)$, the output is:
 \begin{equation}
 y[n] = A |H(e^{j\omega_0})| \cos(\omega_0 n + \phi + \theta(\omega_0))
 \end{equation}
@@ -76,11 +73,41 @@ y[n] = A |H(e^{j\omega_0})| \cos(\omega_0 n + \phi + \theta(\omega_0))
 \end{figure}
 
 \section{Phase Delay vs. Group Delay}
-\subsection{Mathematical Definitions}
-\begin{align}
-\text{Phase Delay: } \tau_p(\omega) &= -\frac{\theta(\omega)}{\omega} \\
-\text{Group Delay: } \tau_g(\omega) &= -\frac{d\theta(\omega)}{d\omega}
-\end{align}
+\subsection{Mathematical Definitions \& Intuitive Meaning}
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{@{}p{0.20\textwidth}p{0.32\textwidth}p{0.22\textwidth}p{0.20\textwidth}@{}}
+\toprule
+\textbf{Concept} & \textbf{Simplest Intuitive Meaning} & \textbf{Formula} & \textbf{Everyday Analogy} \\ \midrule
+\textbf{Phase Delay ($\tau_p$)} & Time delay of a \textbf{SINGLE pure sine wave} & $\tau_p(\omega) = -\frac{\theta(\omega)}{\omega}$ & Delay of a runner's stride rhythm \\
+\textbf{Group Delay ($\tau_g$)} & Time delay of the \textbf{OVERALL ENVELOPE / PACKET} & $\tau_g(\omega) = -\frac{d\theta(\omega)}{d\omega}$ & Delay of the entire group / pack of runners \\ \bottomrule
+\end{tabular}
+\caption{Intuitive distinction between Phase Delay and Group Delay.}
+\end{table}
+
+\subsubsection{\texorpdfstring{Intuition Behind Phase Delay ($\tau_p$)}{Intuition Behind Phase Delay}}
+\begin{itemize}
+    \item \textbf{Core Question:} \textit{"How long does one individual frequency component take to travel through the filter?"}
+    \item \textbf{Derivation:} Sinusoidal phase shift is $\theta(\omega) = -\omega \cdot \tau_p \implies \tau_p(\omega) = -\frac{\theta(\omega)}{\omega}$ (in samples or seconds).
+\end{itemize}
+
+\subsubsection{\texorpdfstring{Intuition Behind Group Delay ($\tau_g$)}{Intuition Behind Group Delay}}
+\begin{itemize}
+    \item \textbf{Core Question:} \textit{"How long does the overall shape, modulation burst, or pulse envelope take to pass through the filter?"}
+    \item \textbf{Why Derivative $\frac{d\theta}{d\omega}$?} Two nearby frequencies ($\omega_1, \omega_2$) interact to form a beat envelope. The delay of this envelope is $\text{Delay} \approx -\frac{\Delta \theta}{\Delta \omega}$. Taking $\Delta \omega \to 0$ yields the exact derivative $\tau_g(\omega) = -\frac{d\theta(\omega)}{d\omega}$.
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.88\textwidth]{images/phase_vs_group_delay_intuition.png}
+\caption{Demonstrative illustration: Phase Delay ($\tau_p$) vs. Group Delay ($\tau_g$) side-by-side comparison with intuitive callout boxes and formulas.}
+\label{fig:phase_vs_group_delay_intuition}
+\end{figure}
+
+
+
 
 \subsection{Narrowband Envelope Propagation}
 Consider a narrowband wave packet input:
@@ -95,14 +122,39 @@ The resulting system output is:
 \begin{equation}
 y[n] \approx |H(e^{j\omega_0})| s[n - \tau_g(\omega_0)] \cos(\omega_0(n - \tau_p(\omega_0)))
 \end{equation}
-Thus, the envelope $s[n]$ is delayed by the group delay, while the carrier phase is delayed by the phase delay. Figure~\ref{fig:group_delay} compares group delay profiles.
+Thus, the modulation envelope $s[n]$ is delayed by the group delay $\tau_g(\omega_0)$, while the carrier fine structure is delayed by the phase delay $\tau_p(\omega_0)$ (Figure~\ref{fig:carrier_envelope_delay}).
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.85\textwidth]{images/group_delay_analysis.png}
-\caption{Filter magnitude and corresponding group delay curves for different pole choices.}
-\label{fig:group_delay}
+\includegraphics[width=0.85\textwidth]{images/narrowband_carrier_envelope_delay.png}
+\caption{Carrier phase shift vs. Modulation envelope shift under phase delay and group delay.}
+\label{fig:carrier_envelope_delay}
 \end{figure}
+
+\section{Impact of Phase \& Group Delay in Time and Frequency Domains}
+\begin{itemize}
+    \item \textbf{Single Pure Sinusoid ($\omega_0$):} In the time domain, the waveform experiences a uniform time shift of $\tau_p(\omega_0)$ samples without shape distortion. In the frequency domain, the spectral line acquires a phase shift $\theta(\omega_0) = -\omega_0 \tau_p(\omega_0)$.
+    \item \textbf{Narrowband Signal (Modulated Wave Packet):} In the time domain, the carrier shifts by phase delay $\tau_p$, while the envelope packet shifts by group delay $\tau_g$. In the frequency domain, the local phase spectrum around $\omega_0$ is linear with slope $-\tau_g(\omega_0)$.
+    \item \textbf{Broadband Multi-Harmonic Signal (Linear Phase):} When $\tau_g(\omega) = \alpha$ (constant across all frequencies), transmission is \textbf{distortionless}. The entire composite signal is shifted by $\alpha$ samples in time with zero shape change.
+    \item \textbf{Broadband Multi-Harmonic Signal (Non-Linear Phase):} When $\tau_g(\omega)$ varies with frequency, \textbf{phase dispersion} occurs. Harmonics shift asynchronously in time, resulting in severe waveform distortion, loss of symmetry, and peak amplitude attenuation.
+\end{itemize}
+
+\section{Impact on Voltage Signal Characteristics}
+In power system harmonics, digital voltage buses, and analog instrumentation, non-constant group delay degrades key voltage parameters:
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{images/voltage_signal_dispersion.png}
+\caption{Impact of linear vs. non-linear group delay dispersion on a multi-harmonic composite voltage waveform.}
+\label{fig:voltage_dispersion}
+\end{figure}
+
+\begin{enumerate}
+    \item \textbf{Peak Voltage Magnitude ($V_{peak}$) Degradation:} In multi-harmonic AC voltage signals $v(t) = \sum V_k \sin(k\omega_0 t + \phi_k)$, non-constant phase delays disrupt the constructive alignment of harmonic peaks, resulting in a reduced peak voltage amplitude or localized voltage overshoots.
+    \item \textbf{Edge Slew Rate ($\frac{dV}{dt}$) \& Rise Time ($t_r$):} Sharp digital voltage steps suffer dispersion because high-frequency Fourier components are delayed differently from low frequencies. This smears the voltage step edge, reduces slew rate $\frac{dV}{dt}$, increases rise time $t_r$, and induces Inter-Symbol Interference (ISI) in data buses.
+    \item \textbf{Crest Factor ($CF = V_{peak}/V_{rms}$):} Even for an all-pass filter where total signal energy and $V_{rms}$ are preserved, non-linear phase alters peak alignment, causing significant variations in the Crest Factor.
+    \item \textbf{Zero-Crossing Jitter \& Synchronization Errors:} Non-uniform phase delay shifts zero-crossing timestamps of harmonic voltage components, introducing timing jitter in Zero-Crossing Detectors (ZCD), phase-locked loops (PLL), and SCR thyristor firing circuits.
+\end{enumerate}
 
 \section{Group Delay Derivation for First-Order Filter}
 Let $y[n] - r y[n-1] = x[n]$ with $|r| < 1$.
@@ -122,5 +174,20 @@ Thus:
 \begin{equation}
 \tau_g(\omega) = -\frac{d\theta(\omega)}{d\omega} = \frac{r\cos\omega - r^2}{1 + r^2 - 2r\cos\omega}
 \end{equation}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{images/group_delay_analysis.png}
+\caption{Filter magnitude and corresponding group delay curves for different pole choices.}
+\label{fig:group_delay}
+\end{figure}
+
+\section{Checkpoint \& Numerical Review Questions}
+\begin{enumerate}
+    \item \textbf{Q1 (Pure Delay):} Find $\tau_p(\omega)$ and $\tau_g(\omega)$ for $h[n] = \delta[n - n_0]$. \\
+    \textit{Solution:} $H(e^{j\omega}) = e^{-j\omega n_0} \implies \theta(\omega) = -\omega n_0$. Thus $\tau_p(\omega) = \tau_g(\omega) = n_0$ samples (constant delay $\to$ distortionless).
+    \item \textbf{Q2 (DC Group Delay):} For $r = 0.9$, evaluate $\tau_g(0)$. \\
+    \textit{Solution:} $\tau_g(0) = \frac{0.9 - 0.81}{1 + 0.81 - 1.8} = \frac{0.09}{0.01} = 9$ samples.
+\end{enumerate}
 
 \end{document}
