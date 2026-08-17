@@ -15,3 +15,6 @@ scratch/
 scratch_*.py
 write_*.py
 *.log
+*.aux
+*.out
+*.toc

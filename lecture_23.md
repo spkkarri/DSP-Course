@@ -35,6 +35,21 @@ Digital oscillators provide perfect reproducibility, instantaneous frequency hop
 
 ## 3. Recursive Oscillator (IIR Approach)
 
+### Visual Illustration: Fixed-Point Amplitude Drift in Recursive Oscillators
+
+![Recursive Oscillator Z-Plane Drift](images/recursive_oscillator_zplane_drift.png)
+
+* **Quantization Vulnerability:** Second-order recursive oscillators place poles exactly on the unit circle ($|z|=1$). Even a $0.5\%$ fixed-point coefficient rounding error shifts poles inside $|z|<1$ (exponential decay) or outside $|z|>1$ (overflow explosion).
+
+---
+
+### Visual Illustration: Direct Digital Synthesis (DDS / NCO) Architecture
+
+![DDS NCO Architecture Operation](images/dds_nco_architecture_operation.png)
+
+* **DDS / NCO Precision:** DDS uses a phase accumulator and sine LUT, guaranteeing exact amplitude stability, sub-Hertz frequency resolution $\Delta f = f_{clk}/2^N$, and glitch-free instantaneous frequency modulation.
+
+
 We can generate a sinusoid by realizing a discrete-time system whose impulse response is a sinusoid. This is equivalent to placing poles exactly on the unit circle.
 
 Consider the complex exponential sequence:
@@ -174,10 +189,6 @@ Instead of a constant phase increment $\Delta\phi$, we use an NCO with a linearl
 ## 10. Illustrative Figures
 
 Below are plots demonstrating typical side-lobe windowing and suppression that are essential when analyzing oscillator outputs or filtering out spurs.
-
-![Window Shapes](images/window_comparison_shapes.png)
-
-![Sidelobe Suppression](images/sidelobe_suppression.png)
 
 ---
 

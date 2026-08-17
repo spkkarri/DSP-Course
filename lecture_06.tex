@@ -32,6 +32,26 @@
 \maketitle
 
 \section{Lecture Plan \& Objectives (40 Minutes Breakdown)}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\textwidth]{images/pole_zero_stability_l6.png}
+    \caption{Z-Plane Stability Regions \& Pole Dynamics: Stable ($|z|<1$), Marginally Stable ($|z|=1$), Unstable ($|z|>1$).}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/impulse_response_modes.png}
+    \caption{Time-Domain Impulse Response Modes corresponding to Pole Locations in the Complex Z-Plane.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/pfe_decomposition_modes.png}
+    \caption{Partial Fraction Expansion: Synthesizing the Complete Impulse Response as a Superposition of Modes.}
+\end{figure}
+
+
 \begin{itemize}
     \item \textbf{00:00 -- 05:00 (5 mins):} Motivation: Why do we need the Inverse Z-transform? Uniqueness of ROC.
     \item \textbf{05:00 -- 18:00 (13 mins):} Method 1: Partial Fraction Expansion (Distinct and Repeated Poles).
@@ -100,19 +120,5 @@ For a pole $z=p$ of order $m$, the residue is:
 \end{itemize}
 
 Stability boundaries and impulse response modes are illustrated in Figures~\ref{fig:zplane_stability} and~\ref{fig:impulse_modes}.
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.65\textwidth]{images/pole_zero_stability_l6.png}
-\caption{Stable and unstable pole regions in the z-plane.}
-\label{fig:zplane_stability}
-\end{figure}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.85\textwidth]{images/impulse_response_modes.png}
-\caption{Decaying (stable) and growing (unstable) impulse response modes.}
-\label{fig:impulse_modes}
-\end{figure}
 
 \end{document}

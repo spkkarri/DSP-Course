@@ -35,6 +35,34 @@ This indirect approach is used because closed-form formulas exist for analog fil
 
 ## 3. Butterworth Analog Prototype
 
+### Visual Illustration: Analog Prototypes & S-Plane Pole Placement
+
+![Analog Filter Prototypes](images/analog_filter_prototypes.png)
+
+* **Prototype Comparison:**
+  - **Butterworth:** Maximally flat passband, all poles uniformly distributed on a circle in the left-half s-plane.
+  - **Chebyshev Type I:** Equiripple in passband, steeper roll-off, poles lie on an ellipse in the left-half plane.
+
+---
+
+### Visual Illustration: Bilinear Transformation Conformal S-to-Z Mapping
+
+![Bilinear S-to-Z Mapping](images/bilinear_s_to_z_mapping.png)
+
+* **Conformal Mapping ($s = rac{2}{T} rac{1-z^{-1}}{1+z^{-1}}$):**
+  - Maps the entire Left-Half S-Plane into the interior of the Unit Circle ($|z|<1$).
+  - Maps the imaginary axis $j\Omega$ exactly onto the Unit Circle boundary ($|z|=1$).
+  - Guarantees that a stable analog filter transforms into a strictly stable digital filter!
+
+---
+
+### Visual Illustration: Frequency Warping & Prewarping Requirement
+
+![Frequency Warping and Prewarping](images/frequency_warping_prewarping.png)
+
+* **Prewarping Essential:** Non-linear frequency compression ($\Omega = rac{2}{T}	an(\omega/2)$) compresses infinite analog frequency $\Omega 	o \infty$ into digital $\omega = \pi$. Prewarping analog critical frequencies guarantees the digital filter cuts off at the exact desired frequency.
+
+
 The Butterworth filter is known as the **maximally flat** magnitude filter. Its response is as flat as mathematically possible in the passband and rolls off monotonically in the stopband.
 
 ### 3.1 Magnitude Response

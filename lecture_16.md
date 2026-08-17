@@ -41,11 +41,32 @@ This is where **Adaptive Filters** come in. An adaptive filter consists of two p
 
 *(Note: The underlying filter structure is often a standard FIR filter. For reference on FIR structures, see the basic linear-phase FIR implementation below. While adaptive filters don't explicitly require linear phase, they share the same tapped-delay line architecture. Similarly, alternative realizations like frequency-sampling can be used, though direct-form is most common in adaptive filtering.)*
 
-![FIR Filter Structure](images/linear_phase_fir.png)
-
 ---
 
 ## 3. Steepest Descent Algorithm
+
+### Visual Illustration: Quadratic MSE Error Performance Surface & Gradient Search
+
+![LMS Error Performance Surface](images/lms_error_performance_surface.png)
+
+* **Performance Bowl:** The Mean Square Error $J(\mathbf{w})$ forms a parabolic bowl. The LMS algorithm uses stochastic gradient descent to iteratively steer the filter weights $\mathbf{w}[n]$ toward the bottom of the bowl (Wiener optimal $\mathbf{w}^*$).
+
+---
+
+### Visual Illustration: Canonical Adaptive FIR Closed-Loop Architecture
+
+![Adaptive Filter Block Diagram](images/adaptive_filter_block_diagram.png)
+
+* **Closed-Loop Feedback:** The error signal $e[n] = d[n] - y[n]$ continually updates tap weights via $\mathbf{w}[n+1] = \mathbf{w}[n] + 2\mu e[n] \mathbf{x}[n]$.
+
+---
+
+### Visual Illustration: LMS Learning Curve (Error Convergence)
+
+![LMS Learning Curve](images/lms_learning_curve_weights.png)
+
+* **Convergence vs Stability:** Step size $\mu$ controls speed of convergence. If $\mu < 1/\lambda_{max}$, error decays exponentially toward the noise floor.
+
 
 To understand adaptive filtering, we first look at the theoretical **Steepest Descent Algorithm**. 
 
@@ -226,8 +247,6 @@ Adaptive filters are everywhere in modern communications.
 When you speak on a speakerphone, the microphone picks up the audio from the loudspeaker and sends it back to the far end, causing an echo.
 An adaptive filter models the acoustic path from the speaker to the mic. The far-end signal is the input $x[n]$, the mic signal is $d[n]$. The filter subtracts its estimate of the echo $y[n]$ from $d[n]$, transmitting only the error $e[n]$ (which is the near-end speech).
 *(Refer to the block diagram concepts from Figure 1 for standard FIR feed-forward paths used here, or alternatively frequency-sampling structures if frequency-domain adaptive filtering is employed.)*
-
-![Frequency Sampling Structure as alternative](images/frequency_sampling_structure.png)
 
 ### 9.2. Adaptive Noise Cancellation (ANC)
 Used in noise-canceling headphones. A primary mic picks up Signal + Noise. A reference mic picks up correlated Noise. The adaptive filter filters the reference noise to match the noise in the primary mic and subtracts it.

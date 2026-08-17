@@ -233,8 +233,6 @@ Evaluating frequency response by moving along the unit circle $z = e^{j\omega}$:
 
 ![Two Poles Two Zeros Vector Demonstration](images/vector_geometric_two_poles_two_zeros.png)
 
-
-
 For transform pairs $x[n] \longleftrightarrow X(z)$ with ROC $R_x$ and $y[n] \longleftrightarrow Y(z)$ with ROC $R_y$:
 
 ### A. Linearity

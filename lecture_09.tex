@@ -45,6 +45,26 @@
 \noindent\rule{\textwidth}{0.5pt}
 
 \section{Computational Complexity Motivation}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/dft_vs_fft_complexity.png}
+    \caption{Computational Scaling: Direct DFT $O(N^2)$ vs. Radix-2 FFT $O(N \log_2 N)$ ($>99.5\%$ Savings for $N=1024$).}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/dit_bit_reversal_tree.png}
+    \caption{Radix-2 Decimation-in-Time Bit-Reversal Address Mapping for In-Place Memory Execution.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\textwidth]{images/fft_butterfly.png}
+    \caption{Fundamental 2-Point Butterfly Computation Unit (Radix-2 DIT).}
+\end{figure}
+
+
 The Direct Discrete Fourier Transform (DFT) of an $N$-point sequence $x[n]$ is given by:
 \begin{equation}
 X[k] = \sum_{n=0}^{N-1} x[n] W_N^{kn}
@@ -66,13 +86,6 @@ For small $N$, this is fine. But consider a typical audio block of $N=1024$:
 Number of complex multiplications = $1024^2 = 1,048,576 > 10^6$. Since one complex multiplication requires 4 real multiplications and 2 real additions, the burden is massive. Real-time processing becomes impossible for longer sequences without a better algorithm.
 
 The Fast Fourier Transform (FFT) reduces this complexity from $O(N^2)$ to $O(N \log_2 N)$. For $N=1024$, the FFT requires only $\frac{N}{2}\log_2 N = 512 \times 10 = 5120$ multiplications.
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.85\textwidth]{images/dft_vs_fft_complexity.png}
-\caption{Comparison of computational complexity: Direct DFT vs. Radix-2 FFT.}
-\label{fig:complexity}
-\end{figure}
 
 \section{Divide \& Conquer Decomposition: Decimation in Time (DIT)}
 The Radix-2 DIT FFT algorithm works by recursively dividing an $N$-point sequence (where $N$ is a power of 2) into two shorter sequences of length $N/2$. 

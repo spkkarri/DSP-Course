@@ -62,6 +62,20 @@ The underlying assumption of the DFT and DTFT is that the signal $x[n]$ is \text
 \end{itemize}
 
 \section{STFT Definition}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/stft_windowing_concept.png}
+    \caption{Short-Time Fourier Transform: Sliding Temporal Window Localizing Time-Varying Spectral Content.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/spectrogram_narrowband_vs_wideband.png}
+    \caption{Spectrogram Resolution Trade-off: Narrowband (Fine Frequency) vs. Wideband (Fine Time) Representation.}
+\end{figure}
+
+
 To analyze a signal at a specific time $n$, we multiply the signal by a window function $w[m-n]$ centered at time $n$. This window isolates a short segment of the signal around time $n$. We then take the Fourier transform of this isolated segment.
 
 The Short-Time Fourier Transform (STFT) is defined as:

@@ -22,6 +22,21 @@
 
 ## 2. Speech Production Model
 
+### Visual Illustration: Source-Filter Speech Production Model
+
+![Speech Production Source Filter Model](images/speech_production_source_filter.png)
+
+* **Acoustic Speech Synthesis:** Voiced pitch pulses (vocal cords) or unvoiced white noise (fricatives) excite a time-varying all-pole vocal tract filter $H(z) = G / A(z)$ to produce intelligible speech.
+
+---
+
+### Visual Illustration: LPC Spectral Envelope Formant Tracking
+
+![LPC Spectral Envelope Tracking](images/lpc_spectral_envelope_tracking.png)
+
+* **Formant Extraction:** Linear Predictive Coding (LPC) estimates the coefficients $a_k$, smoothing out fine glottal pitch harmonics to track major acoustic resonance peaks ($F_1, F_2, F_3$) for speech recognition and vocoder compression.
+
+
 The physical process of human speech generation can be approximated by the **Source-Filter Model**. In this paradigm, the speech signal is the output of a linear time-invariant (LTI) (or slowly time-varying) system.
 
 ### 2.1 Excitation Source (The "Source")
@@ -149,7 +164,7 @@ For a block of speech (e.g., 20 ms frames):
 3.  Pass through the synthesis filter $H(z) = \frac{1}{1 + \sum a_k z^{-k}}$.
 
 *Visualizing Spectral Envelopes:* Although drawn from FIR design, the discrete frequency samples represent the smooth envelope modeled by LPC.
-![Frequency Sampling Grid](images/freq_sampling_discrete.png)
+
 *(Fig: Spectral envelope visualization mapping discrete resonances to continuous envelopes).*
 
 ---
@@ -203,7 +218,7 @@ At $k = T_0$, $x[n] \approx x[n+T_0]$, so $D[T_0]$ drops close to zero. It requi
 ### 9.3 RAPT (Robust Algorithm for Pitch Tracking)
 A highly accurate standard algorithm that uses normalized cross-correlation and dynamic programming (Viterbi decoding) to find the smoothest pitch contour over time.
 
-![Transition Optimization Comparison](images/transition_samples.png)
+
 *(Fig: Analogous to transition bands, smooth pitch tracking avoids abrupt frequency discontinuities).*
 
 ---

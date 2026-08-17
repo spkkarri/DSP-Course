@@ -69,6 +69,20 @@ y[n] = \sum_{k=0}^{M-1} h[k]x[n-k]
 \textbf{Computational Complexity:} For every output sample $y[n]$, we compute exactly $M$ multiplications and $M-1$ additions. In real-time DSP, $M$ MAC (Multiply-Accumulate) operations per sample determine the required processing bandwidth.
 
 \section{Exploiting Linear Phase in FIR Filters}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/fir_linear_phase_efficient_structure.png}
+    \caption{Linear-Phase FIR Structural Optimization: Exploiting Symmetry to Save $50\%$ Hardware Multipliers.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/fir_lattice_filter_architecture.png}
+    \caption{Multi-Stage FIR Lattice Filter Architecture and Reflection Coefficient Stability Criterion ($|k_m|<1$).}
+\end{figure}
+
+
 If an FIR filter has a symmetric (or anti-symmetric) impulse response, it has exact linear phase. For a symmetric filter:
 \begin{equation}
 h[n] = h[M-1-n]
@@ -167,12 +181,7 @@ y[n] = \sum_{m=0}^M v_m b_m[n]
 
 \textbf{Comparison to Parallel Form:}
 In a previous lecture, we looked at the Parallel IIR structure, which breaks $H(z)$ into parallel sum of Second Order Sections. For context, recall the Parallel IIR structure:
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.7\textwidth]{images/iir_parallel_sfg.png}
-\caption{Parallel IIR Signal Flow Graph.}
-\label{fig:iir_parallel_sfg}
-\end{figure}
+
 While the parallel form prevents coefficient quantization errors from affecting other poles, the Lattice-Ladder form gives robust stability checking ($|K_m| < 1$) even under severe quantization.
 
 \section{Polyphase FIR Decomposition}

@@ -45,6 +45,20 @@
 \noindent\rule{\textwidth}{0.5pt}
 
 \section{Why Wavelets? The Limitations of STFT}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/stft_vs_wavelet_tiling.png}
+    \caption{Time-Frequency Tiling: Rigid STFT Grid vs. Adaptive Multiresolution Wavelet Plane.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/dwt_filterbank_mallat.png}
+    \caption{Mallat's Pyramidal Multiresolution Discrete Wavelet Transform (DWT) 3-Level Filter Bank.}
+\end{figure}
+
+
 The Fourier Transform provides frequency content but loses time information. The Short-Time Fourier Transform (STFT) addresses this by multiplying the signal $x(t)$ with a sliding window $w(t)$:
 \begin{equation}
 X(t, \omega) = \int_{-\infty}^{\infty} x(\tau) w(\tau - t) e^{-j\omega \tau} d\tau
@@ -105,13 +119,6 @@ The synthesis filter bank conditions for Perfect Reconstruction (PR) are:
 G_0(z)H_0(-z) + G_1(z)H_1(-z) &= 0 \quad (\text{Alias Cancellation}) \\
 G_0(z)H_0(z) + G_1(z)H_1(z) &= 2z^{-L} \quad (\text{Distortion-free})
 \end{align}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.7\textwidth]{images/iir_cascade.png}
-\caption{Iterated cascade structure loosely analogous to DWT cascading filter stages.}
-\label{fig:cascade}
-\end{figure}
 
 \section{Numerical Example: Haar DWT}
 1-level Haar DWT of $x = [4, 6, 8, 2]$ using $h_0 = \frac{1}{\sqrt{2}}[1,1], h_1 = \frac{1}{\sqrt{2}}[1,-1]$.

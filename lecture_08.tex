@@ -110,18 +110,29 @@ X[N-k] = \sum_{n=0}^{N-1} x[n] e^{j \frac{2\pi}{N} kn} = X^*[k]
 
 \section{Circular Shift of a Sequence}
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/circular_shift_comparison.png}
+    \caption{Linear Time Delay vs. Circular Modulo-$N$ Shift on a Cylindrical Buffer.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/circular_vs_linear_convolution.png}
+    \caption{Linear vs. Circular Convolution: Aliasing Overlap ($N < L_1+L_2-1$) vs. Zero-Padded Exact Recovery.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/dft_symmetry_and_parseval.png}
+    \caption{Hermitian Symmetry Properties and Parseval Energy Conservation for Real Sequences in the DFT.}
+\end{figure}
+
 \subsection{Definition of Circular Shift}
 A circular shift of $x[n]$ by $m$ samples is denoted using modulo indexing:
 \begin{equation}
 x_c[n] = x[((n - m))_N]
 \end{equation}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.85\textwidth]{images/circular_shift_comparison.png}
-\caption{Comparison of Linear Shift vs. Circular Shift ($N=8$, shift $m=3$).}
-\label{fig:shift_comp}
-\end{figure}
 
 \subsection{Circular Time Shift Theorem}
 \begin{equation}
@@ -183,13 +194,6 @@ y_{circ}[n] = \sum_{r=-\infty}^{\infty} y_{lin}[n - rN], \quad 0 \le n \le N-1
 \end{equation}
 
 \textbf{Zero-Padding Rule:} If $N \ge L_1 + L_2 - 1$, $y_{circ}[n] = y_{lin}[n]$. Otherwise, aliasing occurs.
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.85\textwidth]{images/circular_vs_linear_convolution.png}
-\caption{Comparison of Linear Convolution and Circular Convolution.}
-\label{fig:conv_comp}
-\end{figure}
 
 \subsection{Full Numerical Example: 4-Point Circular Convolution}
 Let $x_1[n] = \{1, 2, 3, 4\}$ and $x_2[n] = \{1, 0, 1, 0\}$. Find $y[n] = x_1[n] \circledast_4 x_2[n]$.

@@ -32,6 +32,21 @@ There are two primary approaches to spectral estimation:
 
 ## 3. The Periodogram (Non-parametric)
 
+### Visual Illustration: Spectral Estimation — Raw Periodogram vs. Welch Variance Reduction
+
+![Periodogram vs Bartlett Welch](images/periodogram_vs_bartlett_welch.png)
+
+* **Inconsistency of Periodogram:** The raw sample periodogram does not converge as record length increases ($	ext{Var}\{\hat{P}\} pprox P^2$). The Welch method segments data with $50\%$ overlap and averages windowed periodograms, dramatically suppressing noise variance.
+
+---
+
+### Visual Illustration: Parametric (AR Model) vs. Non-Parametric Spectrum
+
+![AR Parametric vs Non-Parametric](images/ar_parametric_vs_nonparametric.png)
+
+* **Parametric High Resolution:** For short data records, fitting an all-pole Autoregressive (AR) model avoids window leakage and resolves closely spaced spectral peaks far better than FFT methods.
+
+
 The most intuitive way to estimate the power spectrum is to compute the Discrete-Time Fourier Transform (DTFT) of the finite segment and square its magnitude.
 
 Let the truncated signal be $x_N[n] = x[n]w_R[n]$, where $w_R[n]$ is a rectangular window of length $N$. Its DTFT is:
@@ -116,11 +131,7 @@ Solving $\mathbf{R}_{xx}\mathbf{a} = -\mathbf{r}_{xx}$ by direct inversion takes
 Levinson-Durbin is deeply related to **Lattice filters**. The algorithm recursively computes **reflection coefficients** $K_m$ (also called PARCOR coefficients), which can be mapped directly to the FIR lattice structure used in forward/backward prediction.
 A single stage of an FIR lattice filter, representing the prediction error updates, is shown below:
 
-![Single Lattice Stage](images/fir_lattice_stage.png)
-
 By estimating these reflection coefficients directly from data (using methods like Burg's algorithm), we ensure the stability of the estimated AR model, which can also be embedded into a Lattice-Ladder structure for IIR filtering:
-
-![Lattice-Ladder Block Diagram](images/lattice_ladder.png)
 
 ---
 

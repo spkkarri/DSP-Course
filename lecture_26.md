@@ -80,6 +80,21 @@ $$ THD_V = \frac{\sqrt{\sum_{k=2}^N V_k^2}}{V_1} $$
 
 ## 3. Fourier Analysis of Power Signals
 
+### Visual Illustration: Distorted Power Waveform & Harmonic Spectrum (THD)
+
+![Power Harmonics Waveform and THD](images/power_harmonics_waveform_thd.png)
+
+* **Power Quality Monitoring:** Non-linear industrial loads introduce odd harmonic currents ($3	ext{rd}, 5	ext{th}, 7	ext{th}$). Discrete Fourier analysis computes Total Harmonic Distortion $	ext{THD} = rac{\sqrt{\sum_{h=2}^\infty V_h^2}}{V_1}$.
+
+---
+
+### Visual Illustration: Sliding Recursive DFT Architecture for Real-Time PMUs
+
+![Sliding DFT Phasor Tracking](images/sliding_dft_phasor_tracking.png)
+
+* **Sub-Cycle Phasor Measurement:** Recursive sliding DFT updates phasor values $X_n[k] = (X_{n-1}[k] + x[n] - x[n-N]) W_N^{-k}$ with only $O(1)$ operations per sample, enabling real-time smart grid protection.
+
+
 To quantify harmonics and extract phasors, we apply the Discrete Fourier Transform (DFT) to power signals.
 
 ### 3.1 One-Cycle DFT for Harmonic Estimation
@@ -253,10 +268,10 @@ For a 50 Hz system sampled at 1600 Hz (Nyquist = 800 Hz), the anti-aliasing filt
 
 Below we see the design characteristics of typical analog lowpass prototypes (Butterworth vs Chebyshev) used for anti-aliasing in relay design.
 
-![Anti-Aliasing Filter Pole Distributions](images/analog_poles.png)
+
 *Figure 1: Pole distributions for analog anti-aliasing filters (Butterworth vs Chebyshev).*
 
-![Anti-Aliasing Filter Magnitude Responses](images/analog_responses.png)
+
 *Figure 2: Magnitude responses for analog anti-aliasing prototypes. Notice the maximally flat passband of Butterworth compared to the ripple in Chebyshev.*
 
 ---

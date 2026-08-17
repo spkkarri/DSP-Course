@@ -323,3 +323,29 @@ The resulting frequency response will have an equiripple behavior in both stopba
 | **Free Parameters (Type I)** | $L = \frac{N+1}{2}$ |
 
 <br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+
+
+---
+
+### Visual Illustration: Frequency Sampling Grid & Continuous Interpolation
+
+![Frequency Sampling Discrete Grid](images/freq_sampling_discrete_grid.png)
+
+* **Sampling the Target Frequency Response:** The filter response $H(e^{j\omega})$ is forced to match the desired specification exactly at the discrete grid points $\omega_k = rac{2\pi k}{N}$, with Dirichlet sinc interpolation between points.
+
+---
+
+### Visual Illustration: Sidelobe Optimization with Transition Samples
+
+![Transition Band Optimization](images/transition_band_optimization.png)
+
+* **Transition Band Optimization:** Leaving 1 or 2 unconstrained transition samples in the cutoff region allows numerical optimization that suppresses stopband ripples from $-16	ext{ dB}$ down to $-45	ext{ dB}$!
+
+
+---
+
+### Visual Illustration: Radix-2 DIF Butterfly Structure
+
+* **DIT vs DIF Contrast:**
+  - In **DIT**, twiddle multiplication occurs **BEFORE** subtraction.
+  - In **DIF**, twiddle multiplication occurs **AFTER** subtraction at the output stage.

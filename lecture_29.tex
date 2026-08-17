@@ -65,6 +65,20 @@ The range resolution $\delta R$ and Doppler resolution $\delta v$ are:
 \end{align}
 
 \section{Matched Filter for Radar}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/radar_pulse_compression_chirp.png}
+    \caption{Radar Linear Frequency Modulation (Chirp) Pulse Compression for High Range Resolution.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/ca_cfar_detection_threshold.png}
+    \caption{Cell-Averaging Constant False Alarm Rate (CA-CFAR) Adaptive Threshold Target Detection.}
+\end{figure}
+
+
 \subsection{Linear Frequency Modulated (LFM) Chirp}
 The LFM chirp signal is defined as:
 \begin{equation}
@@ -104,20 +118,8 @@ y(n) = x(n) - x(n-1)
 \end{equation}
 In designing more complex MTI filters, analog prototype filters can be digitized using the Matched Z-Transform (MZT) (Figure~\ref{fig:mzt}).
 
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.8\textwidth]{images/matched_zplane.png}
-\caption{Matched z-transform mapping used in advanced MTI filter design.}
-\label{fig:mzt}
-\end{figure}
-
 Spectral transformations can adapt the MTI notch (Figure~\ref{fig:spectral}).
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.6\textwidth]{images/spectral_transformation_mappings.png}
-\caption{Spectral transformations adapting digital filter responses.}
-\label{fig:spectral}
-\end{figure}
+
 
 \subsection{Pulse-Doppler Processing}
 A 2D FFT over the Range-Slow Time Matrix produces a \textbf{Range-Doppler Map}, providing both distance and velocity.

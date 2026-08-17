@@ -46,6 +46,24 @@
 
 \section{Frequency Sampling Method}
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/freq_sampling_discrete_grid.png}
+    \caption{FIR Frequency Sampling Method: Exact Interpolation on Discrete Target Grid Points $H[k]$.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/transition_band_optimization.png}
+    \caption{Sidelobe Optimization: Suppressing Stopband Ripples to $-45\text{ dB}$ via Optimized Transition Samples.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\textwidth]{images/dif_butterfly.png}
+    \caption{Radix-2 Decimation-in-Frequency (DIF) Butterfly Structure with Output Twiddle Multiplication.}
+\end{figure}
+
 The frequency sampling method is a direct way to design FIR filters. Instead of manipulating the impulse response in the time domain, we specify the desired frequency response exactly at $N$ equally spaced points in the frequency domain.
 
 \subsection{Concept and Formulation}
@@ -223,13 +241,6 @@ Implementation & Efficient via FFT & Standard difference equations \\
 \bottomrule
 \end{tabular}
 \end{table}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.9\textwidth]{images/dif_butterfly.png}
-\caption{Large FIR filters can be implemented efficiently using block convolution methods which rely on the Fast Fourier Transform (FFT). The butterfly structure of the FFT is shown.}
-\label{fig:dif_butterfly}
-\end{figure}
 
 \section{Worked Example: 15-Tap Equiripple Bandpass Filter}
 

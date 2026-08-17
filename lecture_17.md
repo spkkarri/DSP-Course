@@ -43,6 +43,23 @@ Imagine looking through a narrow slit that slides across a long scroll of paper.
 
 ## 3. STFT Definition
 
+### Visual Illustration: Short-Time Fourier Transform Sliding Window Concept
+
+![STFT Windowing Concept](images/stft_windowing_concept.png)
+
+* **Localizing Non-Stationary Signals:** A sliding temporal window $w(t-	au)$ isolates local time segments of non-stationary signals (such as chirps or speech bursts) to compute localized frequency spectra.
+
+---
+
+### Visual Illustration: Heisenberg Uncertainty — Narrowband vs. Wideband Spectrograms
+
+![Spectrogram Narrowband vs Wideband](images/spectrogram_narrowband_vs_wideband.png)
+
+* **Resolution Trade-off ($\Delta t \cdot \Delta f \geq rac{1}{4\pi}$):**
+  - **Narrowband (Long Window):** High frequency resolution (sharp horizontal harmonic lines), but poor time localization.
+  - **Wideband (Short Window):** High time resolution (sharp vertical pulse glottal lines), but poor frequency resolution.
+
+
 To analyze a signal at a specific time $n$, we multiply the signal by a window function $w[m-n]$ centered at time $n$. This window is typically non-zero only for a short duration (length $M$). This isolates a short segment of the signal around time $n$. We then take the Fourier transform of this isolated segment.
 
 The Short-Time Fourier Transform (STFT) is defined as:

@@ -59,13 +59,6 @@ To make frequency analysis computable, we must:
 \end{enumerate}
 Evaluating the DTFT at $\omega_k = \frac{2\pi}{N}k$ for $k = 0, \dots, N-1$ gives the \textbf{Discrete Fourier Transform (DFT)}. This maps a finite $N$-point time sequence to an $N$-point frequency sequence.
 
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.85\textwidth]{images/dtft_vs_dft.png}
-\caption{Sampling the continuous DTFT spectrum to obtain discrete DFT bins.}
-\label{fig:dtft_vs_dft}
-\end{figure}
-
 \section{The Twiddle Factor and Its Properties}
 To simplify notation, we introduce the \textbf{Twiddle Factor}:
 \begin{equation}
@@ -164,13 +157,6 @@ For $N=4$, with $W_4 = -j$:
 
 The IDFT in matrix form is $\mathbf{x} = \frac{1}{N} \mathbf{W}_N^* \mathbf{X}$.
 
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.85\textwidth]{images/dft_basis_functions.png}
-\caption{Real and Imaginary basis functions for N=8.}
-\label{fig:basis_vectors}
-\end{figure}
-
 \section{DFT of Common Sequences}
 \begin{itemize}
     \item \textbf{Unit Impulse} $x[n] = \delta[n]$ $\implies X[k] = 1$ (Flat spectrum)
@@ -224,5 +210,23 @@ Result: $X[k] = \{2, 1-j, 0, 1+j\}$.
     \item \textbf{If $x[n]$ is real and 8-point DFT $X[1] = 3+j2$, what is $X[7]$?} \\
     \textbf{Ans:} $X[7] = 3-j2$. By conjugate symmetry for real signals, $X[k] = X^*[N-k]$, so $X[7] = X^*[1]$.
 \end{enumerate}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/dtft_vs_dft.png}
+    \caption{Sampling the Continuous DTFT Spectrum at $N=8$ Uniform Frequency Angles $\omega_k = \frac{2\pi k}{8}$.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/dft_basis_functions.png}
+    \caption{Orthogonal Real (Cosine) and Imaginary (Sine) DFT Harmonic Basis Functions for $N=8$.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/dft_matrix_heatmaps.png}
+    \caption{Vandermonde DFT Matrix $W_8$: Visualizing Real and Imaginary Orthogonal Matrix Coefficients.}
+\end{figure}
 
 \end{document}

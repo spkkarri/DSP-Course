@@ -54,6 +54,21 @@ To understand what sampling does to the frequency content, we take the Fourier t
 
 ## 3. Nyquist-Shannon Sampling Theorem
 
+### Visual Illustration: Continuous Sampling & Frequency Replicas
+
+![Sampling Frequency Replication](images/sampling_frequency_replication.png)
+
+* **Nyquist Criterion:** Sampling in time duplicates the baseband spectrum at integer multiples of sampling frequency $\Omega_s$. If $\Omega_s \geq 2\Omega_{max}$, replicas remain disjoint and the signal can be perfectly recovered.
+
+---
+
+### Visual Illustration: Time-Domain Aliasing (High Frequency Masquerading)
+
+![Aliasing Time Domain Masquerade](images/aliasing_time_domain_masquerade.png)
+
+* **Aliasing Pitfall:** When a $9	ext{ Hz}$ sine wave is sampled at $10	ext{ Hz}$, the discrete samples fall on points identical to a $1	ext{ Hz}$ wave, creating an inescapable false low-frequency alias.
+
+
 ### Formal Statement
 If a continuous-time signal $x(t)$ is bandlimited to $f_{max}$ (meaning $X(f) = 0$ for $|f| > f_{max}$), then $x(t)$ can be perfectly reconstructed from its discrete samples $x(nT)$ if and only if the sampling frequency $f_s$ satisfies:
 $$f_s \geq 2f_{max}$$
@@ -122,11 +137,7 @@ To compensate for the ZOH droop and to remove the spectral images at multiples o
 
 These filters are often FIR filters designed using the window method. The choice of window affects the stopband rejection. The time-domain shapes of standard windows are shown below.
 
-![Window Shapes](images/window_shapes.png)
-
 A poor window choice (like rectangular) results in the Gibbs phenomenon, causing passband ripples and poor image rejection, as shown here:
-
-![Gibbs Phenomenon](images/gibbs_phenomenon.png)
 
 ---
 

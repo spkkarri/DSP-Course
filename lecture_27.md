@@ -62,11 +62,24 @@ If your camera's sensor does not have enough pixels to capture these rapid chang
 
 This is **spatial aliasing**, which is conceptually identical to the 1D aliasing demonstrated below (from our earlier analysis on frequency folding). Notice how high-frequency spectral components wrap around and corrupt the primary band.
 
-![Spatial Aliasing Analogy](images/aliasing_demonstration.png)
-
 ---
 
 ## 3. 2D DTFT and 2D DFT
+
+### Visual Illustration: 2D Spatial Signals & Centered 2D DFT Spectrum
+
+![Image 2D DFT Spatial Frequencies](images/image_2d_dft_spatial_frequencies.png)
+
+* **Spatial Frequencies:** Horizontal and vertical variations in pixel brightness map to corresponding $(u,v)$ frequency coordinates in the centered 2D DFT spectrum (DC located at origin $(0,0)$).
+
+---
+
+### Visual Illustration: JPEG 2D Discrete Cosine Transform (DCT) Energy Compaction
+
+![JPEG 2D DCT Energy Compaction](images/jpeg_2d_dct_energy_compaction.png)
+
+* **Energy Compaction in Compression:** Transforming $8	imes 8$ pixel blocks via 2D DCT concentrates $>95\%$ of image energy into the top-left low-frequency coefficients, allowing high-frequency coefficients to be quantized to zero for lossy compression.
+
 
 To analyze the frequency content of images—to understand where the rapid changes (edges) and slow changes (smooth areas) lie—we must extend our Fourier analysis tools into two dimensions.
 

@@ -40,8 +40,6 @@ For small $N$, this is fine. But consider a typical audio block of $N=1024$:
 
 The Fast Fourier Transform (FFT) is an algorithm that reduces this complexity from $O(N^2)$ to $O(N \log_2 N)$. For $N=1024$, the FFT requires only $\frac{N}{2}\log_2 N = 512 \times 10 = 5120$ multiplications. This is a massive speedup!
 
-![DFT vs FFT Complexity](images/dft_vs_fft_complexity.png)
-
 ---
 
 ## 3. Divide & Conquer Decomposition: Decimation in Time (DIT)
@@ -241,3 +239,33 @@ $$x[n] = \frac{1}{N} \left( \text{FFT}\{X^*[k]\} \right)^*$$
 | **Butterfly Bottom** | $B' = A - W_N^k B$ |
 | **FFT Multiplications**| $\frac{N}{2}\log_2 N$ |
 | **IFFT via FFT** | $x[n] = \frac{1}{N} \left( \text{FFT}\{X^*[k]\} \right)^*$ |
+
+
+---
+
+### Visual Illustration: Computational Scaling — Direct DFT $O(N^2)$ vs. FFT $O(N \log_2 N)$
+
+* **Exponential Speedup:** For an $N=1024$ transform:
+  - Direct DFT requires $N^2 = 1,048,576$ complex multiplications.
+  - Radix-2 FFT requires $rac{N}{2} \log_2 N = 5,120$ multiplications.
+  - **Computational Reduction:** Over $99.5\%$ savings!
+
+---
+
+### Visual Illustration: Radix-2 Decimation-in-Time Bit-Reversal Indexing
+
+![DIT Bit Reversal Tree](images/dit_bit_reversal_tree.png)
+
+* **Why Bit Reversal?** Decomposing the DFT recursively into even and odd index subsets reorders the input indices according to their reversed binary bits (e.g. $001_2 	o 100_2 = 4$). This allows in-place butterfly computation without requiring extra memory buffers.
+
+
+---
+
+### Visual Illustration: Fundamental Dual-Node 2-Point Butterfly
+
+![Radix-2 DIT Butterfly Structure](images/fft_butterfly.png)
+
+* **Butterfly Equations:**
+  $$X = A + B \cdot W_N^r$$
+  $$Y = A - B \cdot W_N^r$$
+* **In-Place Property:** Outputs $X$ and $Y$ can be written back into the exact same memory locations previously holding inputs $A$ and $B$.

@@ -54,6 +54,22 @@ The mapping of bits to complex symbols $s_i$ is known as a constellation.
 
 ## 3. Pulse Shaping and ISI
 
+### Visual Illustration: Nyquist Raised Cosine Pulses (Zero ISI) & Matched Filter
+
+![Raised Cosine Pulse and ISI](images/raised_cosine_pulse_and_isi.png)
+
+* **Eliminating Intersymbol Interference:** Raised cosine pulses pass through zero at integer symbol multiples $t = \pm T, \pm 2T$, ensuring adjacent transmitted symbols cause zero interference at the decision sampling instant.
+* **Matched Filter:** Setting receiver filter impulse response $h[n] = s^*[N-n]$ maximizes output Signal-to-Noise Ratio (SNR) in additive white Gaussian noise.
+
+---
+
+### Visual Illustration: QPSK Constellation & Decision Regions
+
+![QPSK Constellation Diagram](images/qpsk_constellation_and_eye_diagram.png)
+
+* **Vector Modulations:** In-phase (I) and Quadrature (Q) complex constellations illustrate symbol clustering and noise margins against symbol error decisions.
+
+
 When symbols are transmitted consecutively, they can overlap in time if not properly shaped, causing Inter-Symbol Interference (ISI). This is a critical physical problem in communications.
 
 ### The ISI Problem
@@ -105,7 +121,7 @@ In a real-world system, the filtering must be distributed between the transmitte
 9. Because the overall system response is $P_{RC}(f)$, it achieves the Nyquist zero-ISI criterion at the sampling instants.
 
 To visualize filter responses in DSP, here is a magnitude response reference (using an MA filter as a generic placeholder):
-![Filter Magnitude Response](images/moving_average_frequency.png)
+
 
 ---
 
@@ -122,7 +138,7 @@ $$ h[n] = s^*[L-n] $$
 This means the filter is the time-reversed and complex conjugated version of the signal itself.
 The engineering intuition is that the filter acts as a template. It collects all the energy of the signal over time and concentrates it into a single peak at the sampling instant.
 A Z-plane representation of simple filters can be seen here:
-![Filter Z-Plane](images/moving_average_zplane.png)
+
 
 ### Formal Proof of SNR Maximization
 We want to prove that this specific filter shape maximizes the SNR. This is a classic DSP derivation.

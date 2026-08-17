@@ -46,6 +46,23 @@ This is known as **Constant-Q analysis**, where the ratio of the center frequenc
 
 ## 3. Continuous Wavelet Transform (CWT)
 
+### Visual Illustration: Time-Frequency Plane Tiling — STFT vs. Wavelet Multiresolution
+
+![STFT vs Wavelet Tiling](images/stft_vs_wavelet_tiling.png)
+
+* **Multiresolution Advantage:**
+  - **STFT:** Rigid square grid boxes throughout all frequencies.
+  - **Wavelets:** Automatically adapts window geometry: narrow time boxes at high frequencies (fast transients) and wide time boxes at low frequencies (slow oscillations).
+
+---
+
+### Visual Illustration: Mallat's Pyramidal Discrete Wavelet Filter Bank (DWT)
+
+![DWT Filterbank Mallat](images/dwt_filterbank_mallat.png)
+
+* **Octave Decomposition:** The input signal is repeatedly split into Approximation coefficients ($A_j$) through lowpass filtering and Detail coefficients ($D_j$) through highpass filtering, followed by downsampling by 2 at each level.
+
+
 The Continuous Wavelet Transform projects a continuous-time signal $x(t)$ onto a set of basis functions known as wavelets. All wavelets are derived from a single prototype function $\psi(t)$ called the **mother wavelet**.
 
 ### The CWT Equation
@@ -180,7 +197,7 @@ When these conditions are met, $\hat{X}(z) = z^{-L} X(z)$, meaning the reconstru
 
 *(We can visualize multi-stage cascaded filtering architectures using structures similar to Cascade IIR setups, although for DWT we incorporate decimation between stages).*
 
-![Cascade Structures](images/iir_cascade.png)
+
 *Figure: A sequential cascade structure. In DWT, Mallat's algorithm cascades the lowpass outputs iteratively.*
 
 ---

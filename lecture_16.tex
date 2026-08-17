@@ -53,14 +53,27 @@ Classical digital signal processing often assumes that signals are stationary an
 \end{enumerate}
 Adaptive filters dynamically adjust their coefficients to track changing environments. A standard FIR architecture is commonly utilized, as shown below for reference.
 
+\section{Steepest Descent Algorithm}
+
 \begin{figure}[H]
-\centering
-\includegraphics[width=0.85\textwidth]{images/linear_phase_fir.png}
-\caption{FIR Filter Structure commonly used as the basis for Adaptive Filters.}
-\label{fig:fir_structure}
+    \centering
+    \includegraphics[width=0.75\textwidth]{images/lms_error_performance_surface.png}
+    \caption{Quadratic MSE Error Performance Surface and Stochastic Gradient Descent Trajectory.}
 \end{figure}
 
-\section{Steepest Descent Algorithm}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/adaptive_filter_block_diagram.png}
+    \caption{Canonical Adaptive Closed-Loop FIR Filter Architecture with Error Feedback Engine.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/lms_learning_curve_weights.png}
+    \caption{LMS Learning Curve: Exponential Error Convergence toward Theoretical Minimum MSE Floor.}
+\end{figure}
+
+
 Let the input vector be $\mathbf{x}(n) = [x[n], x[n-1], \dots, x[n-N+1]]^T$ and the weights be $\mathbf{w} = [w_0, w_1, \dots, w_{N-1}]^T$. 
 The error is:
 \begin{equation}
@@ -131,12 +144,7 @@ RLS has $O(N^2)$ complexity but much faster convergence.
 
 \section{Applications}
 Adaptive filters are used in acoustic echo cancellation, adaptive noise cancellation, channel equalization, and beamforming. 
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.85\textwidth]{images/frequency_sampling_structure.png}
-\caption{Alternative structures like frequency-domain adaptive filters can also be applied in these applications.}
-\label{fig:freq_sampling}
-\end{figure}
+
 
 \section{Key Formulas}
 \begin{table}[H]

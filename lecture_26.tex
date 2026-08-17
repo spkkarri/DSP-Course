@@ -53,6 +53,20 @@ THD_V = \frac{\sqrt{\sum_{k=2}^N V_k^2}}{V_1}
 High THD causes motor overheating, transformer derating, and capacitor bank failures.
 
 \section{Fourier Analysis of Power Signals}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/power_harmonics_waveform_thd.png}
+    \caption{Power Grid Voltage Distortion and Harmonic Spectrum with Total Harmonic Distortion (THD) Calculation.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/sliding_dft_phasor_tracking.png}
+    \caption{Recursive Sliding-DFT Architecture for Real-Time GPS-Synchronized Phasor Measurement Units (PMUs).}
+\end{figure}
+
+
 The fundamental frequency $f_0 = 50/60$ Hz is sampled at $f_s$, requiring an integer number of samples per cycle $N = f_s / f_0$. The DFT yields complex harmonic phasors:
 \begin{equation}
 V_k = \frac{2}{N} \sum_{n=0}^{N-1} x[n] e^{-j \frac{2\pi}{N} k n}
@@ -91,20 +105,6 @@ where $\mathbf{H}_k = [ \cos(k \theta_0) \quad -\sin(k \theta_0) ]$.
 \section{Protection Relay DSP}
 Overcurrent, distance, and differential relays use DFT-based phasor estimation. Anti-aliasing filters are designed to cutoff below the Nyquist frequency.
 Analog lowpass prototypes for these anti-aliasing filters are shown in the figures below.
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.85\textwidth]{images/analog_poles.png}
-\caption{Analog anti-aliasing filter pole distributions.}
-\label{fig:analog_poles}
-\end{figure}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.65\textwidth]{images/analog_responses.png}
-\caption{Analog anti-aliasing filter magnitude responses.}
-\label{fig:analog_responses}
-\end{figure}
 
 \section{Active and Reactive Power from DFT}
 \begin{align}

@@ -66,6 +66,20 @@ where $I_i[n]$ is the In-phase component and $Q_i[n]$ is the Quadrature componen
 \end{itemize}
 
 \section{Pulse Shaping and ISI}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/raised_cosine_pulse_and_isi.png}
+    \caption{Nyquist Raised-Cosine Zero-ISI Pulses and Matched Filter Output Peak Instantaneous SNR.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.65\textwidth]{images/qpsk_constellation_and_eye_diagram.png}
+    \caption{QPSK Complex Constellation Scatter Diagram with Noise and Decision Boundaries.}
+\end{figure}
+
+
 \subsection{The ISI Problem}
 The received signal is:
 \begin{equation}
@@ -86,12 +100,6 @@ B = \frac{1+\alpha}{2T}
 \end{equation}
 where $\alpha \in [0,1]$ is the roll-off factor.
 
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.65\textwidth]{images/moving_average_frequency.png}
-\caption{Generic Filter Magnitude Response.}
-\end{figure}
-
 \section{The Matched Filter}
 The Matched Filter maximizes the Signal-to-Noise Ratio (SNR) at the sampling instant.
 \begin{equation}
@@ -101,12 +109,6 @@ Discrete form:
 \begin{equation}
 h[n] = s^*[L-n]
 \end{equation}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.45\textwidth]{images/moving_average_zplane.png}
-\caption{Z-Plane Filter Representation.}
-\end{figure}
 
 \subsection{Formal Proof of SNR Maximization}
 The SNR at the sampling instant is:

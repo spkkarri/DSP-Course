@@ -71,6 +71,20 @@ y[n] = \sum_{k=0}^{M} b_k x[n-k] - \sum_{k=1}^{N} a_k y[n-k]
 \textbf{Physical/Engineering Intuition:} The $b_k$ coefficients represent feedforward paths (zeros), and the $a_k$ coefficients represent feedback paths (poles).
 
 \section{Direct Form I Structure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/iir_direct_form_i_ii_comparison.png}
+    \caption{Direct Form I vs. Canonical Direct Form II: Achieving $50\%$ Delay Register Savings.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/iir_cascade_parallel_architectures.png}
+    \caption{Cascade (Biquad Series) vs. Parallel Modular Architectures for Robust Fixed-Point Stability.}
+\end{figure}
+
+
 The Direct Form I structure implements the difference equation exactly as written. 
 Let $w[n]$ be an intermediate sequence:
 \begin{equation}

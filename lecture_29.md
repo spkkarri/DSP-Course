@@ -46,6 +46,21 @@ $$ \delta f_d = \frac{1}{T_{dwell}} \implies \delta v = \frac{\lambda}{2T_{dwell
 
 ## 3. Matched Filter for Radar
 
+### Visual Illustration: Radar Pulse Compression via Linear Frequency Modulation (Chirp)
+
+![Radar Pulse Compression Chirp](images/radar_pulse_compression_chirp.png)
+
+* **Resolving the Radar Dilemma:** Transmitting a long duration ($T$) LFM chirp pulse injects maximum energy into the medium for high detection range, while matched filtering compresses the received echo into a narrow pulse ($\Delta 	au pprox 1/B$) for ultra-fine range resolution.
+
+---
+
+### Visual Illustration: Cell-Averaging Constant False Alarm Rate (CA-CFAR) Detection
+
+![CA-CFAR Detection Architecture](images/ca_cfar_detection_threshold.png)
+
+* **Dynamic Clutter Tracking:** CA-CFAR averages neighboring reference cells around the Cell Under Test (CUT) to set an adaptive detection threshold that prevents false alarms as radar clutter conditions change.
+
+
 To maximize the Signal-to-Noise Ratio (SNR) of a received pulse, we use a matched filter.
 
 ### 3.1 Linear Frequency Modulated (LFM) Chirp
@@ -109,9 +124,9 @@ $$ y(n) = x(n) - x(n-1) $$
 Stationary targets (DC in slow time) are cancelled. 
 
 **Filter Design for Radar:** In designing more complex MTI filters, analog prototype filters can be digitized using techniques like the Matched Z-Transform (MZT).
-![Matched z-plane poles and zeros](images/matched_zplane.png)
+
 Furthermore, spectral transformations can adapt the MTI notch to moving clutter (like rain or chaff).
-![Spectral Transformations](images/spectral_transformation_mappings.png)
+
 
 ### 6.2 Pulse-Doppler Processing
 For precise velocity measurement, we take an FFT across the slow-time dimension for each range bin.

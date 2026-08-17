@@ -59,6 +59,18 @@ There are two primary approaches to spectral estimation:
 
 \section{The Periodogram (Non-parametric)}
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/periodogram_vs_bartlett_welch.png}
+    \caption{Spectral Estimation: Inconsistent Raw Periodogram Variance vs. Smooth Welch Segment Averaging.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/ar_parametric_vs_nonparametric.png}
+    \caption{Parametric Autoregressive (AR) All-Pole Model vs. Non-Parametric Welch Spectral Resolution.}
+\end{figure}
+
 The most intuitive way to estimate the power spectrum is to compute the Discrete-Time Fourier Transform (DTFT) of the finite segment and square its magnitude.
 
 Let the truncated signal be $x_N[n] = x[n]w_R[n]$, where $w_R[n]$ is a rectangular window of length $N$. Its DTFT is:
@@ -162,21 +174,7 @@ Solving $\mathbf{R}_{xx}\mathbf{a} = -\mathbf{r}_{xx}$ by direct inversion takes
 Levinson-Durbin is deeply related to \textbf{Lattice filters}. The algorithm recursively computes \textbf{reflection coefficients} $K_m$ (also called PARCOR coefficients), which can be mapped directly to the FIR lattice structure used in forward/backward prediction.
 A single stage of an FIR lattice filter, representing the prediction error updates, is shown in Figure~\ref{fig:fir_lattice}.
 
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.85\textwidth]{images/fir_lattice_stage.png}
-\caption{Single lattice stage of order $m$.}
-\label{fig:fir_lattice}
-\end{figure}
-
 By estimating these reflection coefficients directly from data (using methods like Burg's algorithm), we ensure the stability of the estimated AR model, which can also be embedded into a Lattice-Ladder structure for IIR filtering (Figure~\ref{fig:lattice_ladder}).
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.75\textwidth]{images/lattice_ladder.png}
-\caption{Lattice-Ladder IIR filter architecture.}
-\label{fig:lattice_ladder}
-\end{figure}
 
 \section{MUSIC Algorithm (Subspace Method)}
 

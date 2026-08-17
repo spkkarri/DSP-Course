@@ -258,3 +258,30 @@ This completes the proof.
    * Multiply by $x_1[n]$ column vector:
    * $\begin{bmatrix} 0 & 2 & 1 \\ 1 & 0 & 2 \\ 2 & 1 & 0 \end{bmatrix} \begin{bmatrix} 1 \\ 2 \\ 3 \end{bmatrix} = \begin{bmatrix} 0(1) + 2(2) + 1(3) \\ 1(1) + 0(2) + 2(3) \\ 2(1) + 1(2) + 0(3) \end{bmatrix} = \begin{bmatrix} 4 + 3 \\ 1 + 6 \\ 2 + 2 \end{bmatrix} = \begin{bmatrix} 7 \\ 7 \\ 4 \end{bmatrix}$
    * The result is $y[n] = \{7, 7, 4\}$.
+
+
+---
+
+### Visual Illustration: Linear Time Delay vs. Circular Modulo-$N$ Shift
+
+* **Visualizing Circular Shift:** In a linear shift $x[n-m]$, samples shifted past index $N-1$ are lost to zero. In a circular shift $x[((n-m))_N]$, samples exiting the right boundary ($n=N-1$) wrap around immediately to reappear at index $n=0$ like a rotating cylinder.
+
+---
+
+### Visual Illustration: Linear vs. Circular Convolution & Zero-Padding
+
+* **Avoid Time Aliasing:**
+  - When circular convolution length $N < L_1 + L_2 - 1$, the trailing samples wrap around and corrupt the leading samples (Time Aliasing).
+  - When zero-padded to $N \geq L_1 + L_2 - 1$, circular convolution equals exact linear convolution.
+
+
+---
+
+### Visual Illustration: DFT Hermitian Symmetry & Energy Conservation
+
+![DFT Symmetry and Parseval](images/dft_symmetry_and_parseval.png)
+
+* **Hermitian Symmetry for Real Signals:**
+  - Magnitude is Even-Symmetric: $|X[k]| = |X[N-k]|$
+  - Phase is Odd-Symmetric: $ngle X[k] = -ngle X[N-k]$
+  - Energy is Conserved: $\sum_{n=0}^{N-1} |x[n]|^2 = rac{1}{N} \sum_{k=0}^{N-1} |X[k]|^2$ (Parseval's Theorem).

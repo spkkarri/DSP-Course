@@ -45,6 +45,20 @@
 \noindent\rule{\textwidth}{0.5pt}
 
 \section{System Design Methodology}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/adaptive_noise_cancellation_system.png}
+    \caption{Acoustic Adaptive Noise Cancellation (ANC) System Architecture using LMS Error Minimization.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/channel_equalizer_frequency_response.png}
+    \caption{Multipath Channel Equalization: Inverting Frequency Distortion to Restore Flat Transfer Function.}
+\end{figure}
+
+
 Designing a DSP system requires traversing from abstract mathematics to physical hardware.
 
 \subsection{Requirements Analysis}
@@ -125,19 +139,6 @@ While the CPU processes Buffer A, the DMA fills Buffer B. Hides I/O latency.
 The WCET must be strictly less than the block processing deadline.
 
 \section{Course Review --- Key Connections}
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.65\textwidth]{images/adaptive_noise_cancellation.png}
-\caption{Adaptive Noise Cancellation (ANC) architecture.}
-\label{fig:anc}
-\end{figure}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.65\textwidth]{images/equalizer_response.png}
-\caption{Channel Equalizer frequency responses.}
-\label{fig:eq}
-\end{figure}
 
 \section{Emerging Trends \& Career Paths}
 \textbf{Trends:} Deep Learning on Edge (TinyML), Neuromorphic Computing, Quantum Signal Processing, Software-Defined Radio. \\

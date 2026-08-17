@@ -21,6 +21,21 @@
 
 ## 2. System Design Methodology
 
+### Visual Illustration: Adaptive Noise Cancellation (ANC) Dual-Microphone System
+
+![Adaptive Noise Cancellation System](images/adaptive_noise_cancellation_system.png)
+
+* **Acoustic Noise Removal:** The reference microphone picks up noise source $n_1[n]$. The adaptive LMS filter models the acoustic transfer path to estimate and subtract noise $\hat{n}_0[n]$ from primary speech microphone $d[n]$, yielding clean output $e[n] pprox s[n]$.
+
+---
+
+### Visual Illustration: Channel Equalization & Multipath Distortion Inversion
+
+![Channel Equalizer Frequency Response](images/channel_equalizer_frequency_response.png)
+
+* **Restoring Flat Response:** Multipath wireless channels introduce frequency-selective nulls. A zero-forcing / MMSE channel equalizer applies inverse transfer function $H_{eq}(z) pprox 1/H_{ch}(z)$ to restore a distortion-free flat frequency response.
+
+
 Designing a DSP system requires traversing from abstract mathematics to physical hardware.
 
 ### 2.1 Requirements Analysis
@@ -137,11 +152,7 @@ Let's connect the major themes of EE3621:
 
 Below is an illustration of an Adaptive Noise Cancellation system, showing how these concepts combine:
 
-![ANC Block Diagram](images/adaptive_noise_cancellation.png)
-
 And the effect of equalization on a distorted channel:
-
-![Channel Equalizer Responses](images/equalizer_response.png)
 
 ---
 

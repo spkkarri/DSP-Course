@@ -71,6 +71,18 @@ where $E\{\cdot\}$ denotes the expected value and $*$ denotes complex conjugatio
 
 \section{Power Spectral Density (PSD)}
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/psd_wiener_khinchin_concept.png}
+    \caption{Autocorrelation Sequence $R_{xx}[m]$ and Power Spectral Density $S_{xx}(e^{j\omega})$ via Wiener-Khinchin Theorem.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/wiener_filter_noise_cancellation.png}
+    \caption{Optimal Wiener Filter Frequency Response: Passband Shaping for Maximum Noise Attenuation.}
+\end{figure}
+
 The Power Spectral Density (PSD), $S_{xx}(e^{j\omega})$, describes how the power of a random signal is distributed across different frequencies.
 
 \subsection{Wiener-Khinchin Theorem}
@@ -141,18 +153,6 @@ R_{dx}[l] - \sum_k w[k] R_{xx}[l-k] &= 0 \\
 \sum_k w[k] R_{xx}[l-k] &= R_{dx}[l]
 \end{align}
 In matrix form for FIR filters: $\mathbf{R}\mathbf{w} = \mathbf{r}$.
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.7\textwidth]{images/fir_direct_form.png}
-\caption{FIR direct-form implementation for Wiener filter.}
-\label{fig:fir_direct}
-\end{figure}
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.7\textwidth]{images/fir_cascade_form.png}
-\caption{Alternative FIR cascade-form structure.}
-\label{fig:fir_cascade}
-\end{figure}
 
 \subsection{Non-Causal Solution and MMSE}
 In frequency domain:

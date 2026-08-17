@@ -45,6 +45,20 @@
 \noindent\rule{\textwidth}{0.5pt}
 
 \section{Why Quantization Matters}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/uniform_quantization_error_pdf.png}
+    \caption{Uniform Mid-Tread Quantizer Characteristic and Uniform Error PDF Statistical Model ($\sigma_e^2 = \Delta^2/12$).}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/sqnr_vs_bitdepth_rule.png}
+    \caption{The $6.02\text{ dB/bit}$ Dynamic Range Rule: Linear SQNR Growth with ADC Wordlength.}
+\end{figure}
+
+
 In any practical Digital Signal Processing (DSP) system, we face finite word-length effects due to hardware limitations.
 An Analog-to-Digital Converter (ADC) maps continuous amplitudes into a finite set of digital levels, inherently discarding information.
 Fixed-point DSPs assign a strict number of bits to the integer and fractional parts. We discard bits after multiplication via truncation (chopping lower bits) or rounding (choosing the nearest representable value).

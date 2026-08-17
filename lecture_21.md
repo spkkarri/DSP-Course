@@ -36,6 +36,21 @@ Most cost-effective microcontrollers and DSP chips use fixed-point arithmetic. U
 
 ## 3. Uniform Quantization
 
+### Visual Illustration: Uniform Quantizer Staircase & Error PDF Model
+
+![Uniform Quantization Error PDF](images/uniform_quantization_error_pdf.png)
+
+* **Statistical Model:** Quantization error $e = Q(x) - x$ is modeled as uniform white noise over $[-\Delta/2, +\Delta/2]$ with variance $\sigma_e^2 = rac{\Delta^2}{12}$.
+
+---
+
+### Visual Illustration: The 6.02 dB/Bit Dynamic Range Rule
+
+![SQNR vs Bit Depth Rule](images/sqnr_vs_bitdepth_rule.png)
+
+* **Dynamic Range Formula:** Each additional bit of ADC resolution increases Signal-to-Quantization-Noise Ratio by $pprox 6.02	ext{ dB}$ ($	ext{SQNR} = 6.02 B + 1.76	ext{ dB}$). 16-bit audio provides $98	ext{ dB}$, while 24-bit audio achieves $146	ext{ dB}$.
+
+
 A uniform quantizer divides the input signal range into equal intervals.
 Let the input signal range be from $x_{min}$ to $x_{max}$.
 For a quantizer with $b$ bits, the number of representation levels is:

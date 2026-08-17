@@ -45,6 +45,21 @@ For every output sample $y[n]$, we compute exactly $M$ multiplications and $M-1$
 
 ## 3. Exploiting Linear Phase in FIR Filters
 
+### Visual Illustration: Efficient Linear Phase FIR Multiplier Reduction
+
+![FIR Linear Phase Efficient Structure](images/fir_linear_phase_efficient_structure.png)
+
+* **Hardware Optimization:** By exploiting coefficient symmetry $h[n] = h[M-1-n]$, samples are added before multiplication, slashing hardware multiplier requirements by **$50\%$**.
+
+---
+
+### Visual Illustration: FIR Lattice Filter Multi-Stage Architecture
+
+![FIR Lattice Filter Architecture](images/fir_lattice_filter_architecture.png)
+
+* **Strict Stability Check:** In lattice filters, all stages are decoupled. The filter is guaranteed to be minimum phase / strictly stable if and only if all reflection coefficients satisfy $|k_m| < 1$.
+
+
 If an FIR filter has a symmetric (or anti-symmetric) impulse response, it has exact linear phase. For a symmetric filter:
 $$ h[n] = h[M-1-n] $$
 
@@ -126,8 +141,6 @@ $$ y[n] = \sum_{m=0}^M v_m b_m[n] $$
 **Comparison to Parallel Form:**
 In a previous lecture, we looked at the Parallel IIR structure, which breaks $H(z)$ into parallel sum of Second Order Sections. 
 For context, recall the Parallel IIR structure:
-
-![Parallel Realization SFG](images/iir_parallel_sfg.png)
 
 While the parallel form prevents coefficient quantization errors from affecting other poles, the Lattice-Ladder form gives robust stability checking ($|K_m| < 1$) even under severe quantization.
 

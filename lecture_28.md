@@ -47,6 +47,26 @@ Biomedical signals present unique challenges for DSP engineers because they typi
 
 ## 3. ECG Processing Pipeline
 
+### Visual Illustration: Clinical ECG Morphology & Noise Artifacts
+
+![ECG Morphology and Noise Artifacts](images/ecg_morphology_and_noise_artifacts.png)
+
+* **ECG Waveform Features:** The cardiac electrical cycle comprises the P-wave (atrial depolarization), QRS-complex (ventricular depolarization), and T-wave (ventricular repolarization), vulnerable to $50	ext{ Hz}$ powerline hum and respiration baseline drift.
+
+---
+
+### Visual Illustration: Pan-Tompkins Real-Time QRS Detection Pipeline
+
+![Pan-Tompkins QRS Detection Pipeline](images/pan_tompkins_qrs_detection_pipeline.png)
+
+* **Five-Stage R-Peak Detection:**
+  1. Bandpass filter ($5-15	ext{ Hz}$) isolates QRS energy.
+  2. Five-point derivative calculates waveform steepness.
+  3. Non-linear squaring operator amplifies high-frequency R-peaks.
+  4. Moving window integration ($150	ext{ ms}$) smooths pulses.
+  5. Dual-threshold adaptive logic detects heartbeats reliably.
+
+
 To accurately extract information like the heart rate or arrhythmias from an ECG signal, we must process it through a well-defined pipeline.
 
 1. **Anti-aliasing LPF:** Analog low-pass filter with a cutoff frequency around 150 Hz.
@@ -85,11 +105,7 @@ $$\Delta\omega \approx 2(1 - r)$$
 ### 4.4 Connection to Bilinear Transformation
 Sometimes, biomedical filters are designed in the analog domain and converted using the Bilinear Transformation. The mapping preserves stability.
 
-![Bilinear s-to-z plane mapping](images/bilinear_s_to_z.png)
-
 When mapping from continuous to discrete time, the frequency axis is warped:
-
-![Frequency Warping](images/bilinear_frequency_warping.png)
 
 ---
 

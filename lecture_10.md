@@ -275,3 +275,29 @@ This confirms the symmetry $h[n] = h[20-n]$, ensuring strictly linear phase.
      * Thus, terms for $k$ and $-k$ can be paired: $h[k+\alpha] (e^{-j\omega k} + e^{j\omega k}) = 2 h[k+\alpha] \cos(\omega k)$.
      * Since cosine is purely real, the entire summation becomes a purely real amplitude function $A(\omega)$.
      * Therefore, $H(e^{j\omega}) = A(\omega) e^{-j\omega \alpha}$, which has a strictly linear phase of $-\alpha \omega$.
+
+
+---
+
+### Visual Illustration: Window Functions in Time and Frequency Domains
+
+![Window Functions Time and Frequency Domain](images/fir_window_functions_time_freq.png)
+
+* **Trade-off:**
+  - **Rectangular Window:** Narrowest mainlobe ($4\pi/M$), but highest sidelobe level ($-13	ext{ dB}$).
+  - **Hamming Window:** Moderately wide mainlobe ($8\pi/M$), excellent sidelobe suppression ($-43	ext{ dB}$).
+  - **Blackman Window:** Widest mainlobe ($12\pi/M$), extreme sidelobe suppression ($-58	ext{ dB}$).
+
+---
+
+### Visual Illustration: Gibbs Phenomenon in Ideal Sinc Truncation
+
+![Gibbs Phenomenon Truncation](images/gibbs_phenomenon_truncation.png)
+
+* **Gibbs Phenomenon:** Abrupt rectangular truncation of the infinite sinc impulse response causes an unavoidable $8.9\%$ overshoot in the frequency response that does not disappear even as filter length $M 	o \infty$. Tapered windows (Hamming, Hann) eliminate this overshoot completely.
+
+---
+
+### Visual Illustration: Step-by-Step FIR Filter Design Workflow
+
+![FIR Filter Design Workflow](images/fir_filter_design_workflow.png)

@@ -43,6 +43,29 @@ Conversely, when we increase the sampling rate by inserting zeros, we are adding
 
 ## 3. Downsampling by $M$ (Decimation)
 
+### Visual Illustration: Downsampling (Decimation) Spectrum & Aliasing
+
+![Downsampling Decimation Spectrum](images/downsampling_decimation_spectrum.png)
+
+* **Spectral Stretching:** Downsampling by factor $M$ expands the frequency axis by $M$. To prevent irreversible spectral overlap (aliasing), the input must be lowpass filtered to $\omega_c = \pi/M$ prior to decimation.
+
+---
+
+### Visual Illustration: Upsampling (Interpolation) Spectrum & Imaging
+
+![Upsampling Interpolation Spectrum](images/upsampling_interpolation_spectrum.png)
+
+* **Spectral Compression:** Inserting $L-1$ zeros compresses the frequency axis, creating $L-1$ unwanted duplicate spectral images that must be removed by an anti-imaging lowpass filter.
+
+---
+
+### Visual Illustration: Polyphase Decomposition & Noble Identities
+
+![Polyphase Decomposition and Noble Identities](images/polyphase_decomposition_noble.png)
+
+* **Noble Identity Efficiency:** Moving filtering operations to after downsamplers (or before upsamplers) allows digital filtering to run at the lowest sampling rate, cutting computational power by factor $M$.
+
+
 ### Time-Domain Operation
 Downsampling (or sub-sampling) by an integer factor $M$ means we keep every $M$-th sample of the sequence and discard all the rest.
 The mathematical input-output relation in the discrete time domain is:
@@ -217,7 +240,7 @@ This optimization reduces the arithmetic workload (the number of multiplications
 ### The Commutator Model
 Instead of explicitly writing delay chains ($z^{-k}$) and individual downsamplers, engineers model the input routing as a counter-clockwise rotating switch (a commutator). This switch distributes the incoming high-rate input samples sequentially to the $M$ parallel polyphase filters, which operate continuously at the lower rate.
 
-![Visual analogy for multirate commutator blocks](images/overlap_save.png)
+
 *(Note: While the diagram references overlap-save processing, the architectural concept of segmenting and discarding data streams visually perfectly maps to how commutators slice data in polyphase filter implementations!)*
 
 ---

@@ -54,6 +54,21 @@ $$ y[n] = \sum_{k=0}^{M} b_k x[n-k] - \sum_{k=1}^{N} a_k y[n-k] $$
 
 ## 3. Direct Form I Structure
 
+### Visual Illustration: Direct Form I vs. Canonical Direct Form II Architectures
+
+![Direct Form I vs Direct Form II Comparison](images/iir_direct_form_i_ii_comparison.png)
+
+* **Canonical Advantage:** Direct Form II shares a single central delay line $w[n]$, reducing hardware delay register count from $M+N$ down to $\max(M,N)$ ($50\%$ memory hardware savings).
+
+---
+
+### Visual Illustration: Modular Cascade & Parallel Biquad Realizations
+
+![Cascade vs Parallel Architectures](images/iir_cascade_parallel_architectures.png)
+
+* **Preventing Numerical Instability:** For filter orders $N > 4$, direct form polynomial coefficients are hyper-sensitive to quantization. Factoring into second-order cascade sections (Biquads) or parallel partial fractions maintains robust numerical stability.
+
+
 The Direct Form I structure implements the difference equation exactly as written above. It essentially cascades an all-zero (FIR) system with an all-pole (IIR) system.
 
 Let $w[n]$ be an intermediate sequence representing the feedforward (FIR) part:

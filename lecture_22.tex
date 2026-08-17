@@ -48,6 +48,18 @@
 
 \section{Continuous-Time Sampling}
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/sampling_frequency_replication.png}
+    \caption{Sampling in the Frequency Domain: Spectral Replication and Aliasing Overlap when $\Omega_s < 2\Omega_{max}$.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/aliasing_time_domain_masquerade.png}
+    \caption{Time-Domain Aliasing: High-Frequency Sine Wave Masquerading Identically as a Low-Frequency Alias.}
+\end{figure}
+
 \subsection{Physical Intuition}
 Sampling is the process of taking a continuous-time signal and measuring its value at discrete time intervals. Think of it like taking a stroboscopic video of a moving fan. If you take pictures fast enough, you capture the true motion. If too slow, the fan might appear to spin backward!
 
@@ -175,21 +187,7 @@ Practical DACs hold the sample value constant for the entire sampling period $T$
 \subsection{Interpolation Filter}
 To compensate for the ZOH droop and to remove the spectral images at multiples of $f_s$, a digital or analog \textbf{interpolation filter} is used. These filters are often FIR filters designed using the window method.
 
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.75\textwidth]{images/window_shapes.png}
-\caption{Time-domain shapes of windows used in interpolation filter design.}
-\label{fig:window_shapes}
-\end{figure}
-
 A poor window choice (like rectangular) results in the Gibbs phenomenon, causing passband ripples and poor image rejection, as shown here:
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.85\textwidth]{images/gibbs_phenomenon.png}
-\caption{Gibbs Phenomenon: Rectangular vs. Hann window responses.}
-\label{fig:gibbs_comparison}
-\end{figure}
 
 \section{Oversampling ADC}
 Oversampling means sampling at $k f_s$, where $f_s$ is the Nyquist rate and $k \gg 1$.

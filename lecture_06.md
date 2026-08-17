@@ -98,8 +98,6 @@ Below are the pole location stability regions in the complex z-plane:
 
 Below are the four possible impulse response profiles based on pole location and ROC causality choice:
 
-![Impulse Response Modes](images/impulse_response_modes.png)
-
 * **Left panel (Green)**: Causal stable ($|p| < 1$, decaying) and anti-causal stable ($|p| > 1$, decaying for $n \to -\infty$).
 * **Right panel (Red)**: Causal unstable ($|p| > 1$, expanding) and anti-causal unstable ($|p| < 1$, expanding for $n \to -\infty$).
 
@@ -130,3 +128,31 @@ Below are the four possible impulse response profiles based on pole location and
      * Step 3: $0.25 z^{-2} / (1 - 0.5 z^{-1}) \implies$ quotient is $0.25 z^{-2}$, remainder is $0.125 z^{-3}$.
      * Result: $X(z) = 1 + 0.5 z^{-1} + 0.25 z^{-2} + \dots$
      * Thus, $x[0] = 1$, $x[1] = 0.5$, and $x[2] = 0.25$.
+
+
+---
+
+### Visual Illustration: Z-Plane Stability Regions & Pole Dynamics
+
+* **Physical Insight:** 
+  - **Inside Unit Circle ($|z| < 1$):** Poles generate decaying modes ($|p|^n 	o 0$ as $n 	o \infty$), guaranteeing bounded-input bounded-output (BIBO) stability.
+  - **On Unit Circle ($|z| = 1$):** Poles generate sustained oscillations or step functions without decaying (Marginal Stability / Oscillators).
+  - **Outside Unit Circle ($|z| > 1$):** Poles produce exponentially explosive modes ($|p|^n 	o \infty$), causing immediate system saturation/overflow.
+
+---
+
+### Visual Illustration: Impulse Response Modes Across the Z-Plane
+
+* **Waveform Characteristics:**
+  - **Positive Real Pole ($z=0.7$):** Smooth monotonic exponential decay.
+  - **Negative Real Pole ($z=-0.7$):** Alternating sign ($\pm$) decaying oscillation with frequency $\omega = \pi$.
+  - **Complex Conjugate Pair ($0.8 e^{\pm j\pi/4}$):** Damped sinusoidal oscillation with envelope decay $0.8^n$.
+  - **Unit Circle Conjugate Pair ($e^{\pm j\pi/4}$):** Pure undamped sinusoidal oscillation with permanent energy.
+
+---
+
+### Visual Illustration: Partial Fraction Expansion Decomposition
+
+![Partial Fraction Expansion Mode Decomposition](images/pfe_decomposition_modes.png)
+
+* **Linear Superposition:** The overall system impulse response $h[n] = 2(0.8)^n u[n] - (0.4)^n u[n]$ is the exact linear superposition of its individual first-order pole modes.

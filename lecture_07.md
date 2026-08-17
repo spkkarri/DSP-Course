@@ -139,8 +139,6 @@ Due to orthogonality, $\mathbf{W}_N^* \mathbf{W}_N = N \mathbf{I}$, where $\math
 The IDFT is naturally:
 $$\mathbf{x} = \frac{1}{N} \mathbf{W}_N^* \mathbf{X}$$
 
-![DFT Basis Functions](images/dft_basis_functions.png)
-
 ---
 
 ## 6. DFT of Common Sequences
@@ -239,3 +237,26 @@ Both methods yield exactly the same DFT sequence!
 
 3. **Question 3:** Let $X[k]$ be the 8-point DFT of a real-valued sequence $x[n]$. If $X[1] = 3 + j2$, what is the value of $X[7]$? Why?
    * **Answer:** $X[7] = 3 - j2$. For a strictly real-valued sequence $x[n]$, the DFT exhibits conjugate symmetry, defined as $X[k] = X^*[N-k]$. Here, $N=8$, so $X[7] = X^*[8-7] = X^*[1]$. The complex conjugate of $3 + j2$ is $3 - j2$. This conjugate symmetry ensures that when reconstructing the signal via the IDFT, the imaginary components perfectly cancel out, leaving a purely real time-domain signal.
+
+
+---
+
+### Visual Illustration: Continuous DTFT vs. Sampled DFT Spectrum
+
+* **Key Concept:** The continuous DTFT spectrum $X(e^{j\omega})$ is sampled at $N$ uniformly spaced frequency points $\omega_k = rac{2\pi k}{N}$ for $k = 0, 1, \dots, N-1$.
+* **Time-Domain Aliasing Warning:** If the time-domain sequence length $L > N$, sampling the DTFT in frequency causes periodic overlapping (time-domain aliasing) in the synthesized sequence.
+
+---
+
+### Visual Illustration: Orthogonal DFT Harmonic Basis Functions
+
+* **Orthogonality:** Each row of the DFT represents a discrete harmonic frequency $\omega_k$. Real parts represent cosine basis waveforms, and imaginary parts represent sine basis waveforms. Their inner product over $N$ samples is strictly zero when $k 
+eq m$ and $N$ when $k = m$.
+
+---
+
+### Visual Illustration: Vandermonde DFT Matrix Heatmap
+
+![DFT Matrix Heatmap](images/dft_matrix_heatmaps.png)
+
+* **Matrix Equation $\mathbf{X} = \mathbf{W}_N \mathbf{x}$:** The transform represents a rotation onto an orthogonal complex coordinate system where $\mathbf{W}_N \mathbf{W}_N^H = N \mathbf{I}_N$.

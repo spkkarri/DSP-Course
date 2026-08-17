@@ -64,6 +64,20 @@ Biomedical signals present unique challenges for DSP engineers because they typi
 \end{enumerate}
 
 \section{ECG Processing Pipeline}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/ecg_morphology_and_noise_artifacts.png}
+    \caption{Clinical ECG Signal Morphology (P-QRS-T Complex) with Powerline Noise and Baseline Wander Removal.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/pan_tompkins_qrs_detection_pipeline.png}
+    \caption{Pan-Tompkins Real-Time 5-Stage QRS / R-Peak Detection Signal Processing Pipeline.}
+\end{figure}
+
+
 \begin{enumerate}
     \item \textbf{Anti-aliasing LPF:} Analog low-pass filter with a cutoff frequency around 150 Hz.
     \item \textbf{ADC:} Analog-to-Digital Conversion with a sampling rate $f_s$ of 500 Hz to 1000 Hz.
@@ -106,20 +120,10 @@ r \approx 1 - \frac{\Delta\omega}{2} \implies \Delta\omega \approx 2(1 - r)
 
 \subsection{Connection to Bilinear Transformation}
 Sometimes, biomedical filters are designed in the analog domain and converted using the Bilinear Transformation. The mapping preserves stability.
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.7\textwidth]{images/bilinear_s_to_z.png}
-\caption{Domain mapping: Left-Half Plane to Unit Circle interior under BZT.}
-\label{fig:bzt_domains}
-\end{figure}
+
 
 When mapping from continuous to discrete time, the frequency axis is warped:
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.65\textwidth]{images/bilinear_frequency_warping.png}
-\caption{Non-linear frequency compression warping curve.}
-\label{fig:warping}
-\end{figure}
+
 
 \section{Pan-Tompkins QRS Detection Algorithm}
 

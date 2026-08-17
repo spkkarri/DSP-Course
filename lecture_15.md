@@ -66,6 +66,21 @@ where $E\{\cdot\}$ denotes the expected value (ensemble average) across all poss
 
 ## 3. Power Spectral Density (PSD)
 
+### Visual Illustration: Autocorrelation and Power Spectral Density via Wiener-Khinchin
+
+![PSD Wiener Khinchin Concept](images/psd_wiener_khinchin_concept.png)
+
+* **Wiener-Khinchin Theorem:** The Power Spectral Density (PSD) $S_{xx}(e^{j\omega})$ is the Discrete-Time Fourier Transform of the statistical autocorrelation sequence $R_{xx}[m]$.
+
+---
+
+### Visual Illustration: Optimal Wiener Filter Frequency-Domain Noise Attenuation
+
+![Optimal Wiener Filter Noise Cancellation](images/wiener_filter_noise_cancellation.png)
+
+* **MSE Minimization:** The Wiener filter frequency response $H(e^{j\omega}) = rac{S_{xs}(e^{j\omega})}{S_{xx}(e^{j\omega})}$ provides maximum passband gain where signal energy is high, and automatically drops to near zero in spectral regions dominated by noise.
+
+
 The Power Spectral Density (PSD), $S_{xx}(e^{j\omega})$, describes how the total average power of a random signal is distributed across different frequency components. 
 
 ### 3.1 Wiener-Khinchin Theorem
@@ -225,10 +240,10 @@ Solving for $\mathbf{w}$ gives the optimal FIR filter:
 $$\mathbf{w}_{opt} = \mathbf{R}^{-1} \mathbf{r}$$
 
 **FIR Implementation Note:** The optimal filter is typically implemented in hardware or software using a Direct-Form FIR structure.
-![FIR Direct Form Realization](images/fir_direct_form.png)
+
 *(Recall the Direct-Form transversal structure from our earlier discussions on filter realizations.)*
 Alternatively, a Cascade-Form can be used if robustness to coefficient quantization is needed in a fixed-point DSP chip:
-![FIR Cascade Form Realization](images/fir_cascade_form.png)
+
 
 ### 6.3 Non-Causal IIR Wiener Filter
 

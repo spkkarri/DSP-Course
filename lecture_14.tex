@@ -60,6 +60,26 @@ Whenever we reduce the sampling rate, we are fundamentally reducing the amount o
 Conversely, when we increase the sampling rate by inserting zeros, we are adding ``blank'' space without adding new information. This creates high-frequency artifacts (images) that must be smoothed out. Multirate DSP provides the rigorous mathematical framework to perform these rate changes safely.
 
 \section{Downsampling by $M$ (Decimation)}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/downsampling_decimation_spectrum.png}
+    \caption{Downsampling (Decimation) Frequency Spectrum: Frequency Axis Expansion and Anti-Aliasing Requirement.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/upsampling_interpolation_spectrum.png}
+    \caption{Upsampling (Interpolation) Spectrum: Zero-Insertion Spectral Compression and Anti-Imaging Filter.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/polyphase_decomposition_noble.png}
+    \caption{Multirate Polyphase Decomposition and Noble Identities for Efficient Low-Rate Implementation.}
+\end{figure}
+
+
 \subsection{Time-Domain Operation}
 Downsampling (or sub-sampling) by an integer factor $M$ means we keep every $M$-th sample of the sequence and discard all the rest. The mathematical input-output relation is:
 \begin{equation}
@@ -228,13 +248,6 @@ Using polyphase decomposition, we write $H(z) = E_0(z^M) + z^{-1}E_1(z^M) + \dot
 
 \subsection{The Commutator Model}
 Instead of explicitly writing delay chains and individual downsamplers, engineers model the input routing as a counter-clockwise rotating switch (a commutator). This switch distributes the incoming high-rate input samples sequentially to the $M$ parallel polyphase filters, which operate continuously at the lower rate.
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.8\textwidth]{images/overlap_save.png}
-\caption{Visual analogy: Commutators cleanly slice data in multirate structures.}
-\label{fig:overlap_save}
-\end{figure}
 
 \section{Summary of Key Formulas}
 \begin{table}[H]

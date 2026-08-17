@@ -45,6 +45,20 @@
 \noindent\rule{\textwidth}{0.5pt}
 
 \section{2D Signals: The Digital Image}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/image_2d_dft_spatial_frequencies.png}
+    \caption{2D Discrete Fourier Transform: Mapping Spatial Image Brightness Patterns to Frequency Coordinates.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.65\textwidth]{images/jpeg_2d_dct_energy_compaction.png}
+    \caption{2D Discrete Cosine Transform (DCT) Energy Compaction Matrix in $8\times 8$ JPEG Compression.}
+\end{figure}
+
+
 In traditional 1D digital signal processing, a signal $x[n]$ is typically a sequence of values indexed by time (e.g., an audio recording). In the realm of image processing, however, a digital image is fundamentally a \textbf{2D discrete signal}, denoted by $f[m,n]$. Here, $m$ and $n$ are discrete spatial coordinates representing the rows and columns of a pixel grid.
 
 \subsection{Pixel Values and Domains}
@@ -63,13 +77,6 @@ Imagine taking a digital photograph of a brick wall from far away, or a person w
 If your camera's sensor does not have enough pixels to capture these rapid changes (i.e., you are sampling below the spatial Nyquist rate), the high-frequency stripes will fold over into lower frequencies. Visually, this manifests as \textbf{Moiré patterns}—strange, wavy, artificial low-frequency artifacts that do not exist in the real object. 
 
 This is \textbf{spatial aliasing}, which is conceptually identical to the 1D aliasing demonstrated below (from our earlier analysis on frequency folding). Notice how high-frequency spectral components wrap around and corrupt the primary band.
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.65\textwidth]{images/aliasing_demonstration.png}
-\caption{Conceptual analog of spatial aliasing as spectral overlapping.}
-\label{fig:spatial_aliasing}
-\end{figure}
 
 \section{2D DTFT and 2D DFT}
 To analyze the frequency content of images—to understand where the rapid changes (edges) and slow changes (smooth areas) lie—we must extend our Fourier analysis tools into two dimensions.

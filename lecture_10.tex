@@ -95,6 +95,26 @@ For $n=0$, $h_d[0] = \frac{\omega_c}{\pi}$.
 The response extends to $\pm\infty$, making it non-causal and unrealizable.
 
 \section{Truncation and Windowing Method}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/fir_window_functions_time_freq.png}
+    \caption{Window Functions in Time and Frequency Domains: Mainlobe Width vs. Sidelobe Attenuation Trade-offs.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/gibbs_phenomenon_truncation.png}
+    \caption{Gibbs Phenomenon: Abrupt Truncation Overshoot ($8.9\%$) vs. Smooth Hamming Window Suppression.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/fir_filter_design_workflow.png}
+    \caption{Step-by-Step Practical FIR Filter Design Procedure using the Window Method.}
+\end{figure}
+
+
 We truncate $h_d[n]$ and shift it to ensure causality. Multiplying the shifted $h_d[n]$ by a finite window function $w[n]$ suppresses the Gibbs phenomenon.
 \begin{equation}
 h[n] = h_d\left[n - \frac{M-1}{2}\right] \cdot w[n], \quad 0 \le n \le M-1
