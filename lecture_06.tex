@@ -9,8 +9,8 @@
 \usepackage{float}
 \usepackage{xcolor}
 
-\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Lecture 6: Inverse Z-Transform \& Stability Analysis \\ \large (III B.Tech EEE)}
-\author{Lecture Notes \& Comprehensive Worked Numerical}
+\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Lecture 6: Inverse Z-Transform, System Response \& Difference Equations \\ \large (III B.Tech EEE)}
+\author{Lecture Notes \& Comprehensive Worked Numericals}
 \date{}
 
 \definecolor{darkbg}{HTML}{0d121f}
@@ -32,6 +32,121 @@
 \maketitle
 
 \section{Lecture Plan \& Objectives (40 Minutes Breakdown)}
+\begin{itemize}
+    \item \textbf{00:00 -- 05:00 (5 mins):} Motivation: Why Inverse Z-Transform? Uniqueness of ROC.
+    \item \textbf{05:00 -- 12:00 (7 mins):} Three Core Inversion Approaches (PFE, Power Series, Contour Integration).
+    \item \textbf{12:00 -- 20:00 (8 mins):} Worked Numericals: Real Exponentials ($a^n$), Repeated Poles ($n a^n$), and Complex Conjugate Poles (Sinusoids/Cosines).
+    \item \textbf{20:00 -- 27:00 (7 mins):} Convolution Theorem Equivalence (Time Domain Sum $\leftrightarrow$ Z-Domain Product).
+    \item \textbf{27:00 -- 34:00 (7 mins):} Solving Linear Constant-Coefficient Difference Equations (LCCDE) with Initial Conditions.
+    \item \textbf{34:00 -- 38:00 (4 mins):} Stability \& Causality Analysis from Z-Plane Poles.
+    \item \textbf{38:00 -- 40:00 (2 mins):} Summary \& Review.
+\end{itemize}
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{Overview of the Inverse Z-Transform}
+The Inverse Z-transform maps $X(z)$ and its ROC back to a discrete sequence $x[n]$:
+\begin{equation}
+x[n] = \mathcal{Z}^{-1}\{X(z)\}
+\end{equation}
+Specification of the ROC is critical to ensure uniqueness.
+
+\section{The Three Inversion Methods}
+\begin{enumerate}
+    \item \textbf{Partial Fraction Expansion (PFE):} Decomposes $\frac{X(z)}{z}$ into first/second-order pole components:
+    \begin{equation}
+    \frac{X(z)}{z} = \sum_{k=1}^{N} \frac{A_k}{z-p_k}, \qquad A_k = \left[ (z-p_k) \frac{X(z)}{z} \right]_{z=p_k}
+    \end{equation}
+    \item \textbf{Power Series Expansion (Long Division):} Direct polynomial long division:
+    \begin{equation}
+    X(z) = \sum_{n=-\infty}^{\infty} x[n] z^{-n} = \dots + x[-1]z^1 + x[0] + x[1]z^{-1} + x[2]z^{-2} + \dots
+    \end{equation}
+    \item \textbf{Contour Integration (Cauchy's Residue Theorem):}
+    \begin{equation}
+    x[n] = \frac{1}{2\pi j} \oint_{C} X(z) z^{n-1} dz = \sum \text{Residues of } \left[ X(z)z^{n-1} \right] \text{ inside } C
+    \end{equation}
+\end{enumerate}
+
+\section{Worked Numerical 1: Comparing All 3 Inversion Approaches}
+Given $X(z) = \frac{1}{1 - 1.5 z^{-1} + 0.5 z^{-2}} = \frac{z^2}{(z - 1)(z - 0.5)}$:
+\begin{itemize}
+    \item \textbf{PFE Decomposition:} $\frac{X(z)}{z} = \frac{2}{z-1} - \frac{1}{z-0.5} \implies X(z) = \frac{2}{1-z^{-1}} - \frac{1}{1-0.5 z^{-1}}$.
+    \item \textbf{Causal Sequence ($|z|>1$):} $x[n] = \left[ 2(1)^n - (0.5)^n \right] u[n] \implies \{1.0, 1.5, 1.75, 1.875, \dots\}$.
+    \item \textbf{Anti-Causal Sequence ($|z|<0.5$):} $x[n] = \left[ (0.5)^n - 2 \right] u[-n-1] \implies \{\dots, 14, 6, 2, 0\}$.
+    \item \textbf{Two-Sided Sequence ($0.5<|z|<1$):} $x[n] = -(0.5)^n u[n] - 2 u[-n-1]$.
+\end{itemize}
+All three methods (PFE, polynomial long division, and residue integration) yield identical analytical formulas and sample values.
+
+\section{Worked Numerical 2: Complex Conjugate Poles (Sinusoids \& Damped Cosines)}
+Given $X(z) = \frac{z^2 - \frac{\sqrt{2}}{2} z}{z^2 - \sqrt{2} z + 1}$ with causal ROC $|z|>1$:
+The poles lie on the unit circle at $p_{1,2} = e^{\pm j\pi/4}$ ($r=1, \omega_0 = \pi/4$).
+Using the standard cosine pair $\mathcal{Z}\{r^n \cos(\omega_0 n) u[n]\} = \frac{z(z - r\cos\omega_0)}{z^2 - 2r\cos\omega_0 z + r^2}$:
+\begin{equation}
+x[n] = \cos\left(\frac{\pi}{4} n\right) u[n] \implies \{1.0, 0.707, 0.0, -0.707, -1.0, \dots\}
+\end{equation}
+
+\section{Worked Numerical 3: Repeated Poles ($a^n$ and $n a^n$ Ramp Modes)}
+Given $X(z) = \frac{z^2}{(z - 0.5)^2}$ with causal ROC $|z|>0.5$:
+\begin{equation}
+\frac{X(z)}{z} = \frac{z}{(z-0.5)^2} = \frac{1.0}{z-0.5} + \frac{0.5}{(z-0.5)^2}
+\end{equation}
+Multiplying by $z$ and applying inverse pairs $\frac{z}{z-a} \leftrightarrow a^n u[n]$ and $\frac{a z}{(z-a)^2} \leftrightarrow n a^n u[n]$:
+\begin{equation}
+x[n] = (0.5)^n u[n] + n(0.5)^n u[n] = (n+1)(0.5)^n u[n]
+\end{equation}
+
+\section{Convolution Theorem Equivalence: Time-Domain Sum $\leftrightarrow$ Z-Domain Product}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/convolution_time_vs_z_domain.png}
+    \caption{Convolution Property Equivalence: Time-Domain Folding vs. Z-Domain Algebraic Multiplication.}
+\end{figure}
+
+Given input $x[n] = (0.5)^n u[n]$ and impulse response $h[n] = (0.8)^n u[n]$:
+\begin{itemize}
+    \item \textbf{Time-Domain Sum:} $y[n] = \sum_{k=0}^n (0.5)^k (0.8)^{n-k} = \frac{8}{3}(0.8)^n - \frac{5}{3}(0.5)^n, \; n \ge 0$.
+    \item \textbf{Z-Domain Product:} $Y(z) = X(z) H(z) = \frac{z^2}{(z-0.5)(z-0.8)} = \frac{8/3 z}{z-0.8} - \frac{5/3 z}{z-0.5}$.
+    \item \textbf{Inverse Z Output:} $y[n] = \left[ \frac{8}{3}(0.8)^n - \frac{5}{3}(0.5)^n \right] u[n]$.
+\end{itemize}
+The Z-domain method replaces complex piecewise sliding summations with simple polynomial multiplication.
+
+\section{Solving Linear Difference Equations (LCCDE) via Z-Transform}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/difference_equation_z_transform_flow.png}
+    \caption{Solving Linear Difference Equations with Initial Conditions via Unilateral Z-Transform.}
+\end{figure}
+
+\subsection{Worked Problem with Initial Conditions}
+Solve $y[n] - 0.7 y[n-1] + 0.1 y[n-2] = x[n]$ for $n \ge 0$, with input $x[n] = u[n]$ and initial conditions $y[-1]=2, y[-2]=1$.
+
+\noindent \textbf{Step 1: Unilateral Z-Transform Property}
+\begin{equation}
+Y(z) (1 - 0.7 z^{-1} + 0.1 z^{-2}) - 0.7(2) + 0.1(2 z^{-1} + 1) = X(z)
+\end{equation}
+\begin{equation}
+Y(z) = \underbrace{\frac{1.3 - 0.2 z^{-1}}{1 - 0.7 z^{-1} + 0.1 z^{-2}}}_{Y_{zi}(z) \text{ (Zero-Input Response)}} + \underbrace{\frac{1}{1 - 0.7 z^{-1} + 0.1 z^{-2}} X(z)}_{Y_{zs}(z) \text{ (Zero-State Response)}}
+\end{equation}
+
+\noindent \textbf{Step 2: Zero-Input Response}
+\begin{equation}
+Y_{zi}(z) = \frac{1.5 z}{z-0.5} - \frac{0.2 z}{z-0.2} \implies y_{zi}[n] = \left[ 1.5(0.5)^n - 0.2(0.2)^n \right] u[n]
+\end{equation}
+
+\noindent \textbf{Step 3: Zero-State Response with $X(z) = \frac{z}{z-1}$}
+\begin{equation}
+Y_{zs}(z) = \frac{2.5 z}{z-1} - \frac{5/3 z}{z-0.5} + \frac{1/6 z}{z-0.2} \implies y_{zs}[n] = \left[ 2.5 - \frac{5}{3}(0.5)^n + \frac{1}{6}(0.2)^n \right] u[n]
+\end{equation}
+
+\noindent \textbf{Step 4: Total Response $y[n] = y_{zi}[n] + y_{zs}[n]$}
+\begin{equation}
+\mathbf{y[n] = \left[ 2.5 - \frac{1}{6}(0.5)^n - \frac{1}{30}(0.2)^n \right] u[n]}
+\end{equation}
+Verified: $y[0] = 2.3$ and $y[1] = 2.41$, matching difference recursion exactly.
+
+\section{Z-Plane Pole Locations \& Stability Analysis}
 
 \begin{figure}[H]
     \centering
@@ -48,121 +163,13 @@
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.82\textwidth]{images/pfe_decomposition_modes.png}
-    \caption{Partial Fraction Expansion: Synthesizing the Complete Impulse Response as a Superposition of Modes.}
+    \caption{Partial Fraction Expansion: Synthesizing Complete Impulse Response as Superposition of Modes.}
 \end{figure}
 
 \begin{itemize}
-    \item \textbf{00:00 -- 05:00 (5 mins):} Motivation: Why do we need the Inverse Z-transform? Uniqueness of ROC.
-    \item \textbf{05:00 -- 15:00 (10 mins):} Method 1: Partial Fraction Expansion (Distinct and Repeated Poles).
-    \item \textbf{15:00 -- 22:00 (7 mins):} Method 2: Power Series Expansion (Long Division for causal vs. anti-causal).
-    \item \textbf{22:00 -- 28:00 (6 mins):} Method 3: Contour Integration (Residue Theorem).
-    \item \textbf{28:00 -- 36:00 (8 mins):} Comprehensive Worked Numerical comparing all 3 approaches.
-    \item \textbf{36:00 -- 40:00 (4 mins):} Stability \& Causality Analysis of LTI Systems based on poles.
-\end{itemize}
-
-\noindent\rule{\textwidth}{0.5pt}
-
-\section{Overview of the Inverse Z-Transform}
-The Inverse Z-transform maps $X(z)$ and its ROC back to a discrete sequence $x[n]$:
-\begin{equation}
-x[n] = \mathcal{Z}^{-1}\{X(z)\}
-\end{equation}
-Specification of the ROC is critical to ensure uniqueness.
-
-\section{Method 1: Partial Fraction Expansion (PFE)}
-For distinct poles $p_k$:
-\begin{equation}
-\frac{X(z)}{z} = \sum_{k=1}^{N} \frac{A_k}{z-p_k} \quad \text{where} \quad A_k = \left[ (z-p_k) \frac{X(z)}{z} \right]_{z=p_k}
-\end{equation}
-
-\section{Method 2: Power Series Expansion (Long Division)}
-We express $X(z)$ directly as a Laurent series:
-\begin{equation}
-X(z) = \sum_{n=-\infty}^{\infty} x[n] z^{-n} = \dots + x[-1]z^1 + x[0] + x[1]z^{-1} + x[2]z^{-2} + \dots
-\end{equation}
-\begin{itemize}
-    \item \textbf{Causal ($|z| > |p|$):} Divide in descending powers of $z$ ($x[0] + x[1]z^{-1} + x[2]z^{-2} + \dots$).
-    \item \textbf{Anti-causal ($|z| < |p|$):} Divide in ascending powers of $z$ ($x[-1]z^1 + x[-2]z^2 + \dots$).
-\end{itemize}
-
-\section{Method 3: Contour Integration (Cauchy's Residue Theorem)}
-\begin{equation}
-x[n] = \frac{1}{2\pi j} \oint_{C} X(z) z^{n-1} dz = \sum \text{Residues of } \left[ X(z)z^{n-1} \right] \text{ inside } C
-\end{equation}
-For a simple pole at $z=p$:
-\begin{equation}
-\text{Res}\left\{ X(z) z^{n-1} \right\}_{z=p} = \lim_{z \to p} (z-p) X(z) z^{n-1}
-\end{equation}
-
-\section{Comprehensive Worked Numerical: All 3 Approaches}
-
-\subsection{Problem Statement}
-Given the rational Z-transform:
-\begin{equation}
-X(z) = \frac{1}{1 - 1.5 z^{-1} + 0.5 z^{-2}} = \frac{z^2}{(z - 1)(z - 0.5)}
-\end{equation}
-Determine the sequence $x[n]$ for:
-\begin{enumerate}
-    \item \textbf{Condition 1:} Causal Sequence (ROC: $|z| > 1$)
-    \item \textbf{Condition 2:} Anti-Causal Sequence (ROC: $|z| < 0.5$)
-    \item \textbf{Condition 3:} Two-Sided / BIBO Stable Sequence (ROC: $0.5 < |z| < 1$)
-\end{enumerate}
-
-\subsection{Approach 1: Partial Fraction Expansion}
-Form $\frac{X(z)}{z} = \frac{z}{(z - 1)(z - 0.5)} = \frac{A}{z - 1} + \frac{B}{z - 0.5}$.
-Residues:
-\begin{equation}
-A = \left. \frac{z}{z - 0.5} \right|_{z = 1} = \frac{1}{1 - 0.5} = 2, \qquad B = \left. \frac{z}{z - 1} \right|_{z = 0.5} = \frac{0.5}{0.5 - 1} = -1
-\end{equation}
-Reconstructing $X(z)$:
-\begin{equation}
-X(z) = 2 \left( \frac{z}{z - 1} \right) - 1 \left( \frac{z}{z - 0.5} \right) = \frac{2}{1 - z^{-1}} - \frac{1}{1 - 0.5 z^{-1}}
-\end{equation}
-Applying ROC conditions:
-\begin{itemize}
-    \item \textbf{Causal ($|z| > 1$):} $x[n] = 2(1)^n u[n] - (0.5)^n u[n] = \left[ 2 - (0.5)^n \right] u[n]$. \\
-    Values: $x[0]=1.0$, $x[1]=1.5$, $x[2]=1.75$, $x[3]=1.875$.
-    \item \textbf{Anti-Causal ($|z| < 0.5$):} $x[n] = -2(1)^n u[-n-1] + (0.5)^n u[-n-1] = \left[ (0.5)^n - 2 \right] u[-n-1]$. \\
-    Values: $x[-1]=0$, $x[-2]=2$, $x[-3]=6$, $x[-4]=14$.
-    \item \textbf{Two-Sided ($0.5 < |z| < 1$):} $x[n] = -(0.5)^n u[n] - 2 u[-n-1]$.
-\end{itemize}
-
-\subsection{Approach 2: Power Series Expansion (Long Division)}
-\textbf{Case A: Causal Sequence ($|z| > 1$)} \\
-Divide $1$ by $(1 - 1.5 z^{-1} + 0.5 z^{-2})$:
-\begin{itemize}
-    \item Step 1: $1 / 1 = \mathbf{1}$. Remainder: $1.5 z^{-1} - 0.5 z^{-2}$.
-    \item Step 2: $1.5 z^{-1} / 1 = \mathbf{1.5 z^{-1}}$. Remainder: $1.75 z^{-2} - 0.75 z^{-3}$.
-    \item Step 3: $1.75 z^{-2} / 1 = \mathbf{1.75 z^{-2}}$. Remainder: $1.875 z^{-3} - 0.875 z^{-4}$.
-\end{itemize}
-Quotient: $X(z) = 1 + 1.5 z^{-1} + 1.75 z^{-2} + 1.875 z^{-3} + \dots \implies x[0]=1, x[1]=1.5, x[2]=1.75, x[3]=1.875$.
-
-\noindent \textbf{Case B: Anti-Causal Sequence ($|z| < 0.5$)} \\
-Divide $1$ by $(0.5 z^{-2} - 1.5 z^{-1} + 1)$:
-\begin{itemize}
-    \item Step 1: $1 / 0.5 z^{-2} = \mathbf{2 z^2}$. Remainder: $3 z - 2 z^2$.
-    \item Step 2: $3 z / 0.5 z^{-2} = \mathbf{6 z^3}$. Remainder: $7 z^2 - 6 z^3$.
-    \item Step 3: $7 z^2 / 0.5 z^{-2} = \mathbf{14 z^4}$.
-\end{itemize}
-Quotient: $X(z) = 0 z^1 + 2 z^2 + 6 z^3 + 14 z^4 + \dots \implies x[-1]=0, x[-2]=2, x[-3]=6, x[-4]=14$.
-
-\subsection{Approach 3: Contour Integration (Residue Theorem)}
-Integrand $F(z) = X(z) z^{n-1} = \frac{z^{n+1}}{(z-1)(z-0.5)}$. \\
-Residues at simple poles:
-\begin{equation}
-\text{Res}\{F(z)\}_{z=1} = \left. \frac{z^{n+1}}{z-0.5} \right|_{z=1} = 2(1)^n, \qquad \text{Res}\{F(z)\}_{z=0.5} = \left. \frac{z^{n+1}}{z-1} \right|_{z=0.5} = -(0.5)^n
-\end{equation}
-\begin{itemize}
-    \item \textbf{Causal ($|z|>1$):} Encloses $z=1, 0.5 \implies x[n] = \text{Res}_{z=1} + \text{Res}_{z=0.5} = \left[ 2 - (0.5)^n \right] u[n]$.
-    \item \textbf{Anti-Causal ($|z|<0.5$):} Evaluates exterior residues $\implies x[n] = -(\text{Res}_{z=1} + \text{Res}_{z=0.5}) = \left[ (0.5)^n - 2 \right] u[-n-1]$.
-    \item \textbf{Two-Sided ($0.5<|z|<1$):} Encloses only $z=0.5 \implies x[n] = -(0.5)^n u[n] - 2 u[-n-1]$.
-\end{itemize}
-
-\section{Causality, Stability \& Pole Locations}
-\begin{itemize}
-    \item \textbf{Causality:} The ROC of a causal LTI system transfer function $H(z)$ must be the exterior of a circle: $|z| > p_{max}$.
-    \item \textbf{Stability:} The ROC of $H(z)$ must contain the unit circle ($|z|=1$).
-    \item \textbf{Causal \& Stable:} All poles must lie strictly inside the unit circle ($|p_k| < 1$).
+    \item \textbf{Causality:} ROC of $H(z)$ must be the exterior of the outermost pole: $|z| > p_{max}$.
+    \item \textbf{BIBO Stability:} ROC of $H(z)$ must include the unit circle ($|z|=1$).
+    \item \textbf{Causal and Stable:} All poles must lie strictly inside the unit circle ($|p_k| < 1$).
 \end{itemize}
 
 \end{document}
