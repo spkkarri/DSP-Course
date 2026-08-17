@@ -7,12 +7,12 @@
 \usepackage{booktabs}
 \usepackage{hyperref}
 \usepackage{float}
+\usepackage{xcolor}
 
 \title{\textbf{EE3621: Digital Signal Processing} \\ \Large Lecture 6: Inverse Z-Transform \& Stability Analysis \\ \large (III B.Tech EEE)}
-\author{Lecture Notes (40-Minute Plan)}
+\author{Lecture Notes \& Comprehensive Worked Numerical}
 \date{}
 
-\usepackage{xcolor}
 \definecolor{darkbg}{HTML}{0d121f}
 \definecolor{lighttext}{HTML}{e2e8f0}
 \definecolor{primary}{HTML}{8b5cf6}
@@ -35,30 +35,29 @@
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.75\textwidth]{images/pole_zero_stability_l6.png}
+    \includegraphics[width=0.72\textwidth]{images/pole_zero_stability_l6.png}
     \caption{Z-Plane Stability Regions \& Pole Dynamics: Stable ($|z|<1$), Marginally Stable ($|z|=1$), Unstable ($|z|>1$).}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.85\textwidth]{images/impulse_response_modes.png}
+    \includegraphics[width=0.82\textwidth]{images/impulse_response_modes.png}
     \caption{Time-Domain Impulse Response Modes corresponding to Pole Locations in the Complex Z-Plane.}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.85\textwidth]{images/pfe_decomposition_modes.png}
+    \includegraphics[width=0.82\textwidth]{images/pfe_decomposition_modes.png}
     \caption{Partial Fraction Expansion: Synthesizing the Complete Impulse Response as a Superposition of Modes.}
 \end{figure}
 
-
 \begin{itemize}
     \item \textbf{00:00 -- 05:00 (5 mins):} Motivation: Why do we need the Inverse Z-transform? Uniqueness of ROC.
-    \item \textbf{05:00 -- 18:00 (13 mins):} Method 1: Partial Fraction Expansion (Distinct and Repeated Poles).
-    \item \textbf{18:00 -- 25:00 (7 mins):} Method 2: Power Series Expansion (Long Division for causal vs. anti-causal).
-    \item \textbf{25:00 -- 30:00 (5 mins):} Method 3: Contour Integration (Residue Theorem).
-    \item \textbf{30:00 -- 38:00 (8 mins):} Stability \& Causality Analysis of LTI Systems based on poles.
-    \item \textbf{38:00 -- 40:00 (2 mins):} Checkpoint \& Summary.
+    \item \textbf{05:00 -- 15:00 (10 mins):} Method 1: Partial Fraction Expansion (Distinct and Repeated Poles).
+    \item \textbf{15:00 -- 22:00 (7 mins):} Method 2: Power Series Expansion (Long Division for causal vs. anti-causal).
+    \item \textbf{22:00 -- 28:00 (6 mins):} Method 3: Contour Integration (Residue Theorem).
+    \item \textbf{28:00 -- 36:00 (8 mins):} Comprehensive Worked Numerical comparing all 3 approaches.
+    \item \textbf{36:00 -- 40:00 (4 mins):} Stability \& Causality Analysis of LTI Systems based on poles.
 \end{itemize}
 
 \noindent\rule{\textwidth}{0.5pt}
@@ -68,49 +67,96 @@ The Inverse Z-transform maps $X(z)$ and its ROC back to a discrete sequence $x[n
 \begin{equation}
 x[n] = \mathcal{Z}^{-1}\{X(z)\}
 \end{equation}
-The algebraic expression $X(z) = \frac{z}{z-a}$ corresponds to:
-\begin{itemize}
-    \item $x[n] = a^n u[n]$ if ROC is $|z| > |a|$.
-    \item $x[n] = -a^n u[-n-1]$ if ROC is $|z| < |a|$.
-\end{itemize}
 Specification of the ROC is critical to ensure uniqueness.
 
-\section{Method 1: Partial Fraction Expansion}
-\subsection{Distinct Poles}
+\section{Method 1: Partial Fraction Expansion (PFE)}
 For distinct poles $p_k$:
 \begin{equation}
 \frac{X(z)}{z} = \sum_{k=1}^{N} \frac{A_k}{z-p_k} \quad \text{where} \quad A_k = \left[ (z-p_k) \frac{X(z)}{z} \right]_{z=p_k}
 \end{equation}
 
-\subsection{Repeated Poles}
-For a pole $p_1$ repeated $m$ times:
-\begin{equation}
-\frac{X(z)}{z} = \sum_{k=1}^{m} \frac{A_{1k}}{(z-p_1)^k} + \sum_{i=2}^{N} \frac{A_i}{z-p_i}
-\end{equation}
-where residues are calculated using derivatives:
-\begin{equation}
-A_{1k} = \frac{1}{(m-k)!} \left[ \frac{d^{m-k}}{dz^{m-k}} \left( (z - p_1)^m \frac{X(z)}{z} \right) \right]_{z = p_1}
-\end{equation}
-
 \section{Method 2: Power Series Expansion (Long Division)}
-We divide the numerator by the denominator:
+We express $X(z)$ directly as a Laurent series:
 \begin{equation}
-X(z) = \sum_{n=-\infty}^{\infty} x[n] z^{-n}
+X(z) = \sum_{n=-\infty}^{\infty} x[n] z^{-n} = \dots + x[-1]z^1 + x[0] + x[1]z^{-1} + x[2]z^{-2} + \dots
 \end{equation}
 \begin{itemize}
-    \item \textbf{Causal ($|z| > |p|$):} Divide in descending powers of $z$ (e.g. $1 + c_1 z^{-1} + c_2 z^{-2} + \dots$).
-    \item \textbf{Anti-causal ($|z| < |p|$):} Divide in ascending powers of $z$ (e.g. $c_{-1} z^1 + c_{-2} z^2 + \dots$).
+    \item \textbf{Causal ($|z| > |p|$):} Divide in descending powers of $z$ ($x[0] + x[1]z^{-1} + x[2]z^{-2} + \dots$).
+    \item \textbf{Anti-causal ($|z| < |p|$):} Divide in ascending powers of $z$ ($x[-1]z^1 + x[-2]z^2 + \dots$).
 \end{itemize}
 
-\section{Method 3: Contour Integration (Residue Theorem)}
-The formal inverse transform is evaluated as a contour integral:
+\section{Method 3: Contour Integration (Cauchy's Residue Theorem)}
 \begin{equation}
 x[n] = \frac{1}{2\pi j} \oint_{C} X(z) z^{n-1} dz = \sum \text{Residues of } \left[ X(z)z^{n-1} \right] \text{ inside } C
 \end{equation}
-For a pole $z=p$ of order $m$, the residue is:
+For a simple pole at $z=p$:
 \begin{equation}
-\text{Res}\left\{ X(z) z^{n-1} \right\}_{z=p} = \frac{1}{(m-1)!} \lim_{z \to p} \frac{d^{m-1}}{dz^{m-1}} \left[ (z-p)^m X(z) z^{n-1} \right]
+\text{Res}\left\{ X(z) z^{n-1} \right\}_{z=p} = \lim_{z \to p} (z-p) X(z) z^{n-1}
 \end{equation}
+
+\section{Comprehensive Worked Numerical: All 3 Approaches}
+
+\subsection{Problem Statement}
+Given the rational Z-transform:
+\begin{equation}
+X(z) = \frac{1}{1 - 1.5 z^{-1} + 0.5 z^{-2}} = \frac{z^2}{(z - 1)(z - 0.5)}
+\end{equation}
+Determine the sequence $x[n]$ for:
+\begin{enumerate}
+    \item \textbf{Condition 1:} Causal Sequence (ROC: $|z| > 1$)
+    \item \textbf{Condition 2:} Anti-Causal Sequence (ROC: $|z| < 0.5$)
+    \item \textbf{Condition 3:} Two-Sided / BIBO Stable Sequence (ROC: $0.5 < |z| < 1$)
+\end{enumerate}
+
+\subsection{Approach 1: Partial Fraction Expansion}
+Form $\frac{X(z)}{z} = \frac{z}{(z - 1)(z - 0.5)} = \frac{A}{z - 1} + \frac{B}{z - 0.5}$.
+Residues:
+\begin{equation}
+A = \left. \frac{z}{z - 0.5} \right|_{z = 1} = \frac{1}{1 - 0.5} = 2, \qquad B = \left. \frac{z}{z - 1} \right|_{z = 0.5} = \frac{0.5}{0.5 - 1} = -1
+\end{equation}
+Reconstructing $X(z)$:
+\begin{equation}
+X(z) = 2 \left( \frac{z}{z - 1} \right) - 1 \left( \frac{z}{z - 0.5} \right) = \frac{2}{1 - z^{-1}} - \frac{1}{1 - 0.5 z^{-1}}
+\end{equation}
+Applying ROC conditions:
+\begin{itemize}
+    \item \textbf{Causal ($|z| > 1$):} $x[n] = 2(1)^n u[n] - (0.5)^n u[n] = \left[ 2 - (0.5)^n \right] u[n]$. \\
+    Values: $x[0]=1.0$, $x[1]=1.5$, $x[2]=1.75$, $x[3]=1.875$.
+    \item \textbf{Anti-Causal ($|z| < 0.5$):} $x[n] = -2(1)^n u[-n-1] + (0.5)^n u[-n-1] = \left[ (0.5)^n - 2 \right] u[-n-1]$. \\
+    Values: $x[-1]=0$, $x[-2]=2$, $x[-3]=6$, $x[-4]=14$.
+    \item \textbf{Two-Sided ($0.5 < |z| < 1$):} $x[n] = -(0.5)^n u[n] - 2 u[-n-1]$.
+\end{itemize}
+
+\subsection{Approach 2: Power Series Expansion (Long Division)}
+\textbf{Case A: Causal Sequence ($|z| > 1$)} \\
+Divide $1$ by $(1 - 1.5 z^{-1} + 0.5 z^{-2})$:
+\begin{itemize}
+    \item Step 1: $1 / 1 = \mathbf{1}$. Remainder: $1.5 z^{-1} - 0.5 z^{-2}$.
+    \item Step 2: $1.5 z^{-1} / 1 = \mathbf{1.5 z^{-1}}$. Remainder: $1.75 z^{-2} - 0.75 z^{-3}$.
+    \item Step 3: $1.75 z^{-2} / 1 = \mathbf{1.75 z^{-2}}$. Remainder: $1.875 z^{-3} - 0.875 z^{-4}$.
+\end{itemize}
+Quotient: $X(z) = 1 + 1.5 z^{-1} + 1.75 z^{-2} + 1.875 z^{-3} + \dots \implies x[0]=1, x[1]=1.5, x[2]=1.75, x[3]=1.875$.
+
+\noindent \textbf{Case B: Anti-Causal Sequence ($|z| < 0.5$)} \\
+Divide $1$ by $(0.5 z^{-2} - 1.5 z^{-1} + 1)$:
+\begin{itemize}
+    \item Step 1: $1 / 0.5 z^{-2} = \mathbf{2 z^2}$. Remainder: $3 z - 2 z^2$.
+    \item Step 2: $3 z / 0.5 z^{-2} = \mathbf{6 z^3}$. Remainder: $7 z^2 - 6 z^3$.
+    \item Step 3: $7 z^2 / 0.5 z^{-2} = \mathbf{14 z^4}$.
+\end{itemize}
+Quotient: $X(z) = 0 z^1 + 2 z^2 + 6 z^3 + 14 z^4 + \dots \implies x[-1]=0, x[-2]=2, x[-3]=6, x[-4]=14$.
+
+\subsection{Approach 3: Contour Integration (Residue Theorem)}
+Integrand $F(z) = X(z) z^{n-1} = \frac{z^{n+1}}{(z-1)(z-0.5)}$. \\
+Residues at simple poles:
+\begin{equation}
+\text{Res}\{F(z)\}_{z=1} = \left. \frac{z^{n+1}}{z-0.5} \right|_{z=1} = 2(1)^n, \qquad \text{Res}\{F(z)\}_{z=0.5} = \left. \frac{z^{n+1}}{z-1} \right|_{z=0.5} = -(0.5)^n
+\end{equation}
+\begin{itemize}
+    \item \textbf{Causal ($|z|>1$):} Encloses $z=1, 0.5 \implies x[n] = \text{Res}_{z=1} + \text{Res}_{z=0.5} = \left[ 2 - (0.5)^n \right] u[n]$.
+    \item \textbf{Anti-Causal ($|z|<0.5$):} Evaluates exterior residues $\implies x[n] = -(\text{Res}_{z=1} + \text{Res}_{z=0.5}) = \left[ (0.5)^n - 2 \right] u[-n-1]$.
+    \item \textbf{Two-Sided ($0.5<|z|<1$):} Encloses only $z=0.5 \implies x[n] = -(0.5)^n u[n] - 2 u[-n-1]$.
+\end{itemize}
 
 \section{Causality, Stability \& Pole Locations}
 \begin{itemize}
@@ -118,7 +164,5 @@ For a pole $z=p$ of order $m$, the residue is:
     \item \textbf{Stability:} The ROC of $H(z)$ must contain the unit circle ($|z|=1$).
     \item \textbf{Causal \& Stable:} All poles must lie strictly inside the unit circle ($|p_k| < 1$).
 \end{itemize}
-
-Stability boundaries and impulse response modes are illustrated in Figures~\ref{fig:zplane_stability} and~\ref{fig:impulse_modes}.
 
 \end{document}

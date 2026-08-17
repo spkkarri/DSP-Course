@@ -77,7 +77,121 @@ $$\text{Res}\left\{ X(z) z^{n-1} \right\}_{z=p} = \frac{1}{(m-1)!} \lim_{z \to p
 
 ---
 
-## 6. Stability, Causality \& Pole Locations
+
+---
+
+## 6. Comprehensive Worked Numerical: Solving via All 3 Inversion Approaches
+
+To deeply understand the mechanics, equivalence, and nuances of the three inverse Z-transform methods, we solve the **exact same system** using all three approaches across different ROC conditions.
+
+### Problem Statement
+Given the rational Z-transform:
+$$X(z) = \frac{1}{1 - 1.5 z^{-1} + 0.5 z^{-2}} = \frac{z^2}{z^2 - 1.5 z + 0.5} = \frac{z^2}{(z - 1)(z - 0.5)}$$
+
+Determine the sequence $x[n]$ for:
+* **Condition 1:** Causal Sequence (ROC: $|z| > 1$)
+* **Condition 2:** Anti-Causal Sequence (ROC: $|z| < 0.5$)
+* **Condition 3:** Two-Sided / BIBO Stable Sequence (ROC: $0.5 < |z| < 1$)
+
+---
+
+### Approach 1: Partial Fraction Expansion (PFE)
+
+#### Step 1: Form $\frac{X(z)}{z}$
+$$\frac{X(z)}{z} = \frac{z}{(z - 1)(z - 0.5)} = \frac{A}{z - 1} + \frac{B}{z - 0.5}$$
+
+#### Step 2: Calculate Residues (Cover-Up Rule)
+$$A = \left[ (z - 1) \frac{X(z)}{z} \right]_{z = 1} = \left. \frac{z}{z - 0.5} \right|_{z = 1} = \frac{1}{1 - 0.5} = 2$$
+$$B = \left[ (z - 0.5) \frac{X(z)}{z} \right]_{z = 0.5} = \left. \frac{z}{z - 1} \right|_{z = 0.5} = \frac{0.5}{0.5 - 1} = -1$$
+
+#### Step 3: Reconstruct $X(z)$
+$$X(z) = 2 \left( \frac{z}{z - 1} \right) - 1 \left( \frac{z}{z - 0.5} \right) = \frac{2}{1 - z^{-1}} - \frac{1}{1 - 0.5 z^{-1}}$$
+
+#### Step 4: Apply ROC Conditions
+1. **For Causal ROC ($|z| > 1$):** Both poles ($z=1, z=0.5$) lie inside the ROC boundary $\implies$ both terms are right-sided:
+   $$x[n] = 2 (1)^n u[n] - (0.5)^n u[n] = \left[ 2 - (0.5)^n \right] u[n]$$
+   * *Sample values:* $x[0] = 1.0$, $x[1] = 1.5$, $x[2] = 1.75$, $x[3] = 1.875, \dots$
+
+2. **For Anti-Causal ROC ($|z| < 0.5$):** Both poles lie outside the ROC boundary $\implies$ both terms are left-sided:
+   $$x[n] = -2 (1)^n u[-n-1] + (0.5)^n u[-n-1] = \left[ (0.5)^n - 2 \right] u[-n-1]$$
+   * *Sample values:* $x[-1] = 0$, $x[-2] = 2$, $x[-3] = 6$, $x[-4] = 14, \dots$
+
+3. **For Two-Sided ROC ($0.5 < |z| < 1$):** Pole at $z=0.5$ is inside $|z|>0.5$ (causal); pole at $z=1$ is outside $|z|<1$ (anti-causal):
+   $$x[n] = -(0.5)^n u[n] - 2 u[-n-1]$$
+
+---
+
+### Approach 2: Power Series Expansion (Long Division Method)
+
+We express $X(z) = \sum_{n=-\infty}^{\infty} x[n] z^{-n}$ by directly dividing numerator by denominator.
+
+#### Case A: Causal Sequence ($|z| > 1$)
+Arrange numerator and denominator in **descending powers of $z$** (ascending powers of $z^{-1}$):
+$$1 \div \left( 1 - 1.5 z^{-1} + 0.5 z^{-2} \right)$$
+
+* **Division Steps:**
+  1. $1 \div 1 = \mathbf{1}$. Remainder: $1 - (1 - 1.5 z^{-1} + 0.5 z^{-2}) = 1.5 z^{-1} - 0.5 z^{-2}$.
+  2. $1.5 z^{-1} \div 1 = \mathbf{1.5 z^{-1}}$. Remainder: $(1.5 z^{-1} - 0.5 z^{-2}) - (1.5 z^{-1} - 2.25 z^{-2} + 0.75 z^{-3}) = 1.75 z^{-2} - 0.75 z^{-3}$.
+  3. $1.75 z^{-2} \div 1 = \mathbf{1.75 z^{-2}}$. Remainder: $(1.75 z^{-2} - 0.75 z^{-3}) - (1.75 z^{-2} - 2.625 z^{-3} + 0.875 z^{-4}) = 1.875 z^{-3} - 0.875 z^{-4}$.
+  4. $1.875 z^{-3} \div 1 = \mathbf{1.875 z^{-3}}$.
+
+* **Quotient Series:**
+  $$X(z) = 1 + 1.5 z^{-1} + 1.75 z^{-2} + 1.875 z^{-3} + \dots$$
+  $$\implies x[0] = 1, \quad x[1] = 1.5, \quad x[2] = 1.75, \quad x[3] = 1.875$$
+  *(Identical to Approach 1!)*
+
+#### Case B: Anti-Causal Sequence ($|z| < 0.5$)
+Arrange numerator and denominator in **ascending powers of $z$** (descending powers of $z^{-1}$):
+$$1 \div \left( 0.5 z^{-2} - 1.5 z^{-1} + 1 \right)$$
+
+* **Division Steps:**
+  1. $1 \div 0.5 z^{-2} = \mathbf{2 z^2}$. Remainder: $1 - (1 - 3 z + 2 z^2) = 3 z - 2 z^2$.
+  2. $3 z \div 0.5 z^{-2} = \mathbf{6 z^3}$. Remainder: $(3 z - 2 z^2) - (3 z - 9 z^2 + 6 z^3) = 7 z^2 - 6 z^3$.
+  3. $7 z^2 \div 0.5 z^{-2} = \mathbf{14 z^4}$.
+
+* **Quotient Series:**
+  $$X(z) = 0 z^1 + 2 z^2 + 6 z^3 + 14 z^4 + \dots = \sum_{n=-\infty}^{-1} x[n] z^{-n}$$
+  $$\implies x[-1] = 0, \quad x[-2] = 2, \quad x[-3] = 6, \quad x[-4] = 14$$
+  *(Identical to Approach 1!)*
+
+---
+
+### Approach 3: Contour Integration (Cauchy's Residue Theorem)
+
+The definition of the inverse transform is:
+$$x[n] = \frac{1}{2\pi j} \oint_{C} X(z) z^{n-1} dz = \frac{1}{2\pi j} \oint_{C} \frac{z^{n+1}}{(z - 1)(z - 0.5)} dz$$
+
+Let integrand $F(z) = \frac{z^{n+1}}{(z - 1)(z - 0.5)}$. The simple poles of $F(z)$ are at $z = 1$ and $z = 0.5$.
+
+#### Residue Calculations at Simple Poles:
+$$\text{Res}\{F(z)\}_{z=1} = \lim_{z \to 1} (z - 1) F(z) = \left. \frac{z^{n+1}}{z - 0.5} \right|_{z=1} = \frac{1^{n+1}}{1 - 0.5} = 2(1)^n$$
+$$\text{Res}\{F(z)\}_{z=0.5} = \lim_{z \to 0.5} (z - 0.5) F(z) = \left. \frac{z^{n+1}}{z - 1} \right|_{z=0.5} = \frac{(0.5)^{n+1}}{0.5 - 1} = -(0.5)^n$$
+
+#### Application to ROCs:
+1. **Causal ROC ($|z| > 1$):** Contour $C$ encloses both poles $z=1$ and $z=0.5$.
+   * For $n \ge 0$:
+     $$x[n] = \text{Res}_{z=1} + \text{Res}_{z=0.5} = 2(1)^n - (0.5)^n = \left[ 2 - (0.5)^n \right] u[n]$$
+   * For $n < 0$: The additional multiple pole at $z=0$ has a residue that exactly cancels $\text{Res}_{z=1} + \text{Res}_{z=0.5}$, yielding $x[n] = 0$.
+
+2. **Anti-Causal ROC ($|z| < 0.5$):** Contour $C$ has radius $r < 0.5$, enclosing no poles for $n \ge 0$ ($x[n] = 0$).
+   * For $n < 0$, evaluating residues on the exterior of contour $C$:
+     $$x[n] = -\left( \text{Res}_{z=1} + \text{Res}_{z=0.5} \right) = -\left[ 2 - (0.5)^n \right] = \left[ (0.5)^n - 2 \right] u[-n-1]$$
+
+3. **Two-Sided ROC ($0.5 < |z| < 1$):** Contour $C$ encloses only the pole at $z=0.5$, while $z=1$ lies outside:
+   $$x[n] = \text{Res}_{z=0.5} u[n] - \text{Res}_{z=1} u[-n-1] = -(0.5)^n u[n] - 2 u[-n-1]$$
+
+---
+
+### Comparison & Verification Summary Table
+
+| Method | Best Used When | Output Format | Causal Sample Values $(n=0, 1, 2, 3)$ |
+| :--- | :--- | :--- | :--- |
+| **1. Partial Fraction Expansion** | Closed-form time sequence $x[n]$ is required for arbitrary $n$. | Analytic closed-form equation: $[2 - (0.5)^n]u[n]$ | $\{1.0, 1.5, 1.75, 1.875\}$ |
+| **2. Power Series (Long Division)** | Only the first few samples $x[0], x[1], \dots$ are needed. | Explicit sequence coefficient array | $\{1.0, 1.5, 1.75, 1.875\}$ |
+| **3. Contour Integration** | Formal mathematical proofs or non-rational analytic functions. | Analytic residue summation | $\{1.0, 1.5, 1.75, 1.875\}$ |
+
+
+## 7. Stability, Causality \& Pole Locations
 
 For a discrete LTI system, the transfer function is $H(z) = \frac{Y(z)}{X(z)}$, which is the Z-transform of the impulse response $h[n]$.
 
@@ -103,7 +217,7 @@ Below are the four possible impulse response profiles based on pole location and
 
 ---
 
-## 7. Checkpoint \& Quick Review Questions
+## 8. Checkpoint \& Quick Review Questions
 
 1. **Q1:** Find the inverse Z-transform of $H(z) = \frac{z^2}{(z - 0.5)(z - 2)}$ for the stable ROC: $0.5 < |z| < 2$.
    * *Answer:*
