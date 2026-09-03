@@ -3122,61 +3122,72 @@
                         </table>
                     </section>
 
-                                        <!-- L10 Section 2: Interactive Sandbox -->
+                                                            <!-- L10 Section 2: Interactive Sandbox -->
                     <section class="card">
                         <div class="card-title">Complete Multi-Stage Radix-2 DIT-FFT Butterfly &amp; Signal Flow Graph Simulator</div>
                         <p class="theory-text">
                             Explore the complete Cooley-Tukey Radix-2 Decimation-in-Time (DIT) FFT Signal Flow Graph (SFG) for arbitrary sequence lengths (\(N = 2, 4, 8, 16\)).
-                            Select a signal length \(N\), choose an input preset or enter custom samples, and step/scroll through each stage to observe how the \(N/2^{m-1}\) sub-DFTs combine hierarchically via 2-point butterfly processing elements with their respective twiddle factors \(W_N^r\).
+                            Select a signal length \(N\), choose an input preset, and use the <strong>Stream Path Tracer</strong> and <strong>Zoom Controls</strong> to inspect how individual signal streams propagate through the butterfly network and combine via twiddle factors \(W_N^r\).
                         </p>
 
                         <!-- Top Control Bar -->
-                        <div class="controls-panel" style="display: flex; flex-wrap: wrap; gap: 15px; align-items: center; justify-content: space-between; background: #0f172a; padding: 14px 18px; border-radius: 8px; border: 1px solid #1e293b; margin-bottom: 16px;">
-                            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                                <label style="font-weight: 600; color: #38bdf8; font-size: 0.9rem;">Signal Length \(N\):</label>
-                                <div class="btn-group" id="btn-group-l10-n" style="display: flex; gap: 6px;">
-                                    <button type="button" class="btn btn-sm btn-outline-primary l10-n-btn" data-n="2">N = 2 (1 Stage)</button>
-                                    <button type="button" class="btn btn-sm btn-outline-primary l10-n-btn" data-n="4">N = 4 (2 Stages)</button>
-                                    <button type="button" class="btn btn-sm btn-primary active l10-n-btn" data-n="8">N = 8 (3 Stages)</button>
-                                    <button type="button" class="btn btn-sm btn-outline-primary l10-n-btn" data-n="16">N = 16 (4 Stages)</button>
+                        <div class="controls-panel" style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; background: #0f172a; padding: 12px 16px; border-radius: 8px; border: 1px solid #1e293b; margin-bottom: 14px;">
+                            <!-- Length N -->
+                            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                <label style="font-weight: 600; color: #38bdf8; font-size: 0.85rem;">Length \(N\):</label>
+                                <div class="btn-group" id="btn-group-l10-n" style="display: flex; gap: 4px;">
+                                    <button type="button" class="btn btn-sm btn-outline-primary l10-n-btn" data-n="2">N = 2</button>
+                                    <button type="button" class="btn btn-sm btn-outline-primary l10-n-btn" data-n="4">N = 4</button>
+                                    <button type="button" class="btn btn-sm btn-primary active l10-n-btn" data-n="8">N = 8</button>
+                                    <button type="button" class="btn btn-sm btn-outline-primary l10-n-btn" data-n="16">N = 16</button>
                                 </div>
                             </div>
 
-                            <div style="display: flex; align-items: center; gap: 10px;">
-                                <label style="font-weight: 600; color: #a78bfa; font-size: 0.9rem;">Input Preset:</label>
-                                <select id="select-l10-preset" class="form-select" style="background: #1e293b; color: #f8fafc; border: 1px solid #334155; border-radius: 6px; padding: 5px 10px; font-size: 0.85rem;">
+                            <!-- Input Preset -->
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <label style="font-weight: 600; color: #a78bfa; font-size: 0.85rem;">Preset:</label>
+                                <select id="select-l10-preset" class="form-select" style="background: #1e293b; color: #f8fafc; border: 1px solid #334155; border-radius: 6px; padding: 4px 8px; font-size: 0.82rem;">
                                     <option value="cosine" selected>Cosine (1 + 2cos)</option>
-                                    <option value="delta">Unit Impulse δ[n]</option>
-                                    <option value="step">Unit Step u[n]</option>
+                                    <option value="delta">Impulse δ[n]</option>
+                                    <option value="step">Step u[n]</option>
                                     <option value="ramp">Linear Ramp</option>
-                                    <option value="symmetric">Symmetric Sequence</option>
-                                    <option value="custom">Custom Input...</option>
+                                    <option value="symmetric">Symmetric</option>
+                                    <option value="custom">Custom...</option>
                                 </select>
                             </div>
 
-                            <div style="display: flex; align-items: center; gap: 10px;">
-                                <label style="font-weight: 600; color: #34d399; font-size: 0.9rem;">Stage Focus / Highlight:</label>
-                                <select id="select-l10-stage-focus" class="form-select" style="background: #1e293b; color: #f8fafc; border: 1px solid #334155; border-radius: 6px; padding: 5px 10px; font-size: 0.85rem;">
-                                    <option value="all" selected>All Stages (Full SFG)</option>
-                                    <option value="1">Stage 1 (2-pt Sub-DFTs)</option>
-                                    <option value="2">Stage 2 (4-pt Sub-DFTs)</option>
-                                    <option value="3">Stage 3 (8-pt Sub-DFTs)</option>
-                                    <option value="4">Stage 4 (16-pt DFT)</option>
+                            <!-- Stream Highlighter -->
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <label style="font-weight: 600; color: #f59e0b; font-size: 0.85rem;">Highlight Stream:</label>
+                                <select id="select-l10-stream-focus" class="form-select" style="background: #1e293b; color: #f8fafc; border: 1px solid #334155; border-radius: 6px; padding: 4px 8px; font-size: 0.82rem;">
+                                    <option value="all" selected>All Streams</option>
+                                    <!-- Filled dynamically by JS -->
                                 </select>
+                            </div>
+
+                            <!-- Zoom & Stage Focus -->
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <label style="font-weight: 600; color: #34d399; font-size: 0.85rem;">Zoom:</label>
+                                <div class="btn-group" style="display: flex; gap: 4px;">
+                                    <button type="button" id="btn-l10-zoom-out" class="btn btn-sm btn-outline-secondary" title="Zoom Out" style="padding: 2px 8px;">−</button>
+                                    <span id="span-l10-zoom-val" style="font-family: monospace; font-size: 0.8rem; color: #94a3b8; display: flex; align-items: center; padding: 0 4px;">100%</span>
+                                    <button type="button" id="btn-l10-zoom-in" class="btn btn-sm btn-outline-secondary" title="Zoom In" style="padding: 2px 8px;">+</button>
+                                    <button type="button" id="btn-l10-zoom-reset" class="btn btn-sm btn-outline-secondary" title="Reset View" style="padding: 2px 6px; font-size: 0.75rem;">Reset</button>
+                                </div>
                             </div>
                         </div>
 
                         <!-- Custom Input Array Row (conditionally visible) -->
-                        <div id="div-l10-custom-input" style="display: none; margin-bottom: 16px; background: #111827; padding: 12px 16px; border-radius: 8px; border: 1px solid #374151;">
-                            <label style="font-size: 0.85rem; color: #9ca3af; margin-bottom: 6px; display: block;">Enter comma-separated real numbers for \(x[n]\):</label>
-                            <div style="display: flex; gap: 10px;">
-                                <input type="text" id="input-l10-custom-values" class="form-control" style="flex: 1; background: #1f2937; color: #f9fafb; border: 1px solid #4b5563; padding: 6px 12px; border-radius: 6px; font-family: monospace;" value="1, 2, 3, 4, 4, 3, 2, 1">
-                                <button type="button" id="btn-l10-apply-custom" class="btn btn-sm btn-success">Apply Input</button>
+                        <div id="div-l10-custom-input" style="display: none; margin-bottom: 14px; background: #111827; padding: 10px 14px; border-radius: 8px; border: 1px solid #374151;">
+                            <label style="font-size: 0.82rem; color: #9ca3af; margin-bottom: 4px; display: block;">Enter comma-separated real numbers for \(x[n]\):</label>
+                            <div style="display: flex; gap: 8px;">
+                                <input type="text" id="input-l10-custom-values" class="form-control" style="flex: 1; background: #1f2937; color: #f9fafb; border: 1px solid #4b5563; padding: 5px 10px; border-radius: 6px; font-family: monospace; font-size: 0.85rem;" value="1, 2, 3, 4, 4, 3, 2, 1">
+                                <button type="button" id="btn-l10-apply-custom" class="btn btn-sm btn-success">Apply</button>
                             </div>
                         </div>
 
                         <!-- Stage Sub-DFT Summary Badges -->
-                        <div id="l10-stage-summary-bar" style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; font-size: 0.8rem;">
+                        <div id="l10-stage-summary-bar" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; font-size: 0.78rem;">
                             <!-- Filled dynamically by JS -->
                         </div>
 
@@ -3184,40 +3195,45 @@
                         <div class="plot-container" style="background: #090d16; border-radius: 8px; border: 1px solid #1e293b; padding: 12px; position: relative;">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding: 0 4px; flex-wrap: wrap; gap: 8px;">
                                 <h4 style="margin: 0; color: #e2e8f0; font-size: 0.95rem;">
-                                    Complete Multi-Stage Signal Flow Graph (\(N = <span id="span-l10-n-val" style="color: #38bdf8;">8</span>\), <span id="span-l10-stages-val" style="color: #a78bfa;">3</span> Stages, <span id="span-l10-butterflies-val" style="color: #34d399;">12</span> Butterflies)
+                                    Multi-Stage Signal Flow Graph (\(N = <span id="span-l10-n-val" style="color: #38bdf8;">8</span>\), <span id="span-l10-stages-val" style="color: #a78bfa;">3</span> Stages)
+                                    <span id="span-l10-stream-active" style="font-size: 0.8rem; color: #f59e0b; margin-left: 8px; font-weight: normal;"></span>
                                 </h4>
-                                <div style="font-size: 0.75rem; color: #94a3b8; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-                                    <span><span style="display: inline-block; width: 10px; height: 10px; background: #8b5cf6; border-radius: 2px; margin-right: 4px;"></span>Upper Branch (+1)</span>
-                                    <span><span style="display: inline-block; width: 10px; height: 10px; background: #0dd5c5; border-radius: 2px; margin-right: 4px;"></span>Lower Branch (-1)</span>
-                                    <span><span style="display: inline-block; width: 10px; height: 10px; background: #f59e0b; border-radius: 50%; margin-right: 4px;"></span>Twiddle Multiplier (\(W_N^r\))</span>
-                                    <span><span style="display: inline-block; width: 10px; height: 10px; background: rgba(56, 189, 248, 0.2); border: 1px solid #38bdf8; border-radius: 2px; margin-right: 4px;"></span>Sub-DFT Block</span>
+                                <div style="font-size: 0.73rem; color: #94a3b8; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                                    <span><span style="display: inline-block; width: 10px; height: 10px; background: #8b5cf6; border-radius: 2px; margin-right: 4px;"></span>Upper (+1)</span>
+                                    <span><span style="display: inline-block; width: 10px; height: 10px; background: #0dd5c5; border-radius: 2px; margin-right: 4px;"></span>Lower (-1)</span>
+                                    <span><span style="display: inline-block; width: 10px; height: 10px; background: #f59e0b; border-radius: 50%; margin-right: 4px;"></span>Twiddle (\(W_N^r\))</span>
+                                    <span style="color: #38bdf8;">💡 Click any stream rail to trace</span>
                                 </div>
                             </div>
                             
-                            <!-- Horizontally Scrollable SFG Container -->
-                            <div id="l10-sfg-scroll-container" style="overflow-x: auto; overflow-y: hidden; width: 100%; border-radius: 6px; background: #070a10; padding: 10px 0; border: 1px solid rgba(255,255,255,0.05);">
-                                <canvas id="canvas-l10-sfg" style="display: block; margin: 0 auto;"></canvas>
+                            <!-- Horizontally & Vertically Scrollable SFG Container -->
+                            <div id="l10-sfg-scroll-container" style="overflow: auto; max-height: 480px; width: 100%; border-radius: 6px; background: #070a10; padding: 8px; border: 1px solid rgba(255,255,255,0.05); cursor: crosshair;">
+                                <canvas id="canvas-l10-sfg" style="display: block;"></canvas>
                             </div>
 
                             <div id="l10-node-tooltip" style="display: none; position: absolute; background: #1e293b; border: 1px solid #38bdf8; color: #f8fafc; padding: 6px 10px; border-radius: 6px; font-size: 0.75rem; font-family: monospace; pointer-events: none; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.5);"></div>
                         </div>
 
+                        <!-- Active Stream Calculation Inspector Card -->
+                        <div id="l10-stream-detail-card" style="display: none; margin-top: 14px; background: #0f172a; padding: 12px 16px; border-radius: 8px; border: 1px solid #f59e0b;">
+                            <h4 style="margin: 0 0 8px 0; color: #f59e0b; font-size: 0.9rem;">Trace Breakdown: <span id="l10-stream-detail-title">Stream x[0]</span></h4>
+                            <div id="l10-stream-detail-content" style="font-family: monospace; font-size: 0.8rem; line-height: 1.6; color: #cbd5e1;"></div>
+                        </div>
+
                         <!-- Lower Sandbox Row: Bit-Reversal Table & Micro 2-Point Butterfly Sandbox -->
-                        <div class="sandbox-grid" style="grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
-                            <!-- Bit-Reversal Table & Decimation Breakdown -->
-                            <div class="plot-container" style="padding: 16px; background: #111827; border-radius: 8px; border: 1px solid #1f2937;">
-                                <h4 style="margin-top: 0; margin-bottom: 12px; color: #38bdf8; font-size: 0.95rem;">Bit-Reversal Mapping &amp; Decimation Hierarchy (\(N = <span id="span-l10-br-n">8</span>\))</h4>
-                                <div id="l10-bit-reversal-table-container" style="overflow-x: auto; max-height: 240px;">
-                                    <!-- Rendered dynamically by JS -->
-                                </div>
+                        <div class="sandbox-grid" style="grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px;">
+                            <!-- Bit-Reversal Table -->
+                            <div class="plot-container" style="padding: 14px; background: #111827; border-radius: 8px; border: 1px solid #1f2937;">
+                                <h4 style="margin-top: 0; margin-bottom: 10px; color: #38bdf8; font-size: 0.9rem;">Bit-Reversal Mapping (\(N = <span id="span-l10-br-n">8</span>\))</h4>
+                                <div id="l10-bit-reversal-table-container" style="overflow-x: auto; max-height: 220px;"></div>
                             </div>
 
                             <!-- Isolated 2-Point Butterfly Processing Element Sandbox -->
-                            <div class="plot-container" style="padding: 16px; background: #111827; border-radius: 8px; border: 1px solid #1f2937;">
-                                <h4 style="margin-top: 0; margin-bottom: 10px; color: #a78bfa; font-size: 0.95rem;">Isolated 2-Point Butterfly Processing Element</h4>
-                                <canvas id="canvas-l10-butterfly" style="width: 100%; height: 140px;"></canvas>
+                            <div class="plot-container" style="padding: 14px; background: #111827; border-radius: 8px; border: 1px solid #1f2937;">
+                                <h4 style="margin-top: 0; margin-bottom: 8px; color: #a78bfa; font-size: 0.9rem;">Isolated 2-Point Butterfly Processing Element</h4>
+                                <canvas id="canvas-l10-butterfly" style="width: 100%; height: 130px;"></canvas>
                                 
-                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; font-size: 0.78rem;">
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px; font-size: 0.75rem;">
                                     <div class="control-group">
                                         <label>Input A (Real): <span id="val-l10-ar" class="control-val">1.0</span></label>
                                         <input type="range" id="slider-l10-ar" min="-2.0" max="2.0" value="1.0" step="0.2">
