@@ -18,3 +18,8 @@ write_*.py
 *.aux
 *.out
 *.toc
+
+tikz_*.tex
+tikz_*.aux
+tikz_*.log
+temp_*.html
