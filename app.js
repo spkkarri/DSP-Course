@@ -4428,90 +4428,450 @@ function initComplexitySimulator() {
 // ============================================================================
 // 17. FFT Butterfly & Bit-Reversal Simulator (Lecture 10)
 // ============================================================================
+// LECTURE 10: COMPLETE MULTI-STAGE RADIX-2 DIT-FFT BUTTERFLY & SFG SIMULATOR
+// ============================================================================
 function initFFTButterflySimulator() {
+    let currentN = 8;
+    let currentStageFocus = "all";
+    let inputSignal = [1, 2, 3, 4, 4, 3, 2, 1];
+    
+    // DOM Elements
+    const btnGroupN = document.getElementById("btn-group-l10-n");
+    const selectPreset = document.getElementById("select-l10-preset");
+    const selectStageFocus = document.getElementById("select-l10-stage-focus");
+    const divCustomInput = document.getElementById("div-l10-custom-input");
+    const inputCustomValues = document.getElementById("input-l10-custom-values");
+    const btnApplyCustom = document.getElementById("btn-l10-apply-custom");
+    
+    const spanNVal = document.getElementById("span-l10-n-val");
+    const spanStagesVal = document.getElementById("span-l10-stages-val");
+    const spanButterfliesVal = document.getElementById("span-l10-butterflies-val");
+    const stageSummaryBar = document.getElementById("l10-stage-summary-bar");
+    
+    const canvasSFG = document.getElementById("canvas-l10-sfg");
+    const sfgScrollContainer = document.getElementById("l10-sfg-scroll-container");
+    const tooltipNode = document.getElementById("l10-node-tooltip");
+    
+    const bitReversalContainer = document.getElementById("l10-bit-reversal-table-container");
+    const spanBrN = document.getElementById("span-l10-br-n");
+    
+    // Micro 2-point butterfly elements
+    const canvasMicro = document.getElementById("canvas-l10-butterfly");
     const sliderAr = document.getElementById("slider-l10-ar");
     const sliderAi = document.getElementById("slider-l10-ai");
     const sliderBr = document.getElementById("slider-l10-br");
     const sliderBi = document.getElementById("slider-l10-bi");
     const sliderR = document.getElementById("slider-l10-r");
-    
     const valAr = document.getElementById("val-l10-ar");
     const valAi = document.getElementById("val-l10-ai");
     const valBr = document.getElementById("val-l10-br");
     const valBi = document.getElementById("val-l10-bi");
     const valR = document.getElementById("val-l10-r");
     
-    const sliderNDec = document.getElementById("slider-l10-n-dec");
-    const valNDec = document.getElementById("val-l10-n-dec");
-    const valNOut = document.getElementById("val-l10-n-out");
-    const valBin = document.getElementById("val-l10-bin");
-    const valRev = document.getElementById("val-l10-rev");
-    const valRevIdx = document.getElementById("val-l10-rev-idx");
-    const seqList = document.getElementById("bit-reversal-sequence-list");
+    if (!canvasSFG || !btnGroupN) return;
     
-    const canvas = document.getElementById("canvas-l10-butterfly");
-    
-    if (!canvas || !sliderNDec || !seqList) return;
-    
-    const ctx = canvas.getContext("2d");
+    const ctxSFG = canvasSFG.getContext("2d");
+    const ctxMicro = canvasMicro ? canvasMicro.getContext("2d") : null;
 
-    function resize() {
-        canvas.width = canvas.parentElement.clientWidth * window.devicePixelRatio;
-        canvas.height = 200 * window.devicePixelRatio;
-        ctx.resetTransform();
-        ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    // Helper: Bit Reversal Calculation
+    function getBitReversedIndex(n, bits) {
+        let rev = 0;
+        for (let i = 0; i < bits; i++) {
+            rev = (rev << 1) | ((n >> i) & 1);
+        }
+        return rev;
     }
-    resize();
-    window.addEventListener("resize", resize);
 
-    function updateBitReversal() {
-        const n = parseInt(sliderNDec.value);
-        valNDec.innerText = n;
-        valNOut.innerText = n;
+    function getBitReversalArray(N) {
+        const bits = Math.round(Math.log2(N));
+        const arr = [];
+        for (let i = 0; i < N; i++) {
+            arr.push(getBitReversedIndex(i, bits));
+        }
+        return arr;
+    }
 
-        const binStr = n.toString(2).padStart(3, '0');
-        const revStr = binStr.split('').reverse().join('');
-        const revIdx = parseInt(revStr, 2);
+    // Helper: Complex Math
+    function cAdd(a, b) { return { r: a.r + b.r, i: a.i + b.i }; }
+    function cSub(a, b) { return { r: a.r - b.r, i: a.i - b.i }; }
+    function cMult(a, b) { return { r: a.r * b.r - a.i * b.i, i: a.r * b.i + a.i * b.r }; }
+    function cTwiddle(r, N) {
+        const angle = -2 * Math.PI * r / N;
+        return { r: Math.cos(angle), i: Math.sin(angle) };
+    }
+    function cFormat(c, precision = 2) {
+        const rStr = Math.abs(c.r) < 0.001 ? "0" : c.r.toFixed(precision);
+        const iAbs = Math.abs(c.i);
+        const iStr = iAbs < 0.001 ? "0" : iAbs.toFixed(precision);
+        if (iStr === "0") return rStr;
+        if (rStr === "0") return `${c.i < 0 ? "-" : ""}j${iStr}`;
+        return `${rStr}${c.i >= 0 ? "+" : "-"}j${iStr}`;
+    }
 
-        valBin.innerText = binStr;
-        valRev.innerText = revStr;
-        valRevIdx.innerText = revIdx;
+    // Generate signal presets
+    function generatePresetSignal(preset, N) {
+        const sig = [];
+        if (preset === "cosine") {
+            for (let n = 0; n < N; n++) {
+                sig.push(Number((1.0 + 2.0 * Math.cos(2 * Math.PI * n / N)).toFixed(2)));
+            }
+        } else if (preset === "delta") {
+            for (let n = 0; n < N; n++) sig.push(n === 0 ? 1.0 : 0.0);
+        } else if (preset === "step") {
+            for (let n = 0; n < N; n++) sig.push(1.0);
+        } else if (preset === "ramp") {
+            for (let n = 0; n < N; n++) sig.push(n);
+        } else if (preset === "symmetric") {
+            if (N === 2) sig.push(1, 1);
+            else if (N === 4) sig.push(1, 2, 2, 1);
+            else if (N === 8) sig.push(1, 2, 3, 4, 4, 3, 2, 1);
+            else if (N === 16) sig.push(1, 2, 3, 4, 5, 6, 7, 8, 8, 7, 6, 5, 4, 3, 2, 1);
+        } else {
+            for (let n = 0; n < N; n++) sig.push(n < inputSignal.length ? inputSignal[n] : 0.0);
+        }
+        return sig;
+    }
 
-        // Render sequence list
-        // Sorted sequence order of original indices: [0, 4, 2, 6, 1, 5, 3, 7]
-        const order = [0, 4, 2, 6, 1, 5, 3, 7];
-        seqList.innerHTML = "";
-        order.forEach((origIdx, seqPos) => {
-            const el = document.createElement("div");
-            el.style.flex = "1";
-            el.style.textAlign = "center";
-            el.style.padding = "6px 2px";
-            el.style.borderRadius = "4px";
-            el.style.fontSize = "0.7rem";
-            el.style.fontFamily = "monospace";
-            
-            if (origIdx === n) {
-                el.style.background = "rgba(13, 213, 197, 0.25)";
-                el.style.border = "1px solid var(--color-teal)";
-                el.style.color = "white";
-                el.style.fontWeight = "bold";
-            } else {
-                el.style.background = "#1f2937";
-                el.style.border = "1px solid rgba(255,255,255,0.08)";
-                el.style.color = "rgba(255,255,255,0.4)";
+    // Compute all intermediate stage states for DIT-FFT
+    function computeDITStages(x, N) {
+        const stages = Math.round(Math.log2(N));
+        const br = getBitReversalArray(N);
+        
+        // Stage 0: Bit-reversed inputs
+        const stageData = [];
+        const stage0 = [];
+        for (let i = 0; i < N; i++) {
+            const val = x[br[i]] || 0;
+            stage0.push({ r: val, i: 0, origIdx: br[i], bitRevPos: i });
+        }
+        stageData.push(stage0);
+
+        // Compute subsequent stages
+        for (let s = 1; s <= stages; s++) {
+            const prev = stageData[s - 1];
+            const curr = new Array(N);
+            const L = Math.pow(2, s);     // Sub-DFT size: 2, 4, 8, 16
+            const H = L / 2;             // Half-size
+            const groups = N / L;
+
+            for (let g = 0; g < groups; g++) {
+                for (let b = 0; b < H; b++) {
+                    const u = g * L + b;
+                    const v = u + H;
+                    const r = b * (N / L); // Twiddle factor exponent
+                    const W = cTwiddle(r, N);
+                    
+                    const A = prev[u];
+                    const B = prev[v];
+                    const mult = cMult(B, W);
+                    
+                    curr[u] = { ...cAdd(A, mult), stage: s, group: g, branch: 'upper', pair: v, r: r, W: W };
+                    curr[v] = { ...cSub(A, mult), stage: s, group: g, branch: 'lower', pair: u, r: r, W: W };
+                }
+            }
+            stageData.push(curr);
+        }
+        return stageData;
+    }
+
+    // Render Stage Summary Badges
+    function renderStageBadges(N) {
+        stageSummaryBar.innerHTML = "";
+        const stages = Math.round(Math.log2(N));
+        
+        // Input badge
+        const inBadge = document.createElement("div");
+        inBadge.style.background = "#1e293b";
+        inBadge.style.border = "1px solid #475569";
+        inBadge.style.padding = "4px 8px";
+        inBadge.style.borderRadius = "4px";
+        inBadge.style.color = "#94a3b8";
+        inBadge.innerHTML = `<strong>Input:</strong> Bit-reversed \(x[n_{rev}]\)`;
+        stageSummaryBar.appendChild(inBadge);
+
+        for (let s = 1; s <= stages; s++) {
+            const L = Math.pow(2, s);
+            const groups = N / L;
+            const twiddles = [];
+            for (let b = 0; b < L / 2; b++) {
+                twiddles.push(`W_${N}^${b * (N / L)}`);
             }
             
-            el.innerHTML = `x[${origIdx}]<br><span style="font-size:0.6rem; color:rgba(255,255,255,0.3)">pos:${seqPos}</span>`;
-            seqList.appendChild(el);
-        });
+            const badge = document.createElement("div");
+            badge.style.background = s % 2 === 1 ? "rgba(139, 92, 246, 0.15)" : "rgba(13, 213, 197, 0.15)";
+            badge.style.border = s % 2 === 1 ? "1px solid rgba(139, 92, 246, 0.4)" : "1px solid rgba(13, 213, 197, 0.4)";
+            badge.style.padding = "4px 8px";
+            badge.style.borderRadius = "4px";
+            badge.style.color = s % 2 === 1 ? "#c4b5fd" : "#6ee7b7";
+            badge.innerHTML = `<strong>Stage ${s}:</strong> ${groups} &times; ${L}-pt Sub-DFTs (Twiddles: ${twiddles.join(", ")})`;
+            stageSummaryBar.appendChild(badge);
+        }
+
+        const outBadge = document.createElement("div");
+        outBadge.style.background = "rgba(16, 185, 129, 0.15)";
+        outBadge.style.border = "1px solid #10b981";
+        outBadge.style.padding = "4px 8px";
+        outBadge.style.borderRadius = "4px";
+        outBadge.style.color = "#6ee7b7";
+        outBadge.innerHTML = `<strong>Output:</strong> Natural order \(X[k]\)`;
+        stageSummaryBar.appendChild(outBadge);
     }
 
-    function formatComplex(r, i) {
-        const sign = i >= 0 ? "+" : "-";
-        return `${r.toFixed(2)}${sign}j${Math.abs(i).toFixed(2)}`;
+    // Render Bit Reversal Table
+    function renderBitReversalTable(N) {
+        if (!bitReversalContainer) return;
+        const bits = Math.round(Math.log2(N));
+        if (spanBrN) spanBrN.innerText = N;
+        
+        let html = `<table style="width:100%; border-collapse:collapse; font-size:0.75rem; font-family:monospace; text-align:center;">
+            <thead>
+                <tr style="background:#0f172a; color:#38bdf8;">
+                    <th style="padding:6px; border:1px solid #1f2937;">Natural \(n\)</th>
+                    <th style="padding:6px; border:1px solid #1f2937;">Binary (\(${bits}\)-bit)</th>
+                    <th style="padding:6px; border:1px solid #1f2937;">Reversed Bits</th>
+                    <th style="padding:6px; border:1px solid #1f2937;">Assigned Input \(x[n_{rev}]\)</th>
+                    <th style="padding:6px; border:1px solid #1f2937;">Value</th>
+                </tr>
+            </thead>
+            <tbody>`;
+            
+        for (let i = 0; i < N; i++) {
+            const rev = getBitReversedIndex(i, bits);
+            const binStr = i.toString(2).padStart(bits, '0');
+            const revBinStr = rev.toString(2).padStart(bits, '0');
+            const val = inputSignal[rev] !== undefined ? inputSignal[rev] : 0;
+            const rowBg = i % 2 === 0 ? "#111827" : "#1e293b";
+            
+            html += `<tr style="background:${rowBg}; color:#e2e8f0;">
+                <td style="padding:4px 6px; border:1px solid #1f2937;">${i}</td>
+                <td style="padding:4px 6px; border:1px solid #1f2937; color:#94a3b8;">${binStr}</td>
+                <td style="padding:4px 6px; border:1px solid #1f2937; color:#38bdf8;">${revBinStr}</td>
+                <td style="padding:4px 6px; border:1px solid #1f2937; color:#a78bfa; font-weight:bold;">x[${rev}] (Pos ${i})</td>
+                <td style="padding:4px 6px; border:1px solid #1f2937; color:#34d399;">${Number(val).toFixed(2)}</td>
+            </tr>`;
+        }
+        html += `</tbody></table>`;
+        bitReversalContainer.innerHTML = html;
     }
 
-    function drawButterfly() {
+    // Draw the Complete Multi-Stage Signal Flow Graph
+    function drawCompleteSFG() {
+        const N = currentN;
+        const stages = Math.round(Math.log2(N));
+        const stageData = computeDITStages(inputSignal, N);
+        
+        spanNVal.innerText = N;
+        spanStagesVal.innerText = stages;
+        spanButterfliesVal.innerText = (N / 2) * stages;
+
+        // Dimensions
+        const rowHeight = N <= 4 ? 60 : (N <= 8 ? 44 : 32);
+        const colWidth = N <= 4 ? 200 : (N <= 8 ? 160 : 135);
+        const leftMargin = 110;
+        const rightMargin = 130;
+        const topMargin = 40;
+        
+        const totalW = leftMargin + stages * colWidth + rightMargin;
+        const totalH = topMargin + N * rowHeight + 40;
+
+        canvasSFG.width = totalW * window.devicePixelRatio;
+        canvasSFG.height = totalH * window.devicePixelRatio;
+        canvasSFG.style.width = `${totalW}px`;
+        canvasSFG.style.height = `${totalH}px`;
+        
+        ctxSFG.resetTransform();
+        ctxSFG.scale(window.devicePixelRatio, window.devicePixelRatio);
+        ctxSFG.clearRect(0, 0, totalW, totalH);
+
+        // Stage column headers
+        ctxSFG.font = "bold 11px sans-serif";
+        ctxSFG.textAlign = "center";
+        
+        ctxSFG.fillStyle = "#94a3b8";
+        ctxSFG.fillText("Inputs x[n_rev]", leftMargin / 2, 20);
+        
+        for (let s = 1; s <= stages; s++) {
+            const x = leftMargin + (s - 0.5) * colWidth;
+            const isFocused = currentStageFocus === "all" || currentStageFocus === String(s);
+            ctxSFG.fillStyle = isFocused ? "#38bdf8" : "#475569";
+            ctxSFG.fillText(`Stage ${s} (${Math.pow(2, s)}-pt DFTs)`, x, 20);
+        }
+        
+        ctxSFG.fillStyle = "#10b981";
+        ctxSFG.fillText("Outputs X[k]", totalW - rightMargin / 2, 20);
+
+        // Draw Sub-DFT Grouping Bounding Boxes
+        for (let s = 1; s <= stages; s++) {
+            const L = Math.pow(2, s);
+            const groups = N / L;
+            const isFocused = currentStageFocus === "all" || currentStageFocus === String(s);
+            const boxX = leftMargin + (s - 1) * colWidth + 10;
+            const boxW = colWidth - 20;
+
+            for (let g = 0; g < groups; g++) {
+                const startY = topMargin + (g * L) * rowHeight - 6;
+                const boxH = L * rowHeight - rowHeight + 12;
+                
+                ctxSFG.fillStyle = isFocused 
+                    ? (s % 2 === 1 ? "rgba(139, 92, 246, 0.06)" : "rgba(13, 213, 197, 0.06)")
+                    : "rgba(255, 255, 255, 0.01)";
+                ctxSFG.strokeStyle = isFocused 
+                    ? (s % 2 === 1 ? "rgba(139, 92, 246, 0.35)" : "rgba(13, 213, 197, 0.35)")
+                    : "rgba(255, 255, 255, 0.05)";
+                ctxSFG.lineWidth = 1;
+                ctxSFG.setLineDash([4, 4]);
+                ctxSFG.strokeRect(boxX, startY, boxW, boxH);
+                ctxSFG.fillRect(boxX, startY, boxW, boxH);
+                ctxSFG.setLineDash([]);
+
+                // Label sub-DFT box
+                if (isFocused && rowHeight >= 32) {
+                    ctxSFG.font = "9px Fira Code, monospace";
+                    ctxSFG.fillStyle = s % 2 === 1 ? "rgba(167, 139, 250, 0.8)" : "rgba(52, 211, 153, 0.8)";
+                    ctxSFG.textAlign = "right";
+                    ctxSFG.fillText(`${L}-pt DFT #${g+1}`, boxX + boxW - 4, startY + 12);
+                }
+            }
+        }
+
+        // Draw Horizontal Rails
+        for (let i = 0; i < N; i++) {
+            const y = topMargin + i * rowHeight;
+            ctxSFG.strokeStyle = "rgba(255, 255, 255, 0.12)";
+            ctxSFG.lineWidth = 1.5;
+            ctxSFG.beginPath();
+            ctxSFG.moveTo(leftMargin - 15, y);
+            ctxSFG.lineTo(totalW - rightMargin + 15, y);
+            ctxSFG.stroke();
+        }
+
+        // Draw Butterflies Stage by Stage
+        for (let s = 1; s <= stages; s++) {
+            const L = Math.pow(2, s);
+            const H = L / 2;
+            const groups = N / L;
+            const isFocused = currentStageFocus === "all" || currentStageFocus === String(s);
+            const startX = leftMargin + (s - 1) * colWidth;
+            const endX = startX + colWidth;
+
+            for (let g = 0; g < groups; g++) {
+                for (let b = 0; b < H; b++) {
+                    const u = g * L + b;
+                    const v = u + H;
+                    const yU = topMargin + u * rowHeight;
+                    const yV = topMargin + v * rowHeight;
+                    const r = b * (N / L);
+
+                    const alpha = isFocused ? 1.0 : 0.2;
+
+                    // Upper branch diagonal (crossing to bottom)
+                    ctxSFG.strokeStyle = `rgba(139, 92, 246, ${alpha})`; // Purple
+                    ctxSFG.lineWidth = 1.8;
+                    ctxSFG.beginPath();
+                    ctxSFG.moveTo(startX + 20, yU);
+                    ctxSFG.lineTo(endX - 25, yV);
+                    ctxSFG.stroke();
+
+                    // Lower branch diagonal (crossing to top)
+                    ctxSFG.strokeStyle = `rgba(13, 213, 197, ${alpha})`; // Teal
+                    ctxSFG.beginPath();
+                    ctxSFG.moveTo(startX + 45, yV);
+                    ctxSFG.lineTo(endX - 25, yU);
+                    ctxSFG.stroke();
+
+                    // Twiddle multiplier dot on lower branch
+                    const multX = startX + 32;
+                    ctxSFG.fillStyle = `rgba(245, 158, 11, ${alpha})`;
+                    ctxSFG.beginPath();
+                    ctxSFG.arc(multX, yV, 5, 0, 2 * Math.PI);
+                    ctxSFG.fill();
+
+                    // Twiddle Label
+                    if (isFocused) {
+                        ctxSFG.fillStyle = "#f59e0b";
+                        ctxSFG.font = "bold 9px Fira Code, monospace";
+                        ctxSFG.textAlign = "center";
+                        ctxSFG.fillText(`W${N}^${r}`, multX, yV + (rowHeight > 36 ? 14 : -8));
+                    }
+
+                    // Branch Multipliers: -1 marker on lower output
+                    if (isFocused) {
+                        ctxSFG.font = "bold 9px sans-serif";
+                        ctxSFG.fillStyle = "#ef4444";
+                        ctxSFG.textAlign = "right";
+                        ctxSFG.fillText("-1", endX - 30, yV - 4);
+
+                        ctxSFG.fillStyle = "#10b981";
+                        ctxSFG.fillText("+1", endX - 30, yU - 4);
+                    }
+                }
+            }
+        }
+
+        // Draw Nodes & Text Values
+        for (let s = 0; s <= stages; s++) {
+            const x = s === 0 ? leftMargin : (leftMargin + s * colWidth);
+            const isFocused = s === 0 || currentStageFocus === "all" || currentStageFocus === String(s) || currentStageFocus === String(s+1);
+            
+            for (let i = 0; i < N; i++) {
+                const y = topMargin + i * rowHeight;
+                const nodeVal = stageData[s][i];
+                
+                // Draw node circle
+                ctxSFG.fillStyle = s === stages ? "#10b981" : (s === 0 ? "#38bdf8" : "#818cf8");
+                ctxSFG.beginPath();
+                ctxSFG.arc(x, y, 4.5, 0, 2 * Math.PI);
+                ctxSFG.fill();
+
+                // Node value text above node
+                if (isFocused && rowHeight >= 32) {
+                    ctxSFG.font = "8px Fira Code, monospace";
+                    ctxSFG.fillStyle = s === stages ? "#6ee7b7" : "#cbd5e1";
+                    ctxSFG.textAlign = "center";
+                    ctxSFG.fillText(cFormat(nodeVal, 1), x, y - 8);
+                }
+            }
+        }
+
+        // Draw Left Input Labels
+        const brArr = getBitReversalArray(N);
+        ctxSFG.textAlign = "right";
+        for (let i = 0; i < N; i++) {
+            const y = topMargin + i * rowHeight;
+            const orig = brArr[i];
+            const val = inputSignal[orig] !== undefined ? inputSignal[orig] : 0;
+            
+            ctxSFG.font = "bold 10px Fira Code, monospace";
+            ctxSFG.fillStyle = "#38bdf8";
+            ctxSFG.fillText(`x[${orig}]`, leftMargin - 35, y + 3);
+            
+            ctxSFG.font = "9px monospace";
+            ctxSFG.fillStyle = "#94a3b8";
+            ctxSFG.fillText(`(${orig.toString(2).padStart(Math.log2(N), '0')})`, leftMargin - 12, y + 3);
+        }
+
+        // Draw Right Output Labels & Magnitude
+        ctxSFG.textAlign = "left";
+        const finalStage = stageData[stages];
+        for (let k = 0; k < N; k++) {
+            const y = topMargin + k * rowHeight;
+            const Xk = finalStage[k];
+            const mag = Math.sqrt(Xk.r * Xk.r + Xk.i * Xk.i);
+            
+            ctxSFG.font = "bold 10px Fira Code, monospace";
+            ctxSFG.fillStyle = "#10b981";
+            ctxSFG.fillText(`X[${k}] = ${cFormat(Xk, 2)}`, totalW - rightMargin + 15, y + 3);
+            
+            // Draw mini magnitude bar
+            const barW = Math.min(30, (mag / (N * 2)) * 30);
+            ctxSFG.fillStyle = "rgba(16, 185, 129, 0.4)";
+            ctxSFG.fillRect(totalW - 35, y - 4, barW, 8);
+        }
+    }
+
+    // Draw Isolated 2-Point Micro Butterfly
+    function drawMicroButterfly() {
+        if (!canvasMicro || !ctxMicro) return;
         const Ar = parseFloat(sliderAr.value);
         const Ai = parseFloat(sliderAi.value);
         const Br = parseFloat(sliderBr.value);
@@ -4524,130 +4884,150 @@ function initFFTButterflySimulator() {
         valBi.innerText = Bi.toFixed(1);
         valR.innerText = r;
 
-        // Compute Twiddle Factor W_8^r = e^{-j 2pi r / 8}
-        const angle = -2 * Math.PI * r / 8;
-        const Wr = Math.cos(angle);
-        const Wi = Math.sin(angle);
+        // Twiddle W_N^r
+        const W = cTwiddle(r, currentN);
+        const mult = cMult({ r: Br, i: Bi }, W);
+        const outA = cAdd({ r: Ar, i: Ai }, mult);
+        const outB = cSub({ r: Ar, i: Ai }, mult);
 
-        // Compute multiplication W_8^r * B
-        const multR = Br * Wr - Bi * Wi;
-        const multI = Br * Wi + Bi * Wr;
+        const w = canvasMicro.clientWidth;
+        const h = canvasMicro.clientHeight;
+        canvasMicro.width = w * window.devicePixelRatio;
+        canvasMicro.height = h * window.devicePixelRatio;
+        ctxMicro.resetTransform();
+        ctxMicro.scale(window.devicePixelRatio, window.devicePixelRatio);
+        ctxMicro.clearRect(0, 0, w, h);
 
-        // Compute outputs
-        const Xr = Ar + multR;
-        const Xi = Ai + multI;
-        
-        const Yr = Ar - multR;
-        const Yi = Ai - multI;
+        const y1 = 30;
+        const y2 = 110;
+        const startX = 65;
+        const endX = w - 85;
 
-        const w = canvas.width / window.devicePixelRatio;
-        const h = canvas.height / window.devicePixelRatio;
+        // Rails
+        ctxMicro.strokeStyle = "rgba(255,255,255,0.15)";
+        ctxMicro.lineWidth = 1.8;
+        ctxMicro.beginPath();
+        ctxMicro.moveTo(startX, y1); ctxMicro.lineTo(endX, y1);
+        ctxMicro.moveTo(startX, y2); ctxMicro.lineTo(endX, y2);
+        ctxMicro.stroke();
 
-        ctx.clearRect(0, 0, w, h);
+        // Diagonals
+        ctxMicro.strokeStyle = "#8b5cf6";
+        ctxMicro.beginPath();
+        ctxMicro.moveTo(startX + 30, y1); ctxMicro.lineTo(endX - 25, y2);
+        ctxMicro.stroke();
 
-        const y1 = 45;
-        const y2 = 145;
-        const startX = 85;
-        const endX = w - 95;
-        const midX = (startX + endX) / 2;
+        ctxMicro.strokeStyle = "#0dd5c5";
+        ctxMicro.beginPath();
+        ctxMicro.moveTo(startX + 55, y2); ctxMicro.lineTo(endX - 25, y1);
+        ctxMicro.stroke();
 
-        // Draw horizontal paths
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.15)";
-        ctx.lineWidth = 2;
-        
-        // Channel A path
-        ctx.beginPath();
-        ctx.moveTo(startX, y1);
-        ctx.lineTo(endX, y1);
-        ctx.stroke();
+        // Twiddle multiplier
+        const multX = startX + 40;
+        ctxMicro.fillStyle = "#f59e0b";
+        ctxMicro.beginPath();
+        ctxMicro.arc(multX, y2, 5, 0, 2*Math.PI);
+        ctxMicro.fill();
+        ctxMicro.font = "bold 9px Fira Code";
+        ctxMicro.textAlign = "center";
+        ctxMicro.fillText(`\u00d7 W${currentN}^${r}`, multX, y2 + 16);
 
-        // Channel B path
-        ctx.beginPath();
-        ctx.moveTo(startX, y2);
-        ctx.lineTo(endX, y2);
-        ctx.stroke();
+        // Branch signs
+        ctxMicro.font = "bold 9px sans-serif";
+        ctxMicro.fillStyle = "#10b981"; ctxMicro.textAlign = "right"; ctxMicro.fillText("+1", endX - 30, y1 - 4);
+        ctxMicro.fillStyle = "#ef4444"; ctxMicro.fillText("-1", endX - 30, y2 - 4);
 
-        // Draw diagonal cross connections
-        ctx.strokeStyle = "#8b5cf6"; // A path diagonal
-        ctx.beginPath();
-        ctx.moveTo(startX + 40, y1);
-        ctx.lineTo(endX - 30, y2);
-        ctx.stroke();
+        // Inputs
+        ctxMicro.textAlign = "right";
+        ctxMicro.font = "9px Fira Code";
+        ctxMicro.fillStyle = "#38bdf8";
+        ctxMicro.fillText(`A: ${cFormat({r: Ar, i: Ai}, 1)}`, startX - 8, y1 + 3);
+        ctxMicro.fillText(`B: ${cFormat({r: Br, i: Bi}, 1)}`, startX - 8, y2 + 3);
 
-        ctx.strokeStyle = "#0dd5c5"; // B path diagonal
-        ctx.beginPath();
-        ctx.moveTo(startX + 75, y2);
-        ctx.lineTo(endX - 30, y1);
-        ctx.stroke();
-
-        // Draw twiddle multiplier circle
-        const multX = startX + 50;
-        ctx.fillStyle = "#f59e0b";
-        ctx.beginPath();
-        ctx.arc(multX, y2, 6, 0, 2 * Math.PI);
-        ctx.fill();
-
-        // Input Labels (left)
-        ctx.fillStyle = "#e2e8f0";
-        ctx.font = "9px Fira Code";
-        ctx.textAlign = "right";
-        ctx.fillText(`A: ${Ar.toFixed(1)}${Ai >= 0 ? "+" : "-"}j${Math.abs(Ai).toFixed(1)}`, startX - 10, y1 + 3);
-        ctx.fillText(`B: ${Br.toFixed(1)}${Bi >= 0 ? "+" : "-"}j${Math.abs(Bi).toFixed(1)}`, startX - 10, y2 + 3);
-
-        // Twiddle annotation
-        ctx.fillStyle = "#f59e0b";
-        ctx.font = "9px sans-serif";
-        ctx.textAlign = "center";
-        ctx.fillText(`\u00d7 W8^${r}`, multX, y2 - 12);
-        ctx.font = "8px Fira Code";
-        ctx.fillText(`(${Wr.toFixed(2)}${Wi >= 0 ? "+" : "-"}j${Math.abs(Wi).toFixed(2)})`, multX, y2 + 18);
-
-        // Subtraction indicator on bottom branch
-        ctx.fillStyle = "#ef4444";
-        ctx.font = "bold 9px sans-serif";
-        ctx.textAlign = "right";
-        ctx.fillText("-1", endX - 35, y2 - 8);
-
-        ctx.fillStyle = "#10b981";
-        ctx.fillText("+1", endX - 35, y1 - 8);
-
-        // Summation circles
-        ctx.fillStyle = "#3b82f6";
-        ctx.beginPath();
-        ctx.arc(endX - 20, y1, 7, 0, 2 * Math.PI);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(endX - 20, y2, 7, 0, 2 * Math.PI);
-        ctx.fill();
-
-        ctx.fillStyle = "white";
-        ctx.font = "bold 10px sans-serif";
-        ctx.textAlign = "center";
-        ctx.fillText("+", endX - 20, y1 + 3);
-        ctx.fillText("+", endX - 20, y2 + 3);
-
-        // Output Labels (right)
-        ctx.textAlign = "left";
-        ctx.font = "9px Fira Code";
-        ctx.fillStyle = "#10b981";
-        ctx.fillText(`X[p]: ${formatComplex(Xr, Xi)}`, endX + 5, y1 + 3);
-        ctx.fillStyle = "#ef4444";
-        ctx.fillText(`X[q]: ${formatComplex(Yr, Yi)}`, endX + 5, y2 + 3);
+        // Outputs
+        ctxMicro.textAlign = "left";
+        ctxMicro.fillStyle = "#10b981";
+        ctxMicro.fillText(`A+W·B = ${cFormat(outA, 2)}`, endX + 8, y1 + 3);
+        ctxMicro.fillStyle = "#ef4444";
+        ctxMicro.fillText(`A-W·B = ${cFormat(outB, 2)}`, endX + 8, y2 + 3);
     }
 
     function updateAll() {
-        drawButterfly();
+        renderStageBadges(currentN);
+        renderBitReversalTable(currentN);
+        drawCompleteSFG();
+        drawMicroButterfly();
     }
 
-    sliderAr.addEventListener("input", updateAll);
-    sliderAi.addEventListener("input", updateAll);
-    sliderBr.addEventListener("input", updateAll);
-    sliderBi.addEventListener("input", updateAll);
-    sliderR.addEventListener("input", updateAll);
-    sliderNDec.addEventListener("input", updateBitReversal);
+    // Event Handlers for N Selection
+    document.querySelectorAll(".l10-n-btn").forEach(btn => {
+        btn.addEventListener("click", function() {
+            document.querySelectorAll(".l10-n-btn").forEach(b => {
+                b.classList.remove("active", "btn-primary");
+                b.classList.add("btn-outline-primary");
+            });
+            this.classList.add("active", "btn-primary");
+            this.classList.remove("btn-outline-primary");
+            
+            currentN = parseInt(this.getAttribute("data-n"));
+            sliderR.max = currentN - 1;
+            
+            // Re-populate stage focus dropdown
+            const stages = Math.round(Math.log2(currentN));
+            selectStageFocus.innerHTML = '<option value="all" selected>All Stages (Full SFG)</option>';
+            for (let s = 1; s <= stages; s++) {
+                const opt = document.createElement("option");
+                opt.value = s;
+                opt.innerText = `Stage ${s} (${Math.pow(2, s)}-pt Sub-DFTs)`;
+                selectStageFocus.appendChild(opt);
+            }
+            currentStageFocus = "all";
 
-    updateBitReversal();
+            inputSignal = generatePresetSignal(selectPreset.value, currentN);
+            updateAll();
+        });
+    });
+
+    // Preset selector
+    selectPreset.addEventListener("change", function() {
+        if (this.value === "custom") {
+            divCustomInput.style.display = "block";
+        } else {
+            divCustomInput.style.display = "none";
+            inputSignal = generatePresetSignal(this.value, currentN);
+            updateAll();
+        }
+    });
+
+    // Custom input apply
+    btnApplyCustom.addEventListener("click", function() {
+        const raw = inputCustomValues.value.split(',').map(s => parseFloat(s.trim())).filter(n => !isNaN(n));
+        if (raw.length > 0) {
+            inputSignal = [];
+            for (let i = 0; i < currentN; i++) {
+                inputSignal.push(i < raw.length ? raw[i] : 0);
+            }
+            updateAll();
+        }
+    });
+
+    // Stage focus dropdown
+    selectStageFocus.addEventListener("change", function() {
+        currentStageFocus = this.value;
+        drawCompleteSFG();
+    });
+
+    // Micro butterfly sliders
+    sliderAr.addEventListener("input", drawMicroButterfly);
+    sliderAi.addEventListener("input", drawMicroButterfly);
+    sliderBr.addEventListener("input", drawMicroButterfly);
+    sliderBi.addEventListener("input", drawMicroButterfly);
+    sliderR.addEventListener("input", drawMicroButterfly);
+
+    // Initial setup
+    inputSignal = generatePresetSignal("cosine", currentN);
     updateAll();
+    window.addEventListener("resize", drawCompleteSFG);
 }
 
 // ============================================================================
