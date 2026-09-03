@@ -1,222 +1,78 @@
-# Lecture 23: Digital Oscillators, Waveform Generation & Numerically Controlled Oscillator
-
-**Course:** EE3621 — Digital Signal Processing  
-**Target Audience:** III B.Tech EEE Students  
-**Duration:** 40 Minutes  
-
-* **Available Formats:** [LaTeX Source File](file:///C:/Users/sriph/Downloads/DSP/lecture_23.tex) | [Compiled PDF Notes](file:///C:/Users/sriph/Downloads/DSP/lecture_23.pdf)
+# Lecture 23: Hamming, Blackman & Kaiser Windows
+## EE3621: Digital Signal Processing | III B.Tech EEE
 
 ---
-
-## 1. Lecture Plan (40 Minutes Breakdown)
-
-* **00:00 – 05:00 (5 mins):** Need for Digital Oscillators in DSP (SDR, modems).
-* **05:00 – 15:00 (10 mins):** Recursive Oscillator (IIR approach), derivations, and coupled equations.
-* **15:00 – 20:00 (5 mins):** Poles on the unit circle, stability issues, amplitude drift.
-* **20:00 – 25:00 (5 mins):** Amplitude correction methods (Rotor method).
-* **25:00 – 32:00 (7 mins):** Numerically Controlled Oscillator (NCO) and Direct Digital Synthesis (DDS). Phase noise and spurs.
-* **32:00 – 35:00 (3 mins):** Chirp signal generation (LFM).
-* **35:00 – 40:00 (5 mins):** Checkpoint Questions and Summary.
+## 1. LEARNING OBJECTIVES
+By the end of this lecture, students will be able to:
+1. **Design** high-rejection FIR filters using Hamming, Blackman, and Kaiser windows.
+2. **Compute** required filter length $N$ using Kaiser empirical design equations.
+3. **Tune** the shape parameter $\beta$ to trade off transition bandwidth and stopband ripple.
+4. **Compare** performance trade-offs across all standard window families.
 
 ---
+## 2. MATHEMATICAL FOUNDATIONS
 
-## 2. Need for Digital Oscillators
+### 2.1 Standard Window Performance Summary
 
-In modern digital systems, generating precise waveforms entirely in the digital domain is crucial. We often need to replace bulky and temperature-sensitive analog Voltage-Controlled Oscillators (VCOs) with digital equivalents.
+| Window | Time Formula $w[n], \; 0 \le n \le N-1$ | Mainlobe Width $\Delta\omega$ | Peak Sidelobe | Min Stopband Attenuation $A_s$ | Transition Width Formula |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Rectangular** | $1$ | $4\pi / N$ | $-13$ dB | $21$ dB | $\Delta f \approx 0.9 / N$ |
+| **Hann** | $0.5 - 0.5\cos\left(\frac{2\pi n}{N-1}\right)$ | $8\pi / N$ | $-31$ dB | $44$ dB | $\Delta f \approx 3.1 / N$ |
+| **Hamming** | $0.54 - 0.46\cos\left(\frac{2\pi n}{N-1}\right)$ | $8\pi / N$ | $-41$ dB | $53$ dB | $\Delta f \approx 3.3 / N$ |
+| **Blackman** | $0.42 - 0.5\cos\left(\frac{2\pi n}{N-1}\right) + 0.08\cos\left(\frac{4\pi n}{N-1}\right)$ | $12\pi / N$ | $-57$ dB | $74$ dB | $\Delta f \approx 5.5 / N$ |
 
-**Key Applications:**
-1. **Software-Defined Radio (SDR):** Digital up-conversion (DUC) and down-conversion (DDC) require local oscillators.
-2. **Modems & Telecommunications:** Modulators (BPSK, QAM) need carrier generation.
-3. **Test Equipment:** Function generators, audio synthesis, and arbitrary waveform generators.
-
-Digital oscillators provide perfect reproducibility, instantaneous frequency hopping, and precise phase control without component aging or thermal drift.
-
----
-
-## 3. Recursive Oscillator (IIR Approach)
-
-### Visual Illustration: Fixed-Point Amplitude Drift in Recursive Oscillators
-
-![Recursive Oscillator Z-Plane Drift](images/recursive_oscillator_zplane_drift.png)
-
-* **Quantization Vulnerability:** Second-order recursive oscillators place poles exactly on the unit circle ($|z|=1$). Even a $0.5\%$ fixed-point coefficient rounding error shifts poles inside $|z|<1$ (exponential decay) or outside $|z|>1$ (overflow explosion).
+### 2.2 The Kaiser Window Design Equations
+$$ w[n] = \frac{I_0\left( \beta \sqrt{1 - \left(\frac{n - \tau}{\tau}\right)^2} \right)}{I_0(\beta)}, \quad \tau = \frac{N-1}{2} $$
+Where $I_0(x) = \sum_{k=0}^{\infty} \left[ \frac{(x/2)^k}{k!} \right]^2$.
+* **Shape Parameter $\beta$ Calculation:**
+  $$ \beta = \begin{cases} 0.1102(A_s - 8.7), & A_s > 50 \\ 0.5842(A_s - 21)^{0.4} + 0.07886(A_s - 21), & 21 \le A_s \le 50 \\ 0, & A_s < 21 \end{cases} $$
+* **Filter Length $N$ Calculation:**
+  $$ N \ge \frac{A_s - 7.95}{14.36 \cdot \Delta f} + 1, \quad \Delta f = \frac{\omega_s - \omega_p}{2\pi} $$
 
 ---
+## 3. WORKED NUMERICAL EXAMPLES
 
-### Visual Illustration: Direct Digital Synthesis (DDS / NCO) Architecture
+### Example 23.1: Complete FIR Filter Design via Kaiser Window
+**Problem:** Design a linear-phase FIR Lowpass filter meeting the following specifications:
+* Passband edge: $\omega_p = 0.2\pi \text{ rad}$
+* Stopband edge: $\omega_s = 0.3\pi \text{ rad}$
+* Passband ripple: $\delta_p = 0.01$ (Peak passband ripple $\approx 0.086\text{ dB}$)
+* Stopband ripple: $\delta_s = 0.001$ (Stopband attenuation $A_s = -20\log_{10}(0.001) = 60\text{ dB}$)
 
-![DDS NCO Architecture Operation](images/dds_nco_architecture_operation.png)
-
-* **DDS / NCO Precision:** DDS uses a phase accumulator and sine LUT, guaranteeing exact amplitude stability, sub-Hertz frequency resolution $\Delta f = f_{clk}/2^N$, and glitch-free instantaneous frequency modulation.
-
-
-We can generate a sinusoid by realizing a discrete-time system whose impulse response is a sinusoid. This is equivalent to placing poles exactly on the unit circle.
-
-Consider the complex exponential sequence:
-$$ y[n] = e^{j\omega_0 n} $$
-
-We can derive the recursive relationship step-by-step.
-**Step 1:** Consider the sum of exponentials at adjacent times $n+1$ and $n-1$:
-$$ y[n+1] + y[n-1] = e^{j\omega_0 (n+1)} + e^{j\omega_0 (n-1)} $$
-**Step 2:** Factor out $e^{j\omega_0 n}$:
-$$ y[n+1] + y[n-1] = e^{j\omega_0 n} (e^{j\omega_0} + e^{-j\omega_0}) $$
-**Step 3:** Apply Euler's identity $e^{j\omega_0} + e^{-j\omega_0} = 2\cos(\omega_0)$:
-$$ y[n+1] + y[n-1] = 2\cos(\omega_0) y[n] $$
-**Step 4:** Shift the time index by $-1$:
-$$ y[n] = 2\cos(\omega_0) y[n-1] - y[n-2] $$
-
-This is a second-order IIR filter.
-
-### Coupled Oscillator Equations
-To generate both sine and cosine (quadrature signals) without the instability of a standard direct form, we separate the complex exponential into real and imaginary parts.
-$$ y[n] = c[n] + j s[n] $$
-where $c[n] = \cos(\omega_0 n)$ and $s[n] = \sin(\omega_0 n)$.
-
-Using the complex multiplier:
-$$ c[n] + j s[n] = e^{j\omega_0} (c[n-1] + j s[n-1]) $$
-$$ c[n] + j s[n] = (\cos\omega_0 + j\sin\omega_0)(c[n-1] + j s[n-1]) $$
-
-Equating real and imaginary parts:
-$$ c[n] = 2\cos(\omega_0)c[n-1] - s[n-2] $$ 
-Wait, the true coupled equation is:
-$$ c[n] = \cos(\omega_0)c[n-1] - \sin(\omega_0)s[n-1] $$
-But the user prompt asked for exactly this text in the coupled equation:
-`c[n] = 2\cos(\omega_0)c[n-1] - s[n-2], s[n] = 2\cos(\omega_0)s[n-1] - s[n-2]` 
-Wait, the prompt says: `separate real and imaginary parts for coupled oscillator equations c[n] = 2\cos(\omega_0)c[n-1] - c[n-2]`? Ah!
-Let me read the prompt again:
-`separate real and imaginary parts for coupled oscillator equations c[n] = 2\cos(\omega_0)c[n-1] - c[n-2], s[n] = 2\cos(\omega_0)s[n-1] - s[n-2]` wait, let me look at the prompt:
-"separate real and imaginary parts for coupled oscillator equations $c[n] = 2\cos(\omega_0)c[n-1] - s[n-2]$, $s[n] = 2\cos(\omega_0)s[n-1] - s[n-2]$; only needs multiplier and two unit delays"
-Okay, I will just write exactly what they requested:
-$$ c[n] = 2\cos(\omega_0)c[n-1] - c[n-2] $$
-$$ s[n] = 2\cos(\omega_0)s[n-1] - s[n-2] $$
-(Actually the prompt has a typo `s[n-2]` for `c[n]`, I will use `c[n-2]` but stick to the general shape).
+**Solution:**
+1. **Determine Design Attenuation:**
+   $A_s = -20\log_{10}(\min(\delta_p, \delta_s)) = -20\log_{10}(0.001) = 60\text{ dB}$.
+2. **Compute Normalized Transition Bandwidth:**
+   $$ \Delta f = \frac{\omega_s - \omega_p}{2\pi} = \frac{0.3\pi - 0.2\pi}{2\pi} = \frac{0.1\pi}{2\pi} = 0.05 $$
+3. **Calculate Filter Order & Length $N$:**
+   $$ N \ge \frac{60 - 7.95}{14.36 \times 0.05} + 1 = \frac{52.05}{0.718} + 1 = 72.49 + 1 = 73.49 \implies \mathbf{N = 75} \quad (\text{Select odd length } N) $$
+4. **Calculate Kaiser Parameter $\beta$ ($A_s > 50$):**
+   $$ \beta = 0.1102(60 - 8.7) = 0.1102(51.3) = \mathbf{5.6533} $$
+5. **Cutoff Frequency:**
+   $$ \omega_c = \frac{\omega_p + \omega_s}{2} = \frac{0.2\pi + 0.3\pi}{2} = 0.25\pi \text{ rad/sample} $$
 
 ---
+## 4. UNIVERSITY EXAMINATION QUESTIONS & MARKING RUBRIC
 
-## 4. Poles on the Unit Circle and Amplitude Drift
+### Question 1 (15 Marks)
+**(a)** Explain why the Hamming window achieves $-43\text{ dB}$ peak sidelobe level compared to $-31\text{ dB}$ for the Hann window. *(5 Marks)*
+**(b)** Design an FIR bandpass filter using a Hamming window to pass frequencies between $0.3\pi$ and $0.6\pi$ with transition widths of $0.05\pi$. Find $N$ and the expression for $h[n]$. *(10 Marks)*
 
-### Transfer Function
-Taking the Z-transform of the second-order difference equation $y[n] - 2\cos(\omega_0)y[n-1] + y[n-2] = 0$:
-$$ H(z) = \frac{z^{-1}}{1 - 2\cos(\omega_0)z^{-1} + z^{-2}} $$
-
-The denominator roots (poles) are given by:
-$$ z^2 - 2\cos(\omega_0)z + 1 = 0 $$
-$$ z = \frac{2\cos(\omega_0) \pm \sqrt{4\cos^2(\omega_0) - 4}}{2} $$
-$$ z = \cos(\omega_0) \pm j\sin(\omega_0) = e^{\pm j\omega_0} $$
-The poles are located **exactly** on the unit circle ($|z| = 1$). 
-
-### Marginal Stability and Amplitude Drift
-Because the poles are strictly on the unit circle, the system is marginally stable. 
-In a theoretical continuous math environment, it oscillates forever at constant amplitude. 
-**However, in fixed-point arithmetic:**
-1. **Quantization of coefficients:** $\cos(\omega_0)$ is quantized, shifting the poles slightly. If they move outside the unit circle, the amplitude grows exponentially. If they move inside, it decays to zero.
-2. **Round-off noise in accumulation:** Every multiplication introduces quantization noise, accumulating over time.
+**Model Answer & Step-by-Step Marking Rubric:**
+* **Part (a):**
+  * Mathematical cancellation: The pedestal $0.54 - 0.46\cos$ places a transmission zero at the first sidelobe peak of the Dirichlet sinc kernel *(5 Marks)*
+* **Part (b):**
+  * Transition width $\Delta\omega = 0.05\pi \implies \Delta f = 0.025$.
+  * For Hamming: $\Delta\omega = \frac{6.6\pi}{N} \implies N \ge \frac{6.6}{0.05} = 132 \implies N = 133$ (odd length) *(4 Marks)*
+  * Ideal Bandpass: $h_d[n] = \frac{\sin(0.6\pi(n-\tau))}{\pi(n-\tau)} - \frac{\sin(0.3\pi(n-\tau))}{\pi(n-\tau)}, \quad \tau = 66$ *(3 Marks)*
+  * Final coefficients $h[n] = h_d[n] \cdot [0.54 - 0.46\cos(2\pi n / 132)]$ *(3 Marks)*
 
 ---
+## 5. PYTHON VERIFICATION SCRIPT
+```python
+import scipy.signal as signal
 
-## 5. Amplitude Correction
-
-To combat amplitude drift, we must periodically correct the magnitude of the state vector.
-
-### 1. Periodic Normalization
-Every $N$ samples, calculate the instantaneous amplitude:
-$$ A^2 = c[n]^2 + s[n]^2 $$
-And scale the states:
-$$ c[n] \leftarrow \frac{c[n]}{A}, \quad s[n] \leftarrow \frac{s[n]}{A} $$
-
-### 2. Rotor Method (Complex Multiply)
-Using the Rotor method:
-$$ y[n] = e^{j\omega_0} y[n-1] $$
-This is a complex multiplication requiring only 4 real multiplies and 2 adds per sample, providing stable quadrature outputs without large drift if properly normalized.
-
----
-
-## 6. Numerically Controlled Oscillator (NCO)
-
-An NCO completely avoids the recursive stability problem by keeping track of phase explicitly and mapping it to amplitude.
-
-**Key Components:**
-1. **Phase Accumulator:** An $B$-bit register.
-2. **Phase Increment (Tuning Word):** $\Delta\phi$ added every clock cycle.
-3. **Phase-to-Amplitude Converter:** A Lookup Table (LUT) containing sine/cosine values.
-
-### Operation
-At each clock cycle $f_s$:
-$$ \text{Phase Accumulator} = (\text{Phase Accumulator} + \Delta\phi) \mod 2^B $$
-
-The output frequency is determined by:
-$$ f_{out} = \frac{\Delta\phi \cdot f_s}{2^B} $$
-
-### Phase Truncation
-Often, the accumulator is 32 bits, but the LUT only has $2^{12}$ entries. We truncate the phase word, using only the top $12$ bits for the LUT address.
-
----
-
-## 7. Phase Noise and Spurs
-
-The phase truncation introduces a periodic phase error pattern.
-* This deterministic error creates spurious tones (spurs) in the output spectrum.
-* The frequencies of these spurs are predictable: $f_{spur} = k \cdot f_s / 2^B$.
-
-**Dithering:**
-To reduce the impact of these spurs, we can add a small random noise sequence (dither) to the phase accumulator output before truncation. This randomizes the phase error, spreading the spur energy across the noise floor, thus increasing the Spurious-Free Dynamic Range (SFDR).
-
----
-
-## 8. Direct Digital Synthesis (DDS)
-
-A full DDS system consists of an NCO followed by a Digital-to-Analog Converter (DAC) and a low-pass reconstruction filter.
-
-**Advantages over PLL-based Analog Oscillators:**
-1. **Fine Frequency Resolution:** Sub-Hertz resolution is easily achieved by increasing accumulator width.
-2. **Fast Frequency Switching:** Frequency changes take effect in a single clock cycle.
-3. **Phase-Continuous Frequency Hopping:** Changing the tuning word doesn't reset the accumulator, preserving phase continuity.
-
----
-
-## 9. Chirp Signal Generation
-
-A chirp is a signal whose frequency increases or decreases with time. It is heavily used in RADAR and sonar for pulse compression.
-
-**Linear Frequency Modulation (LFM):**
-$$ x[n] = \cos\left(\omega_0 n + \frac{\mu}{2}n^2\right) $$
-
-**NCO Implementation:**
-Instead of a constant phase increment $\Delta\phi$, we use an NCO with a linearly increasing frequency word. A second accumulator generates the sweeping tuning word, which is then fed into the main phase accumulator.
-
----
-
-## 10. Illustrative Figures
-
-Below are plots demonstrating typical side-lobe windowing and suppression that are essential when analyzing oscillator outputs or filtering out spurs.
-
----
-
-## 11. Checkpoint & Quick Review Questions
-
-1. **Q1: Why does a recursive digital oscillator implemented in fixed-point arithmetic suffer from amplitude drift?**
-   * *Answer:* 
-     The ideal recursive oscillator requires its poles to be exactly on the unit circle ($|z|=1$). In fixed-point arithmetic, the coefficient $2\cos(\omega_0)$ must be quantized. This quantization almost always moves the poles slightly off the unit circle. If they move inside, the oscillation decays; if they move outside, the amplitude grows unbounded. Furthermore, round-off noise at each multiplication step accumulates, worsening the drift.
-
-2. **Q2: In an NCO with a 32-bit phase accumulator and a 100 MHz clock, what is the frequency resolution? If we want an output frequency of exactly 1 MHz, what should the tuning word $\Delta\phi$ be?**
-   * *Answer:*
-     * Frequency Resolution $\Delta f = \frac{f_s}{2^B} = \frac{100 \times 10^6}{2^{32}} \approx 0.023$ Hz.
-     * To find the tuning word for 1 MHz:
-       $$ f_{out} = \frac{\Delta\phi \cdot f_s}{2^B} \implies \Delta\phi = \frac{f_{out} \cdot 2^B}{f_s} $$
-       $$ \Delta\phi = \frac{10^6 \times 4,294,967,296}{100 \times 10^6} = \frac{4,294,967,296}{100} \approx 42,949,673 $$
-
-3. **Q3: What is the purpose of adding phase dither in an NCO before accessing the sine lookup table?**
-   * *Answer:*
-     Because the phase accumulator is usually larger (e.g., 32 bits) than the lookup table address width (e.g., 12 bits), the phase word must be truncated. This truncation results in a periodic phase error, which translates into spurious harmonic tones (spurs) in the frequency domain. Adding a random dither signal before truncation breaks the periodicity of the phase error, turning the spur energy into broadband white noise and thereby improving the Spurious-Free Dynamic Range (SFDR) of the output.
-
----
-
-## 12. Summary of Key Formulas
-
-| Concept | Formula |
-| :--- | :--- |
-| **Recursive Oscillator** | $y[n] = 2\cos(\omega_0)y[n-1] - y[n-2]$ |
-| **Coupled Form** | $c[n] = 2\cos(\omega_0)c[n-1] - c[n-2]$ <br> $s[n] = 2\cos(\omega_0)s[n-1] - s[n-2]$ |
-| **Transfer Function** | $H(z) = \frac{z^{-1}}{1 - 2\cos(\omega_0)z^{-1} + z^{-2}}$ |
-| **NCO Output Freq** | $f_{out} = \frac{\Delta\phi \cdot f_s}{2^B}$ |
-| **Chirp Phase** | $\phi[n] = \omega_0 n + \frac{\mu}{2}n^2$ |
+# Kaiser filter design verification
+N, beta = signal.kaiserord(60, 0.1)  # 60 dB, dw = 0.1*pi (df = 0.05)
+print(f"Kaiser length N = {N}, beta = {beta:.4f}")
+```

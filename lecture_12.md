@@ -1,309 +1,75 @@
-# Lecture 12: IIR Filter Design — Analog Prototype & Bilinear Transform
-
-**Course:** EE3621 — Digital Signal Processing  
-**Target Audience:** III B.Tech EEE Students  
-**Duration:** 40 Minutes  
-
-* **Available Formats:** [LaTeX Source File](file:///C:/Users/sriph/Downloads/DSP/lecture_12.tex) | [Compiled PDF Notes](file:///C:/Users/sriph/Downloads/DSP/lecture_12.pdf)
+# Lecture 12: Radix-4 FFT Algorithm & Computational Complexity
+## EE3621: Digital Signal Processing | III B.Tech EEE
 
 ---
-
-## 1. Lecture Plan (40 Minutes Breakdown)
-
-* **00:00 – 05:00 (5 mins):** **IIR Design Philosophy** — Introduction to the concept of borrowing from continuous-time analog filter theory to build digital filters.
-* **05:00 – 15:00 (10 mins):** **Analog Prototypes** — Detailed exploration of Butterworth, Chebyshev (Types I & II), and Elliptic filters.
-* **15:00 – 20:00 (5 mins):** **Impulse Invariance Method** — The time-domain approach to mapping continuous to discrete time.
-* **20:00 – 28:00 (8 mins):** **The Bilinear Transform (BLT)** — Frequency-domain approach, derivation of the mapping, and frequency warping.
-* **28:00 – 35:00 (7 mins):** **Bilinear Design Procedure & Worked Example** — Designing a 3rd-order digital Butterworth filter from scratch.
-* **35:00 – 40:00 (5 mins):** **Checkpoints & Summary** — Quick questions to reinforce learning and evaluate understanding.
+## 1. LEARNING OBJECTIVES
+By the end of this lecture, students will be able to:
+1. **Derive** the Radix-4 FFT decimation equations and 4-point butterfly structure.
+2. **Construct** digit-reversal (base-4) addressing schemes for Radix-4 input/output ordering.
+3. **Quantify** arithmetic operation counts across Direct DFT, Radix-2, and Radix-4 algorithms.
+4. **Evaluate** trade-offs between algorithm speed and hardware architectural complexity.
 
 ---
+## 2. MATHEMATICAL FOUNDATIONS
 
-## 2. IIR Design Philosophy
+### 2.1 Radix-4 Decimation-in-Time Derivation
+Let $N = 4^M$. Decimate $x[n]$ into 4 sub-sequences: $x[4r], x[4r+1], x[4r+2], x[4r+3]$ for $r = 0, 1, \dots, N/4 - 1$:
+$$ X[k] = \sum_{r=0}^{N/4-1} x[4r] W_N^{4rk} + W_N^k \sum_{r=0}^{N/4-1} x[4r+1] W_N^{4rk} + W_N^{2k} \sum_{r=0}^{N/4-1} x[4r+2] W_N^{4rk} + W_N^{3k} \sum_{r=0}^{N/4-1} x[4r+3] W_N^{4rk} $$
+Using $W_N^{4rk} = W_{N/4}^{rk}$:
+$$ X[k] = X_0[k] + W_N^k X_1[k] + W_N^{2k} X_2[k] + W_N^{3k} X_3[k] $$
+Evaluating for $k, k + N/4, k + N/2, k + 3N/4$ yields the Radix-4 Butterfly Matrix:
+$$ \begin{bmatrix} X[k] \\ X[k + N/4] \\ X[k + N/2] \\ X[k + 3N/4] \end{bmatrix} = \begin{bmatrix} 1 & 1 & 1 & 1 \\ 1 & -j & -1 & j \\ 1 & -1 & 1 & -1 \\ 1 & j & -1 & -j \end{bmatrix} \begin{bmatrix} X_0[k] \\ X_1[k] W_N^k \\ X_2[k] W_N^{2k} \\ X_3[k] W_N^{3k} \end{bmatrix} $$
 
-The design of Infinite Impulse Response (IIR) digital filters is fundamentally different from Finite Impulse Response (FIR) design. Instead of designing directly in the discrete-time domain, we leverage decades of well-established analog filter design theory. 
+### 2.2 Computational Complexity Comparison
 
-The standard IIR design philosophy follows these steps:
-1. **Specification:** Start with discrete-time filter specifications (passband ripple, stopband attenuation, cutoff frequencies).
-2. **Pre-warping:** Convert the discrete-time frequency specifications into continuous-time (analog) specifications.
-3. **Analog Design:** Design a continuous-time analog prototype filter (e.g., Butterworth, Chebyshev) that meets these analog specifications. This yields an analog transfer function $H_a(s)$.
-4. **Transformation:** Map the analog transfer function $H_a(s)$ to a digital transfer function $H(z)$ using a mapping technique (such as the Bilinear Transform).
-
-This indirect approach is used because closed-form formulas exist for analog filter poles and polynomials, making the process purely algebraic and highly robust.
-
----
-
-## 3. Butterworth Analog Prototype
-
-### Visual Illustration: Analog Prototypes & S-Plane Pole Placement
-
-![Analog Filter Prototypes](images/analog_filter_prototypes.png)
-
-* **Prototype Comparison:**
-  - **Butterworth:** Maximally flat passband, all poles uniformly distributed on a circle in the left-half s-plane.
-  - **Chebyshev Type I:** Equiripple in passband, steeper roll-off, poles lie on an ellipse in the left-half plane.
+| Algorithm | Complex Multiplications | Complex Additions | For $N = 1024$ Mults |
+| :--- | :--- | :--- | :--- |
+| **Direct DFT** | $N^2$ | $N(N-1)$ | $1,048,576$ |
+| **Radix-2 FFT** | $\frac{N}{2} \log_2 N$ | $N \log_2 N$ | $5,120$ |
+| **Radix-4 FFT** | $\frac{3N}{8} \log_2 N = \frac{3N}{4} \log_4 N$ | $\frac{N}{2} (4 \log_4 N) = 2N \log_4 N$ | $3,840$ |
 
 ---
+## 3. WORKED NUMERICAL EXAMPLES
 
-### Visual Illustration: Bilinear Transformation Conformal S-to-Z Mapping
+### Example 12.1: Arithmetic Complexity Evaluation
+**Problem:** A radar DSP processor must compute a 4096-point DFT in real-time. Calculate the complex multiplications and additions for:
+(a) Direct DFT, (b) Radix-2 FFT, (c) Radix-4 FFT.
 
-![Bilinear S-to-Z Mapping](images/bilinear_s_to_z_mapping.png)
-
-* **Conformal Mapping ($s = rac{2}{T} rac{1-z^{-1}}{1+z^{-1}}$):**
-  - Maps the entire Left-Half S-Plane into the interior of the Unit Circle ($|z|<1$).
-  - Maps the imaginary axis $j\Omega$ exactly onto the Unit Circle boundary ($|z|=1$).
-  - Guarantees that a stable analog filter transforms into a strictly stable digital filter!
-
----
-
-### Visual Illustration: Frequency Warping & Prewarping Requirement
-
-![Frequency Warping and Prewarping](images/frequency_warping_prewarping.png)
-
-* **Prewarping Essential:** Non-linear frequency compression ($\Omega = rac{2}{T}	an(\omega/2)$) compresses infinite analog frequency $\Omega 	o \infty$ into digital $\omega = \pi$. Prewarping analog critical frequencies guarantees the digital filter cuts off at the exact desired frequency.
-
-
-The Butterworth filter is known as the **maximally flat** magnitude filter. Its response is as flat as mathematically possible in the passband and rolls off monotonically in the stopband.
-
-### 3.1 Magnitude Response
-The squared magnitude response of an $N$-th order analog Butterworth lowpass filter is given by:
-
-$$ |H_a(j\Omega)|^2 = \frac{1}{1 + \left(\frac{\Omega}{\Omega_c}\right)^{2N}} $$
-
-where:
-* $\Omega$ is the analog frequency (rad/s).
-* $\Omega_c$ is the 3-dB cutoff frequency.
-* $N$ is the filter order.
-
-### 3.2 Derivation of Pole Locations
-To find the poles of the transfer function, we extend the frequency variable $j\Omega$ to the complex $s$-plane by setting $s = j\Omega$, which implies $\Omega = s/j = -js$. 
-
-Substitute this into the magnitude squared equation. Note that $|H_a(j\Omega)|^2 = H_a(j\Omega)H_a(-j\Omega)$, so:
-
-$$ H_a(s) H_a(-s) = \frac{1}{1 + \left(\frac{s/j}{\Omega_c}\right)^{2N}} $$
-$$ H_a(s) H_a(-s) = \frac{1}{1 + \frac{s^{2N}}{j^{2N} \Omega_c^{2N}}} $$
-
-Since $j^{2N} = (j^2)^N = (-1)^N$, we have:
-
-$$ H_a(s) H_a(-s) = \frac{1}{1 + (-1)^N \left(\frac{s}{\Omega_c}\right)^{2N}} $$
-
-To find the poles, we set the denominator to zero:
-
-$$ 1 + (-1)^N \left(\frac{s}{\Omega_c}\right)^{2N} = 0 $$
-$$ \left(\frac{s}{\Omega_c}\right)^{2N} = -(-1)^{-N} = (-1)^{N-1} $$
-
-We can express $(-1)^{N-1}$ in polar form as $e^{j\pi(2k + N - 1)}$ for integer $k$. Taking the $2N$-th root yields the pole locations:
-
-$$ s_k = \Omega_c e^{j\frac{\pi(2k + N - 1)}{2N}}, \quad \text{for } k = 1, 2, \dots, 2N $$
-
-**Physical Intuition:** 
-These $2N$ poles lie exactly on a circle of radius $\Omega_c$ in the $s$-plane. For a stable, causal filter $H_a(s)$, we must select the $N$ poles that lie strictly in the left half of the $s$-plane (LHP).
-
-Thus, the stable poles are:
-$$ s_k = \Omega_c e^{j\frac{\pi}{2N}(2k + N - 1)}, \quad \text{for } k = 1, 2, \dots, N $$
-
-### 3.3 Derivation of Order Formula
-Let the filter specifications be:
-* Passband maximum attenuation $A_p$ at frequency $\Omega_p$.
-* Stopband minimum attenuation $A_s$ at frequency $\Omega_s$.
-
-From the magnitude response:
-$$ A_p^2 = 1 + \left(\frac{\Omega_p}{\Omega_c}\right)^{2N} \implies \left(\frac{\Omega_p}{\Omega_c}\right)^{2N} = A_p^2 - 1 $$
-$$ A_s^2 = 1 + \left(\frac{\Omega_s}{\Omega_c}\right)^{2N} \implies \left(\frac{\Omega_s}{\Omega_c}\right)^{2N} = A_s^2 - 1 $$
-
-Taking the ratio of the two equations:
-$$ \left(\frac{\Omega_s}{\Omega_p}\right)^{2N} = \frac{A_s^2 - 1}{A_p^2 - 1} $$
-
-Taking the base-10 logarithm on both sides:
-$$ 2N \log_{10}\left(\frac{\Omega_s}{\Omega_p}\right) = \log_{10}\left(\frac{A_s^2 - 1}{A_p^2 - 1} \right) $$
-
-**KEY RESULT - Order Formula:**
-$$ N \geq \frac{\log_{10}\left( \frac{A_s^2 - 1}{A_p^2 - 1} \right)}{2 \log_{10}\left( \frac{\Omega_s}{\Omega_p} \right)} $$
+**Solution:**
+Here $N = 4096 = 2^{12} = 4^6$.
+* **(a) Direct DFT:**
+  * Multiplications: $N^2 = 4096^2 = 16,777,216$.
+  * Additions: $N(N-1) = 4096 \times 4095 = 16,773,120$.
+* **(b) Radix-2 FFT:**
+  * Multiplications: $\frac{N}{2} \log_2 N = 2048 \times 12 = 24,576$.
+  * Additions: $N \log_2 N = 4096 \times 12 = 49,152$.
+* **(c) Radix-4 FFT:**
+  * Multiplications: $\frac{3N}{8} \log_2 N = \frac{3 \times 4096}{8} \times 12 = 1,536 \times 12 = 18,432$.
+  * Additions: $N \log_2 N \times \text{matrix factor} \approx 49,152$.
+* **Savings:** Radix-4 achieves a $(24576 - 18432) / 24576 = 25.0\%$ reduction in complex multiplications compared to Radix-2.
 
 ---
+## 4. UNIVERSITY EXAMINATION QUESTIONS & MARKING RUBRIC
 
-## 4. Chebyshev and Elliptic Prototypes
+### Question 1 (15 Marks)
+**(a)** Derive the Radix-4 Decimation-in-Time FFT algorithm. Explain why it is computationally more efficient than the Radix-2 FFT. *(10 Marks)*
+**(b)** Construct the Digit-Reversal mapping table for a 16-point Radix-4 FFT. *(5 Marks)*
 
-When flat passbands are not strictly required, we can allow ripple to achieve a steeper roll-off (transition band) for a given order $N$.
-
-### 4.1 Chebyshev Type I
-Chebyshev Type I filters have an equiripple response in the passband and are monotonically decreasing in the stopband. The magnitude squared response is:
-
-$$ |H(j\Omega)|^2 = \frac{1}{1 + \epsilon^2 C_N^2\left(\frac{\Omega}{\Omega_p}\right)} $$
-
-Where $\epsilon$ controls the passband ripple, and $C_N(x)$ is the $N$-th order Chebyshev polynomial defined as:
-$$ C_N(x) = \cos(N \cos^{-1} x), \quad \text{for } |x| \leq 1 $$
-$$ C_N(x) = \cosh(N \cosh^{-1} x), \quad \text{for } |x| > 1 $$
-
-The poles of a Chebyshev Type I filter do not lie on a circle, but rather on an **ellipse** in the left half of the $s$-plane.
-
-### 4.2 Chebyshev Type II
-Chebyshev Type II filters have a monotonic passband and an equiripple stopband. They are designed using an inverse Chebyshev polynomial. 
-The magnitude squared response is:
-
-$$ |H(j\Omega)|^2 = \frac{1}{1 + \left[ \epsilon^2 C_N^2\left(\frac{\Omega_s}{\Omega}\right) \right]^{-1}} $$
-
-These filters contain both poles and zeros. The zeros lie directly on the $j\Omega$ axis, which creates the deep nulls (equiripple behavior) in the stopband.
-
-### 4.3 Elliptic (Cauer) Filters
-Elliptic filters provide equiripple behavior in **both** the passband and the stopband. 
-For a given set of specifications, an Elliptic filter will always yield the **minimum possible order $N$**.
-
-The magnitude response is defined using Jacobian elliptic functions $U_N(x)$:
-$$ |H(j\Omega)|^2 = \frac{1}{1 + \epsilon^2 U_N^2\left(\frac{\Omega}{\Omega_p}\right)} $$
-Because the math involves complex elliptic integrals, practical designs rely heavily on software (like MATLAB's `ellip` function).
+**Model Answer & Step-by-Step Marking Rubric:**
+* **Part (a):**
+  * 4-way decimation derivation and matrix equation *(5 Marks)*
+  * Trivial twiddle multiplication proof ($\pm 1, \pm j$) requiring only 3 complex twiddles per 4-point block *(3 Marks)*
+  * Derivation of $\mu = \frac{3N}{8}\log_2 N$ showing 25% savings over Radix-2 *(2 Marks)*
+* **Part (b):**
+  * 16-point base-4 digit reversal ($n = d_1 4^1 + d_0 4^0 \leftrightarrow n_{\text{rev}} = d_0 4^1 + d_1 4^0$) table for $n=0$ to 15 *(5 Marks)*
 
 ---
-
-## 5. Comparison Table of Analog Prototypes
-
-| Filter Type | Passband Behavior | Stopband Behavior | Phase Linearity | Order $N$ Required |
-| :--- | :--- | :--- | :--- | :--- |
-| **Butterworth** | Maximally Flat | Monotonic | Best of the four | Highest |
-| **Chebyshev I** | Equiripple | Monotonic | Moderate | Lower than Butterworth |
-| **Chebyshev II** | Monotonic | Equiripple | Moderate | Lower than Butterworth |
-| **Elliptic** | Equiripple | Equiripple | Very Non-linear | **Lowest** |
-
----
-
-## 6. The Impulse Invariance Method
-
-The Impulse Invariance Method (IIM) converts an analog filter to a digital filter such that the digital filter's impulse response is a directly sampled version of the analog filter's impulse response.
-
-$$ h[n] = T_s \, h_a(nT_s) $$
-
-### 6.1 Pole Mapping
-If the analog transfer function is expanded via partial fractions:
-$$ H_a(s) = \sum_{k=1}^N \frac{A_k}{s - s_k} $$
-The corresponding analog impulse response is:
-$$ h_a(t) = \sum_{k=1}^N A_k e^{s_k t} u(t) $$
-Sampling at $t = nT_s$:
-$$ h[n] = T_s \sum_{k=1}^N A_k e^{s_k n T_s} u[n] = T_s \sum_{k=1}^N A_k (e^{s_k T_s})^n u[n] $$
-Taking the Z-transform yields:
-$$ H(z) = \sum_{k=1}^N \frac{T_s A_k}{1 - e^{s_k T_s} z^{-1}} $$
-
-**KEY RESULT - IIM Mapping:**
-Each analog pole $s_k$ maps directly to a digital pole $z_k = e^{s_k T_s}$.
-
-### 6.2 The Aliasing Problem
-Because IIM is based on time-domain sampling, it is inherently subject to **aliasing** if the analog filter is not strictly bandlimited. Since no practical analog filter is perfectly bandlimited, there is always some aliasing.
-**Engineering Intuition:** IIM is only suitable for lowpass and bandpass filters with narrow bandwidths where the high-frequency content is negligible. It is totally unsuitable for highpass or bandstop filters.
-
----
-
-## 7. The Bilinear Transform (BLT)
-
-To avoid aliasing, we need a mapping that takes the entire $j\Omega$ axis ($-\infty < \Omega < \infty$) and maps it exactly once around the unit circle ($-\pi \leq \omega \leq \pi$). The Bilinear Transform achieves this via a rational conformal mapping.
-
-### 7.1 The Transform Definition
-The BLT approximates the integration of the continuous-time differential equation using the trapezoidal rule. The resulting algebraic substitution is:
-$$ s = \frac{2}{T_s} \frac{1 - z^{-1}}{1 + z^{-1}} = \frac{2}{T_s} \frac{z - 1}{z + 1} $$
-
-Conversely, to map from $s$ to $z$:
-$$ z = \frac{1 + (T_s/2)s}{1 - (T_s/2)s} $$
-
-### 7.2 Proof of Stability Preservation
-Let $s = \sigma + j\Omega$. Then:
-$$ z = \frac{1 + (T_s/2)(\sigma + j\Omega)}{1 - (T_s/2)(\sigma + j\Omega)} $$
-$$ |z|^2 = \frac{[1 + (T_s/2)\sigma]^2 + [(T_s/2)\Omega]^2}{[1 - (T_s/2)\sigma]^2 + [(T_s/2)\Omega]^2} $$
-* If $\sigma < 0$ (LHP), then $(1 + (T_s/2)\sigma)^2 < (1 - (T_s/2)\sigma)^2$, so $|z| < 1$ (inside unit circle).
-* If $\sigma = 0$ ($j\Omega$ axis), then $|z| = 1$ (on the unit circle).
-* If $\sigma > 0$ (RHP), then $|z| > 1$ (outside unit circle).
-
-Thus, a stable analog filter perfectly maps to a stable digital filter!
-
-### 7.3 Frequency Warping
-Let us map the analog frequency axis to the digital frequency axis by substituting $s = j\Omega$ and $z = e^{j\omega}$:
-$$ j\Omega = \frac{2}{T_s} \frac{e^{j\omega} - 1}{e^{j\omega} + 1} $$
-Factor out $e^{j\omega/2}$:
-$$ j\Omega = \frac{2}{T_s} \frac{e^{j\omega/2}(e^{j\omega/2} - e^{-j\omega/2})}{e^{j\omega/2}(e^{j\omega/2} + e^{-j\omega/2})} $$
-$$ j\Omega = \frac{2}{T_s} \frac{2j \sin(\omega/2)}{2 \cos(\omega/2)} = j \frac{2}{T_s} \tan\left(\frac{\omega}{2}\right) $$
-
-**KEY RESULT - Warping Equation:**
-$$ \Omega = \frac{2}{T_s} \tan\left(\frac{\omega}{2}\right) $$
-Because the infinite analog frequency range maps to a finite digital frequency range $[-\pi, \pi]$, the high frequencies are highly compressed (warped). To fix this, we must **prewarp** our critical frequencies before designing the analog prototype.
-
----
-
-## 8. Bilinear Design Procedure Step-by-Step
-
-1. **Given:** Digital specifications $\omega_p$ and $\omega_s$.
-2. **Prewarping:** Compute analog specifications $\Omega_p = \frac{2}{T_s} \tan(\omega_p/2)$ and $\Omega_s = \frac{2}{T_s} \tan(\omega_s/2)$. (Often, $T_s = 2$ is chosen to simplify math).
-3. **Prototype Design:** Determine $N$ and $\Omega_c$, then find $H_a(s)$.
-4. **BLT Conversion:** Substitute $s = \frac{2}{T_s} \frac{z-1}{z+1}$ into $H_a(s)$ to get $H(z)$.
-5. **Verification:** Check that $H(z)$ meets the original digital specifications.
-
----
-
-## 9. Worked Example: 3rd-Order Digital Butterworth LPF
-
-**Problem:** Design a 3rd-order digital Butterworth lowpass filter with a 3-dB cutoff frequency $\omega_c = 0.3\pi$ using the Bilinear Transform.
-
-**Step 1: Prewarping**
-Let $T_s = 2$ for mathematical simplicity.
-$$ \Omega_c = \frac{2}{2} \tan\left(\frac{0.3\pi}{2}\right) = \tan(0.15\pi) \approx 0.5095 \text{ rad/s} $$
-
-**Step 2: Analog Prototype Design**
-For a 3rd-order Butterworth ($N=3$), the stable poles are:
-$$ s_k = \Omega_c e^{j\frac{\pi}{6}(2k + 2)}, \quad k = 1, 2, 3 $$
-Calculating the poles:
-* $k=1: \quad s_1 = \Omega_c e^{j\frac{4\pi}{6}} = \Omega_c \left(\cos(120^\circ) + j\sin(120^\circ)\right) = 0.5095 (-0.5 + j0.866) = -0.2548 + j0.4412$
-* $k=2: \quad s_2 = \Omega_c e^{j\pi} = \Omega_c (-1) = -0.5095$
-* $k=3: \quad s_3 = \Omega_c e^{j\frac{8\pi}{6}} = \Omega_c \left(\cos(240^\circ) + j\sin(240^\circ)\right) = 0.5095 (-0.5 - j0.866) = -0.2548 - j0.4412$
-
-The analog transfer function is:
-$$ H_a(s) = \frac{\Omega_c^3}{(s - s_1)(s - s_2)(s - s_3)} $$
-Since $(s - s_1)(s - s_3) = (s - (-0.2548 + j0.4412))(s - (-0.2548 - j0.4412)) = (s + 0.2548)^2 + (0.4412)^2 = s^2 + 0.5096s + 0.2596$
-And $s_2 = -0.5095$:
-$$ H_a(s) = \frac{\Omega_c^3}{(s + 0.5095)(s^2 + 0.5096s + 0.2596)} $$
-$$ \Omega_c^3 \approx (0.5095)^3 \approx 0.1323 $$
-$$ H_a(s) = \frac{0.1323}{s^3 + 1.0191s^2 + 0.5193s + 0.1323} $$
-
-**Step 3: Bilinear Transform**
-Since $T_s = 2$, we substitute $s = \frac{z-1}{z+1}$:
-$$ H(z) = \frac{0.1323}{\left(\frac{z-1}{z+1}\right)^3 + 1.0191\left(\frac{z-1}{z+1}\right)^2 + 0.5193\left(\frac{z-1}{z+1}\right) + 0.1323} $$
-
-Multiply numerator and denominator by $(z+1)^3$:
-$$ H(z) = \frac{0.1323(z+1)^3}{(z-1)^3 + 1.0191(z-1)^2(z+1) + 0.5193(z-1)(z+1)^2 + 0.1323(z+1)^3} $$
-
-Expanding the polynomials:
-* $(z-1)^3 = z^3 - 3z^2 + 3z - 1$
-* $(z-1)^2(z+1) = (z^2 - 2z + 1)(z+1) = z^3 - z^2 - z + 1$
-* $(z-1)(z+1)^2 = (z-1)(z^2 + 2z + 1) = z^3 + z^2 - z - 1$
-* $(z+1)^3 = z^3 + 3z^2 + 3z + 1$
-
-Substitute and group by powers of $z$:
-Denominator $D(z) = (1 + 1.0191 + 0.5193 + 0.1323)z^3 + (-3 - 1.0191 + 0.5193 + 0.3969)z^2 + (3 - 1.0191 - 0.5193 + 0.3969)z + (-1 + 1.0191 - 0.5193 + 0.1323)$
-$D(z) = 2.6707z^3 - 3.1029z^2 + 1.8585z - 0.3679$
-
-Normalizing by $2.6707$ to make the leading coefficient 1:
-$$ H(z) = \frac{0.1323 / 2.6707 (z^3 + 3z^2 + 3z + 1)}{z^3 - 1.1618z^2 + 0.6959z - 0.1378} $$
-$$ H(z) = \frac{0.0495 (1 + 3z^{-1} + 3z^{-2} + z^{-3})}{1 - 1.1618z^{-1} + 0.6959z^{-2} - 0.1378z^{-3}} $$
-
-This is the final digital filter transfer function.
-
----
-
-## 10. Summary Table of Key Formulas
-
-| Concept | Formula |
-| :--- | :--- |
-| **Butterworth Magnitude** | $\|H_a(j\Omega)\|^2 = \frac{1}{1 + (\Omega/\Omega_c)^{2N}}$ |
-| **Butterworth Poles** | $s_k = \Omega_c e^{j\frac{\pi}{2N}(2k + N - 1)}$ |
-| **Order Formula** | $N \geq \frac{\log_{10}((A_s^2 - 1)/(A_p^2 - 1))}{2 \log_{10}(\Omega_s/\Omega_p)}$ |
-| **Impulse Invariance** | $h[n] = T_s h_a(nT_s)$, maps $s_k \to e^{s_k T_s}$ |
-| **Bilinear Transform** | $s = \frac{2}{T_s} \frac{z-1}{z+1}$ |
-| **Frequency Warping** | $\Omega = \frac{2}{T_s} \tan(\omega/2)$ |
-
----
-
-## 11. Checkpoints & Quick Review Questions
-
-1. **Q1: Why do we prefer the Bilinear Transform over the Impulse Invariance Method for designing highpass digital filters?**
-   * *Answer:* The Impulse Invariance Method suffers from frequency aliasing because the continuous-time spectrum is copied and shifted by multiples of the sampling frequency. Highpass filters have infinite bandwidth in continuous time, so aliasing would severely distort the passband. The Bilinear Transform, however, maps the entire infinite analog frequency axis $[-\infty, \infty]$ exactly onto the finite digital frequency interval $[-\pi, \pi]$, completely eliminating aliasing, making it ideal for highpass and bandstop filters.
-
-2. **Q2: In a Butterworth filter, what happens to the poles as the order $N$ increases?**
-   * *Answer:* The $2N$ poles of the squared magnitude transfer function lie on a circle of radius $\Omega_c$ in the $s$-plane. As $N$ increases, the number of poles increases, and they become more densely packed along the circumference of the circle. The angle between adjacent poles decreases (it is $\pi/N$). The leftmost poles move closer to the $j\Omega$ axis, which results in a much sharper transition band (a steeper roll-off) in the frequency response.
-
-3. **Q3: When using the Bilinear Transform, why is it mathematically permissible to simply choose $T_s = 2$ regardless of the actual physical sampling rate?**
-   * *Answer:* $T_s$ only acts as an intermediate scaling factor. If you set $T_s = 2$, the prewarping formula becomes $\Omega = \tan(\omega/2)$. The analog cutoff frequency $\Omega_c$ scales accordingly. When you apply the BLT, $s = \frac{z-1}{z+1}$ maps it right back. The parameter $T_s$ cancels itself out perfectly between the prewarping step and the substitution step. The final digital filter coefficients in $H(z)$ remain completely independent of the $T_s$ value chosen.
+## 5. PYTHON VERIFICATION SCRIPT
+```python
+N = 4096
+r2_mults = (N // 2) * 12
+r4_mults = (3 * N // 8) * 12
+print(f"Radix-2 Mults: {r2_mults:,}")
+print(f"Radix-4 Mults: {r4_mults:,}")
+print(f"Percentage Savings: {100*(r2_mults - r4_mults)/r2_mults:.2f}%")
+```

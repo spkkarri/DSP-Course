@@ -1,187 +1,89 @@
-# Lecture 20: Spectral Estimation — Periodogram & Parametric Methods
-
-**Course:** EE3621 — Digital Signal Processing  
-**Target Audience:** III B.Tech EEE Students  
-**Duration:** 40 Minutes  
-
-* **Available Formats:** [LaTeX Source File](file:///C:/Users/sriph/Downloads/DSP/lecture_20.tex) | [Compiled PDF Notes](file:///C:/Users/sriph/Downloads/DSP/lecture_20.pdf)
+# Lecture 20: Lattice & Lattice-Ladder Structures & Finite Word-Length Effects
+## EE3621: Digital Signal Processing | III B.Tech EEE
 
 ---
-
-## 1. Lecture Plan (40 Minutes Breakdown)
-* **00:00 – 05:00 (5 mins):** Problem Statement: Estimating PSD from a finite record. Parametric vs. Non-parametric approaches.
-* **05:00 – 15:00 (10 mins):** The Periodogram: Definition, Expected Value, Bias, and Variance (inconsistency).
-* **15:00 – 22:00 (7 mins):** Improved Non-parametric Methods: Bartlett's, Welch's, and Blackman-Tukey methods.
-* **22:00 – 32:00 (10 mins):** Parametric (AR) Spectral Estimation: AR modeling, Yule-Walker equations, Levinson-Durbin, and Lattice structures.
-* **32:00 – 35:00 (3 mins):** Subspace Methods: Brief introduction to the MUSIC algorithm.
-* **35:00 – 40:00 (5 mins):** Comparison Table, Checkpoints & Interactive Q&A.
+## 1. LEARNING OBJECTIVES
+By the end of this lecture, students will be able to:
+1. **Convert** FIR direct form coefficients to lattice reflection coefficients $k_m$ using the step-down algorithm.
+2. **Evaluate** IIR filter stability directly from reflection coefficients.
+3. **Construct** signal flow graphs for FIR lattice and IIR lattice-ladder filters.
+4. **Quantify** round-off noise power and identify limit cycle conditions.
 
 ---
+## 2. MATHEMATICAL FOUNDATIONS
 
-## 2. Problem Statement: Spectral Estimation
+### 2.1 FIR Lattice Recursion & Step-Down Algorithm
+* **Lattice Recursion:**
+  $$ A_m(z) = A_{m-1}(z) + k_m z^{-1} B_{m-1}(z) $$
+  $$ B_m(z) = z^{-m} A_m(z^{-1}) \quad (\text{Reverse Polynomial}) $$
+* **Step-Down Algorithm (Direct $\to$ Lattice):**
+  Given $A_N(z) = 1 + \sum_{i=1}^N \alpha_N(i) z^{-i}$:
+  1. Set $k_N = \alpha_N(N)$.
+  2. For $m = N, N-1, \dots, 2$:
+     $$ \alpha_{m-1}(i) = \frac{\alpha_m(i) - k_m \alpha_m(m - i)}{1 - k_m^2}, \quad i = 1, 2, \dots, m-1 $$
+     $$ k_{m-1} = \alpha_{m-1}(m-1) $$
 
-In practical DSP applications (radar, speech processing, seismology), we never have an infinite-length signal. We are given a **finite data record**:
-$$x[0], x[1], \dots, x[N-1]$$
-Our goal is to estimate the **Power Spectral Density (PSD)**, denoted as $S_{xx}(e^{j\omega})$, of the underlying wide-sense stationary (WSS) random process.
-
-There are two primary approaches to spectral estimation:
-1.  **Non-parametric methods**: Make no assumptions about how the data was generated. These rely directly on the Fourier transform of the data or its estimated autocorrelation sequence.
-2.  **Parametric methods**: Assume the signal is the output of a specific linear system (usually an All-Pole or AR model) driven by white noise. We estimate the model parameters and use them to compute the PSD analytically.
-
----
-
-## 3. The Periodogram (Non-parametric)
-
-### Visual Illustration: Spectral Estimation — Raw Periodogram vs. Welch Variance Reduction
-
-![Periodogram vs Bartlett Welch](images/periodogram_vs_bartlett_welch.png)
-
-* **Inconsistency of Periodogram:** The raw sample periodogram does not converge as record length increases ($	ext{Var}\{\hat{P}\} pprox P^2$). The Welch method segments data with $50\%$ overlap and averages windowed periodograms, dramatically suppressing noise variance.
+### 2.3 Finite Word-Length Effects Summary
+1. **Coefficient Quantization:** Shifts poles in the $z$-plane; high-order direct forms are severely sensitive; lattice and cascade forms are highly robust.
+2. **Round-off Noise:** Fixed-point truncation error modeled as white noise with variance $\sigma_e^2 = \frac{2^{-2B}}{12}$ for $B$-bit quantization. Output noise power:
+   $$ \sigma_{y}^2 = \sigma_e^2 \sum_{n=0}^{\infty} |h[n]|^2 = \sigma_e^2 \frac{1}{2\pi j} \oint H(z) H(z^{-1}) z^{-1} dz $$
+3. **Limit Cycle Oscillations:** Nonlinear oscillations in recursive filters caused by arithmetic quantization (deadbands) and two's complement overflow. Mitigated by using saturation arithmetic.
 
 ---
+## 3. WORKED NUMERICAL EXAMPLES
 
-### Visual Illustration: Parametric (AR Model) vs. Non-Parametric Spectrum
+### Example 20.1: Step-Down Conversion to Reflection Coefficients
+**Problem:** Find the reflection coefficients $k_1, k_2, k_3$ for the FIR filter:
+$$ A_3(z) = 1 - 0.9 z^{-1} + 0.64 z^{-2} - 0.5 z^{-3} $$
 
-![AR Parametric vs Non-Parametric](images/ar_parametric_vs_nonparametric.png)
-
-* **Parametric High Resolution:** For short data records, fitting an all-pole Autoregressive (AR) model avoids window leakage and resolves closely spaced spectral peaks far better than FFT methods.
-
-
-The most intuitive way to estimate the power spectrum is to compute the Discrete-Time Fourier Transform (DTFT) of the finite segment and square its magnitude.
-
-Let the truncated signal be $x_N[n] = x[n]w_R[n]$, where $w_R[n]$ is a rectangular window of length $N$. Its DTFT is:
-$$X_N(e^{j\omega}) = \sum_{n=0}^{N-1} x[n]e^{-j\omega n}$$
-
-The **Periodogram** estimate of the PSD is defined as:
-$$\hat{S}_{xx}^P(e^{j\omega}) = \frac{1}{N} \left| X_N(e^{j\omega}) \right|^2$$
-
-### Expected Value and Bias
-Let's analyze the statistical properties of the periodogram. The expected value is:
-$$E[\hat{S}_{xx}^P(e^{j\omega})] = E\left[ \frac{1}{N} X_N(e^{j\omega}) X_N^*(e^{j\omega}) \right]$$
-$$= \frac{1}{N} \sum_{n=0}^{N-1} \sum_{m=0}^{N-1} E[x[n]x^*[m]] e^{-j\omega (n-m)}$$
-Using the definition of autocorrelation $R_{xx}[n-m] = E[x[n]x^*[m]]$, and applying a change of variables $k = n-m$:
-$$E[\hat{S}_{xx}^P(e^{j\omega})] = \sum_{k=-(N-1)}^{N-1} \left( 1 - \frac{|k|}{N} \right) R_{xx}[k] e^{-j\omega k}$$
-
-This is exactly the DTFT of the true autocorrelation sequence multiplied by a Bartlett (triangular) window $w_B[k] = 1 - \frac{|k|}{N}$. In the frequency domain, multiplication becomes convolution:
-$$E[\hat{S}_{xx}^P(e^{j\omega})] = \frac{1}{2\pi} \int_{-\pi}^{\pi} S_{xx}(e^{j\theta}) W_B(e^{j(\omega-\theta)}) d\theta$$
-where $W_B(e^{j\omega}) = \frac{1}{N} |W_R(e^{j\omega})|^2$. 
-
-**Physical Intuition**: The expected value is the true PSD convolved with the squared magnitude of the rectangular window's Fourier transform. This convolution smears the true spectrum (leakage) and limits resolution. As $N \to \infty$, $W_B(e^{j\omega})$ approaches an impulse, making the periodogram **asymptotically unbiased**.
-
-### Variance and Inconsistency
-For a Gaussian random process, the variance of the periodogram is approximately:
-$$\text{Var}[\hat{S}_{xx}^P(e^{j\omega})] \approx S_{xx}^2(e^{j\omega})$$
-Notice that the variance does **not** decrease as the data record length $N$ increases. It remains proportional to the square of the true spectrum! 
-**KEY RESULT:** Because its variance does not tend to zero as $N \to \infty$, the periodogram is an **inconsistent estimator**. 
+**Solution:**
+* **Stage 3:**
+  $k_3 = \alpha_3(3) = -0.5$.
+  $1 - k_3^2 = 1 - (-0.5)^2 = 1 - 0.25 = 0.75$.
+* **Compute $\alpha_2(i)$ for $m=3$:**
+  * $\alpha_2(1) = \frac{\alpha_3(1) - k_3 \alpha_3(2)}{0.75} = \frac{-0.9 - (-0.5)(0.64)}{0.75} = \frac{-0.9 + 0.32}{0.75} = \frac{-0.58}{0.75} = -0.7733$.
+  * $\alpha_2(2) = \frac{\alpha_3(2) - k_3 \alpha_3(1)}{0.75} = \frac{0.64 - (-0.5)(-0.9)}{0.75} = \frac{0.64 - 0.45}{0.75} = \frac{0.19}{0.75} = 0.2533$.
+  $k_2 = \alpha_2(2) = 0.2533$.
+* **Stage 2:**
+  $1 - k_2^2 = 1 - (0.2533)^2 = 1 - 0.0642 = 0.9358$.
+* **Compute $\alpha_1(i)$ for $m=2$:**
+  * $\alpha_1(1) = \frac{\alpha_2(1) - k_2 \alpha_2(1)}{0.9358} = \frac{-0.7733(1 - 0.2533)}{0.9358} = \frac{-0.7733 \times 0.7467}{0.9358} = -0.6170$.
+  $k_1 = \alpha_1(1) = -0.6170$.
+* **Stability Check:**
+  $|k_1| = 0.6170 < 1, \; |k_2| = 0.2533 < 1, \; |k_3| = 0.5000 < 1$.
+  All $|k_m| < 1 \implies$ The corresponding all-pole filter is **Stable**.
 
 ---
+## 4. UNIVERSITY EXAMINATION QUESTIONS & MARKING RUBRIC
 
-## 4. Improved Non-parametric Methods
+### Question 1 (15 Marks)
+**(a)** State the Schur-Cohn stability criterion for digital filters. Using the step-down algorithm, determine if the system is stable:
+$$ H(z) = \frac{1}{1 - 1.2 z^{-1} + 0.8 z^{-2} - 0.2 z^{-3}} $$
+*(9 Marks)*
+**(b)** Discuss limit cycle oscillations in recursive digital filters. Explain the difference between zero-input granular limit cycles and overflow oscillations. *(6 Marks)*
 
-To overcome the inconsistency of the periodogram, we can trade frequency resolution for reduced variance.
-
-### 4.1 Bartlett's Method
-Bartlett's method averages multiple independent periodograms to reduce variance.
-1. Divide the $N$-point sequence into $K$ **non-overlapping** segments, each of length $L = N/K$.
-2. Compute the periodogram for each segment: $\hat{S}_i(e^{j\omega})$.
-3. Average them: 
-   $$\hat{S}_{xx}^B(e^{j\omega}) = \frac{1}{K} \sum_{i=1}^K \hat{S}_i(e^{j\omega})$$
-
-**Performance:**
-* **Variance**: Reduced by a factor of $K$: $\text{Var} \approx \frac{1}{K} S_{xx}^2(e^{j\omega})$.
-* **Resolution**: Reduced by a factor of $K$ because the mainlobe of the window of length $L$ is $K$ times wider than that of length $N$.
-
-### 4.2 Welch's Method
-Welch's method is the most widely used practical non-parametric method (e.g., `pwelch` in MATLAB/Python). It improves on Bartlett's method by:
-1. Using **overlapping segments** (typically 50% to 75% overlap). This yields more segments $K$ for a given $N$, providing more averaging.
-2. Applying a non-rectangular **window** (like Hanning or Hamming) to each segment before taking the FFT. This drastically reduces spectral leakage (sidelobes).
-
-Because of the window, the normalization factor changes, but the variance is further reduced, yielding a much smoother PSD estimate.
-
-### 4.3 Blackman-Tukey Method
-Instead of averaging periodograms, the Blackman-Tukey method operates on the estimated autocorrelation.
-1. Estimate the autocorrelation sequence $\hat{R}_{xx}[m]$ from the data for lags $|m| \le M$ (where $M \ll N$).
-2. Multiply the estimate by a lag window $w[m]$ (e.g., Bartlett or Hamming) to suppress high-variance estimates at large lags.
-3. Compute the DTFT:
-   $$\hat{S}_{BT}(e^{j\omega}) = \sum_{m=-M}^{M} \hat{R}_{xx}[m]w[m]e^{-j\omega m}$$
-This provides a smoothed spectrum by explicitly windowing the autocorrelation.
+**Model Answer & Step-by-Step Marking Rubric:**
+* **Part (a):**
+  * Statement of Schur-Cohn criterion: All $|k_m| < 1$ *(2 Marks)*
+  * Step-down execution:
+    $k_3 = -0.2 \implies 1 - k_3^2 = 0.96$
+    $\alpha_2(1) = \frac{-1.2 - (-0.2)(0.8)}{0.96} = \frac{-1.04}{0.96} = -1.0833$
+    $\alpha_2(2) = \frac{0.8 - (-0.2)(-1.2)}{0.96} = \frac{0.56}{0.96} = 0.5833 \implies k_2 = 0.5833$
+    $1 - k_2^2 = 1 - 0.3403 = 0.6597$
+    $\alpha_1(1) = \frac{-1.0833 - (0.5833)(-1.0833)}{0.6597} = \frac{-1.0833(0.4167)}{0.6597} = -0.6843 \implies k_1 = -0.6843$ *(5 Marks)*
+  * Since $|k_1| = 0.6843 < 1, |k_2| = 0.5833 < 1, |k_3| = 0.2 < 1 \implies$ **Stable** *(2 Marks)*
+* **Part (b):**
+  * Explanation of granular limit cycles due to quantization rounding *(3 Marks)*
+  * Explanation of overflow oscillations and mitigation via saturation arithmetic *(3 Marks)*
 
 ---
+## 5. PYTHON VERIFICATION SCRIPT
+```python
+import numpy as np
 
-## 5. Parametric Spectral Estimation (AR Model)
-
-Parametric methods can achieve **high resolution** even with short data records because they extrapolate the autocorrelation sequence beyond the available data based on a mathematical model.
-
-The most common model is the **Autoregressive (AR) model**. We assume the signal $x[n]$ is the output of an all-pole filter of order $p$, driven by white noise $w[n]$ with variance $\sigma_w^2$.
-$$x[n] = -\sum_{k=1}^p a_k x[n-k] + w[n]$$
-Taking the Z-transform, the system transfer function is $H(z) = \frac{1}{A(z)} = \frac{1}{1 + \sum_{k=1}^p a_k z^{-k}}$.
-The theoretical PSD is:
-$$S_{xx}(e^{j\omega}) = |H(e^{j\omega})|^2 S_{ww}(e^{j\omega}) = \frac{\sigma_w^2}{|A(e^{j\omega})|^2}$$
-
-To find the PSD, we just need to estimate the AR coefficients $\{a_1, a_2, \dots, a_p\}$ and $\sigma_w^2$ from the data.
-
-### Yule-Walker Equations
-By multiplying the AR difference equation by $x^*[n-m]$ and taking the expectation, we get the Yule-Walker equations:
-$$\sum_{k=1}^p a_k R_{xx}[m-k] = -R_{xx}[m], \quad \text{for } m = 1, 2, \dots, p$$
-In matrix form: $\mathbf{R}_{xx}\mathbf{a} = -\mathbf{r}_{xx}$.
-
-### Lattice Structures and Levinson-Durbin
-Solving $\mathbf{R}_{xx}\mathbf{a} = -\mathbf{r}_{xx}$ by direct inversion takes $O(p^3)$ operations. Since $\mathbf{R}_{xx}$ is a Toeplitz matrix, we can use the **Levinson-Durbin recursion** to solve it in $O(p^2)$ operations.
-
-Levinson-Durbin is deeply related to **Lattice filters**. The algorithm recursively computes **reflection coefficients** $K_m$ (also called PARCOR coefficients), which can be mapped directly to the FIR lattice structure used in forward/backward prediction.
-A single stage of an FIR lattice filter, representing the prediction error updates, is shown below:
-
-By estimating these reflection coefficients directly from data (using methods like Burg's algorithm), we ensure the stability of the estimated AR model, which can also be embedded into a Lattice-Ladder structure for IIR filtering:
-
----
-
-## 6. MUSIC Algorithm (Subspace Method)
-
-The **Multiple Signal Classification (MUSIC)** algorithm is a high-resolution technique designed specifically to estimate the frequencies of sinusoids buried in noise.
-
-1. Construct the empirical autocorrelation matrix $\hat{\mathbf{R}}$.
-2. Perform Eigendecomposition: $\hat{\mathbf{R}} = \mathbf{V} \mathbf{\Lambda} \mathbf{V}^H$.
-3. Partition the eigenvectors into a **Signal Subspace** (eigenvectors corresponding to the largest eigenvalues) and a **Noise Subspace** $\mathbf{V}_n$ (eigenvectors for the smallest eigenvalues).
-4. The signal vectors are strictly orthogonal to the noise subspace. The MUSIC pseudospectrum is defined as:
-   $$P_{\text{MUSIC}}(e^{j\omega}) = \frac{1}{\mathbf{v}^H(e^{j\omega}) \mathbf{V}_n \mathbf{V}_n^H \mathbf{v}(e^{j\omega})}$$
-where $\mathbf{v}(e^{j\omega}) = [1, e^{j\omega}, \dots, e^{j\omega(M-1)}]^T$. 
-
-$P_{\text{MUSIC}}$ exhibits extremely sharp peaks at the true frequencies, offering **super-resolution** far beyond the Fourier limit.
-
----
-
-## 7. Comparison Table
-
-| Method | Type | Resolution | Variance | Computational Cost | Best Used For |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **Periodogram** | Non-parametric | Good ($1/N$) | High (Inconsistent) | Low ($O(N \log N)$) | Quick looks, theoretical baseline |
-| **Bartlett** | Non-parametric | Poor ($K/N$) | Medium | Low | Seldom used (Welch is better) |
-| **Welch** | Non-parametric | Medium | Low | Moderate | General practical spectral estimation |
-| **AR (Levinson)** | Parametric | Very High | Low | Moderate ($O(p^2)$) | Short data records, peaked spectra |
-| **MUSIC** | Subspace | Super-resolution | Very Low | High ($O(M^3)$ for SVD) | Resolving closely spaced sinusoids |
-
----
-
-## 8. Summary of Key Formulas
-
-| Concept | Formula |
-| :--- | :--- |
-| **Periodogram PSD** | $\hat{S}_{xx}^P(e^{j\omega}) = \frac{1}{N} \left| \sum_{n=0}^{N-1} x[n]e^{-j\omega n} \right|^2$ |
-| **Expected Value (Bias)** | $E[\hat{S}^P] = \frac{1}{2\pi} \int_{-\pi}^{\pi} S_{xx}(e^{j\theta}) W_B(e^{j(\omega-\theta)}) d\theta$ |
-| **AR Model Spectrum** | $S_{xx}(e^{j\omega}) = \frac{\sigma_w^2}{|1 + \sum_{k=1}^p a_k e^{-j\omega k}|^2}$ |
-| **Yule-Walker Eq.** | $\mathbf{R}_{xx}\mathbf{a} = -\mathbf{r}_{xx}$ |
-
----
-
-## 9. Checkpoint & Quick Review Questions
-
-1. **Q1:** Why is the raw periodogram considered an "inconsistent estimator" of the power spectral density?
-   * *Answer:* An estimator is consistent if its variance approaches zero as the number of data points $N \to \infty$. For the raw periodogram, the variance is approximately equal to the square of the true PSD ($S_{xx}^2(e^{j\omega})$) regardless of how large $N$ becomes. Because the variance does not decrease with increasing data length, it remains inconsistent.
-
-2. **Q2:** In Welch's method, what is the purpose of using overlapping segments and non-rectangular windows (like Hanning) compared to Bartlett's method?
-   * *Answer:* 
-     * **Overlapping segments:** By overlapping segments (e.g., 50%), we can extract more segments $K$ from the same total record length $N$. Averaging over a larger number of segments further reduces the variance of the estimate.
-     * **Non-rectangular windows:** Windowing smooths the edges of each data segment, dramatically reducing sidelobe levels (spectral leakage) compared to the rectangular windows implicitly used in Bartlett's method. This improves dynamic range and ensures weak signals aren't overwhelmed by leakage from strong signals.
-
-3. **Q3:** How does an Autoregressive (AR) parametric spectral estimator achieve higher frequency resolution than the Periodogram for short data records?
-   * *Answer:* Non-parametric methods implicitly assume that data outside the measurement window is zero, causing the spectrum to be convolved with the window's Fourier transform (broadening peaks). AR models fit a linear all-pole equation to the available data and analytically evaluate the transfer function. This effectively extrapolates the signal's autocorrelation to infinity, avoiding the sharp windowing effect and allowing it to resolve extremely closely spaced peaks even with a short data record.
+# Verify step-down conversion
+a = np.array([1.0, -1.2, 0.8, -0.2])
+roots = np.roots(a)
+print("Pole Magnitudes:", np.abs(roots))
+print("All inside unit circle:", np.all(np.abs(roots) < 1.0))
+```

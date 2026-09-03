@@ -1,293 +1,156 @@
 # Lecture 1: Course Introduction & Discrete-Time Signals
-
-**Course:** EE3621 — Digital Signal Processing  
-**Target Audience:** III B.Tech EEE Students  
-**Duration:** 40 Minutes  
-
-* **Available Formats:** [LaTeX Source File](file:///C:/Users/sriph/Downloads/DSP/lecture_01.tex) | [Compiled PDF Notes](file:///C:/Users/sriph/Downloads/DSP/lecture_01.pdf)
-
+## EE3621: Digital Signal Processing | III B.Tech EEE
 
 ---
-
-## 1. Lecture Plan (40 Minutes Breakdown)
-* **00:00 – 05:00 (5 mins):** Welcome, Course Objectives, & Syllabus Walkthrough
-* **05:00 – 18:00 (13 mins):** Introduction to DSP, Analog vs. Digital Processing (Block Diagram, Pros & Cons)
-* **18:00 – 30:00 (12 mins):** Classification of Discrete-Time (DT) Signals (Periodicity, Energy/Power, Symmetry)
-* **30:00 – 38:00 (8 mins):** Elementary Sequences (Impulse, Step, Ramp, Sinusoid, Exponential)
-* **38:00 – 40:00 (2 mins):** Q&A and Summary of the day
-
----
-
-## 2. Introduction to DSP & Analog vs. Digital Processing
-
-### What is Digital Signal Processing (DSP)?
-A **signal** is any physical quantity that varies with time, space, or any other independent variable, carrying information. Examples in electrical engineering include voltage $v(t)$, current $i(t)$, and power waveforms.
-* **Analog Signal Processing (ASP):** Signals are processed in their continuous-time, continuous-amplitude form using analog hardware (resistors, capacitors, inductors, operational amplifiers).
-* **Digital Signal Processing (DSP):** Signals are represented as sequences of numbers (discrete-time, quantized amplitude) and processed using digital hardware (microprocessors, DSP chips, FPGAs, or software).
-
-### Typical DSP System Block Diagram
-An analog signal is converted to digital, processed, and then converted back to analog (if required):
-
-```
-+---------------+     +-------+     +------------+     +-------+     +---------------+
-| Analog Signal | --> |  ADC  | --> | DSP Device | --> |  DAC  | --> | Analog Signal |
-|     x(t)      |     |       |     |   x[n]     |     |       |     |     y(t)      |
-+---------------+     +-------+     +------------+     +-------+     +---------------+
-```
-
-1. **Anti-Aliasing Filter (LPF) [Optional/Implicit]:** Pre-filters the analog input $x(t)$ to remove high-frequency noise and prevent aliasing.
-2. **Analog-to-Digital Converter (ADC):** Consists of:
-   * **Sampler:** Discretizes the continuous time variable $t \to n T_s$.
-   * **Quantizer:** Discretizes the continuous amplitude value. The number of quantization levels $L$ is determined by the **bit depth** $B$:
-     $$L = 2^B$$
-     The **step size** $\Delta$ for a full-scale range $R$ is:
-     $$\Delta = \frac{R}{2^B}$$
-     The rounding of values introduces **quantization noise** $e[n] = x_q[n] - x[n]$, bounded by $-\frac{\Delta}{2} \le e[n] \le \frac{\Delta}{2}$.
-   * **Coder:** Maps each quantized level to an equivalent $B$-bit binary word.
-   * **Theoretical SQNR:** For a full-scale sinusoid, the Signal-to-Quantization-Noise Ratio is:
-     $$\text{SQNR (dB)} \approx 6.02 B + 1.76\text{ dB}$$
-     Adding 1 bit increases the SQNR by $6.02\text{ dB}$ (improving signal fidelity and lowering noise).
-3. **Digital Signal Processor:** Executes mathematical algorithms (addition, multiplication, delay) on the discrete sequence $x[n]$ to produce $y[n]$.
-4. **Digital-to-Analog Converter (DAC) & Reconstruction Filter:** Reconstructs the continuous-time signal $y(t)$ from $y[n]$.
-
-### Analog Pre-Processing Circuits: Anti-Aliasing & Sample-and-Hold
-
-Before sampling, the analog signal must pass through physical circuitry to prepare it for conversion:
-
-#### 1. Anti-Aliasing Filter (AAF) Circuit
-An AAF is an analog low-pass filter (typically a 1st-order RC filter for simplicity) that cuts off high-frequency noise above the folding frequency $f_N = f_s/2$.
-* **Transfer Function:** $H(f) = \frac{1}{1 + j 2\pi f R C}$
-* **Cutoff Frequency:** $f_c = \frac{1}{2\pi R C}$
-* **Relationship with Sampling Rate ($f_s$):** To prevent aliasing, we require $f_c \le \frac{f_s}{2}$:
-  $$\frac{1}{2\pi R C} \le \frac{f_s}{2} \implies R C \ge \frac{1}{\pi f_s}$$
-  *Example:* For $f_s = 20\text{ Hz}$, the RC time constant must satisfy $RC \ge 15.9\text{ ms}$.
-
-#### 2. Sample-and-Hold (S&H) Circuit
-The S&H circuit captures the continuous-time voltage and holds it steady while the ADC performs quantization. It consists of an electronic switch (MOSFET) and a holding capacitor $C_{hold}$.
-* **Track Mode (Switch Closed):** The capacitor charges to the input voltage.
-  * The switch has a small on-resistance $R_{on}$.
-  * Charging time constant is $\tau_{acq} = R_{on} C_{hold}$.
-  * To charge the capacitor to within $0.1\%$ accuracy (for a 10-bit ADC), the switch must stay closed for at least $T_{track} \ge 7 \tau_{acq} = 7 R_{on} C_{hold}$.
-* **Hold Mode (Switch Open):** The switch is open, and the capacitor holds the voltage.
-  * The capacitor slowly discharges through the input resistance of the buffer amplifier ($R_{in}$).
-  * Discharge time constant is $\tau_{hold} = R_{in} C_{hold}$.
-  * To prevent the voltage from dropping (droop rate) during the sample period $T_s = 1/f_s$, we require the hold constant to be extremely large: $R_{in} C_{hold} \gg \frac{1}{f_s}$.
-
-### DSP vs. Analog Processing: Comparison
-
-| Feature | Analog Signal Processing (ASP) | Digital Signal Processing (DSP) |
-| :--- | :--- | :--- |
-| **Components** | Active/passive hardware components ($R$, $L$, $C$, Op-Amps). | Digital hardware (multipliers, adders, registers, memory) or software. |
-| **Accuracy** | Limited by component tolerances (e.g., $5\%$ resistor tolerance), drift due to temperature, and aging. | Highly accurate; limited only by word-length (quantization errors). |
-| **Flexibility** | Difficult to modify; requires physical re-wiring or hardware redesign. | Extremely flexible; algorithms can be updated simply by modifying code. |
-| **Storage** | Hard to store analog signals without degradation (e.g., magnetic tapes). | Easy to store in digital media (flash, hard drives) without loss. |
-| **Complexity** | Implementing complex filters (e.g., linear phase, sharp transitions) is highly impractical. | Complex algorithms (adaptive filtering, FFT, compression) are easily implemented. |
-| **Speed/Bandwidth**| Very high bandwidth; works in real-time for high frequencies. | Limited by the sampling rate of the ADC/DAC and processor clock speed. |
-
-### Visualizing Signal Types (Analog vs. Sampled vs. Digital)
-Below is the visual progression of a signal from analog, to sampled, to quantized digital form:
-
-![Analog vs. Sampled vs. Digital Signal](images/analog_vs_digital.png)
+## 1. LEARNING OBJECTIVES
+By the end of this lecture, students will be able to:
+1. **Differentiate** between continuous-time, discrete-time, and digital signals across time-domain and amplitude-domain representations.
+2. **Compute** the fundamental period $N_0$ of discrete-time sinusoids and verify periodicity conditions.
+3. **Decompose** an arbitrary discrete-time sequence into its even symmetric $x_e[n]$ and odd symmetric $x_o[n]$ components.
+4. **Evaluate** the total signal energy $E$ and average power $P$ of elementary and composite discrete-time sequences.
+5. **Formulate** elementary signal operations including time-shifting, time-reversal, amplitude scaling, and downsampling/upsampling.
 
 ---
+## 2. MATHEMATICAL FOUNDATIONS & DEFINITIONS
 
+### 2.1 Continuous to Discrete Sampling
+A discrete-time signal $x[n]$ is obtained by sampling a continuous-time signal $x_a(t)$ at uniform intervals of $T_s$ seconds:
+$$ x[n] = x_a(n T_s) = \left. x_a(t) \right|_{t = n T_s}, \quad n \in \mathbb{Z} $$
+Where:
+* $T_s = 1/F_s$ is the sampling period in seconds.
+* $F_s$ is the sampling frequency in Hertz ($\text{Hz}$ or samples/sec).
+* $\Omega$ denotes continuous-time angular frequency ($\text{rad/s}$), and $\omega = \Omega T_s = \Omega / F_s$ denotes normalized discrete-time angular frequency ($\text{rad/sample}$).
 
-## 3. Discrete-Time (DT) Signals & Classification
+### 2.2 Elementary Discrete-Time Sequences
+1. **Unit Impulse (Kronecker Delta):**
+   $$ \delta[n] = \begin{cases} 1, & n = 0 \\ 0, & n \ne 0 \end{cases} $$
+   *Sifting Property:* $\sum_{n=-\infty}^{\infty} x[n] \delta[n - n_0] = x[n_0]$.
 
-A discrete-time signal $x[n]$ is defined only at integer values of the independent variable $n$. It is mathematically represented as a sequence of numbers:
-$$x[n] = \{x[-1], \underline{x[0]}, x[1], x[2], \dots\}$$
-*(Note: The underline indicates the origin sample where $n = 0$.)*
+2. **Unit Step Sequence:**
+   $$ u[n] = \begin{cases} 1, & n \ge 0 \\ 0, & n < 0 \end{cases} = \sum_{k=0}^{\infty} \delta[n - k] = \sum_{m=-\infty}^{n} \delta[m] $$
+   Relation to impulse: $\delta[n] = u[n] - u[n-1]$.
 
-### Classification of DT Signals
+3. **Unit Ramp Sequence:**
+   $$ r[n] = n \cdot u[n] = \begin{cases} n, & n \ge 0 \\ 0, & n < 0 \end{cases} $$
 
-#### A. Periodic vs. Aperiodic Signals
-A DT signal $x[n]$ is **periodic** if there exists a positive integer $N$ such that:
-$$x[n + N] = x[n] \quad \forall n$$
-The smallest integer $N > 0$ satisfying this is the **fundamental period**.
-* **Key Concept for EEE:** For a sinusoidal sequence $x[n] = A \cos(\omega_0 n + \theta)$ to be periodic, the frequency $\omega_0$ must be a rational multiple of $2\pi$:
-  $$\frac{\omega_0}{2\pi} = \frac{m}{N} \quad \text{where } m, N \in \mathbb{Z}$$
-  If this ratio is irrational, the DT sinusoid is **aperiodic** (unlike its continuous-time counterpart, which is always periodic).
+4. **Real Exponential Sequence:**
+   $$ x[n] = a^n u[n] = \begin{cases} a^n, & n \ge 0 \\ 0, & n < 0 \end{cases} $$
+   * For $0 < a < 1$: decaying monotonic sequence.
+   * For $-1 < a < 0$: alternating decaying sequence.
+   * For $|a| > 1$: exponentially growing sequence (unstable).
 
-#### B. Symmetric (Even) vs. Anti-Symmetric (Odd) Signals
-* **Even Signal:** $x[-n] = x[n]$ (Symmetrical about the y-axis)
-* **Odd Signal:** $x[-n] = -x[n]$ (Asymmetrical about the origin; implies $x[0] = 0$)
-Any arbitrary signal $x[n]$ can be decomposed into even ($x_e[n]$) and odd ($x_o[n]$) parts:
-$$x_e[n] = \frac{x[n] + x[-n]}{2}, \quad x_o[n] = \frac{x[n] - x[-n]}{2}$$
+5. **Complex Exponential and Sinusoidal Sequences:**
+   $$ x[n] = A e^{j(\omega_0 n + \phi)} = A \cos(\omega_0 n + \phi) + j A \sin(\omega_0 n + \phi) $$
 
-Below is an illustration of an arbitrary signal $x[n]$ decomposed into its even and odd parts:
+### 2.3 Periodicity Condition in Discrete Time
+A discrete-time sequence $x[n]$ is periodic with fundamental period $N \in \mathbb{Z}^+$ if and only if $x[n + N] = x[n]$ for all $n$.
+For a sinusoid $x[n] = \cos(\omega_0 n)$:
+$$ \cos(\omega_0 (n + N)) = \cos(\omega_0 n + \omega_0 N) = \cos(\omega_0 n) \iff \omega_0 N = 2\pi k, \quad k \in \mathbb{Z}^+ $$
+$$ \frac{\omega_0}{2\pi} = \frac{k}{N} \in \mathbb{Q} \quad (\text{Ratio of frequency to } 2\pi \text{ must be a rational number}) $$
+The fundamental period is $N_0 = \frac{2\pi k}{\omega_0}$, where $k$ is the smallest positive integer such that $N_0$ is an integer.
 
-![Even/Odd Decomposition](images/even_odd_decomposition.png)
-
-
-#### C. Energy vs. Power Signals
-* **Total Energy ($E$):**
-  $$E = \sum_{n=-\infty}^{\infty} |x[n]|^2$$
-* **Average Power ($P$):**
-  $$P = \lim_{N \to \infty} \frac{1}{2N + 1} \sum_{n=-N}^{N} |x[n]|^2$$
+### 2.4 Energy and Power Classification
+* **Total Signal Energy $E$:**
+  $$ E = \sum_{n=-\infty}^{\infty} |x[n]|^2 $$
+* **Average Signal Power $P$:**
+  $$ P = \lim_{K \to \infty} \frac{1}{2K + 1} \sum_{n=-K}^{K} |x[n]|^2 $$
+  For a periodic sequence with fundamental period $N_0$:
+  $$ P = \frac{1}{N_0} \sum_{n=0}^{N_0 - 1} |x[n]|^2 $$
 * **Classification:**
-  * **Energy Signal:** $0 < E < \infty \implies P = 0$. (Typically finite-duration signals).
-  * **Power Signal:** $0 < P < \infty \implies E = \infty$. (Typically periodic or infinite-duration signals).
+  1. *Energy Signal:* $0 < E < \infty \implies P = 0$.
+  2. *Power Signal:* $0 < P < \infty \implies E = \infty$.
+  3. *Neither:* $E = \infty$ and $P = \infty$ or $P = 0$.
 
-Below is an illustration comparing a finite-energy exponential decay signal and an infinite-energy periodic sinusoidal power signal:
-
-![Energy vs. Power Signals](images/energy_vs_power.png)
-
-
-#### D. Causality
-* **Causal:** $x[n] = 0$ for $n < 0$ (Depends only on present and past).
-* **Non-causal:** $x[n] \neq 0$ for some $n < 0$ (Depends on future values).
-* **Anti-causal:** $x[n] = 0$ for $n \ge 0$ (Depends only on future/past negative values).
+### 2.5 Even and Odd Symmetry Decomposition
+Any arbitrary sequence $x[n]$ can be uniquely decomposed into even and odd components:
+$$ x[n] = x_e[n] + x_o[n] $$
+$$ x_e[n] = \frac{1}{2} \left( x[n] + x[-n] \right) \quad (\text{Even Component: } x_e[-n] = x_e[n]) $$
+$$ x_o[n] = \frac{1}{2} \left( x[n] - x[-n] \right) \quad (\text{Odd Component: } x_o[-n] = -x_o[n], \; x_o[0] = 0) $$
 
 ---
+## 3. WORKED NUMERICAL EXAMPLES
 
-## 4. Elementary Sequences
+### Example 1.1: Periodicity Analysis of Composite Discrete Sinusoids
+**Problem:** Determine if the following signals are periodic. If periodic, find the fundamental period $N_0$:
+(a) $x_1[n] = \cos\left( \frac{3\pi}{7} n + \frac{\pi}{4} \right)$
+(b) $x_2[n] = \cos(0.8 n)$
+(c) $x_3[n] = \cos\left( \frac{\pi}{6} n \right) + \sin\left( \frac{\pi}{8} n \right)$
 
-These basic signals serve as the building blocks for representing and analyzing more complex signals.
+**Solution:**
+**(a)** $\omega_1 = \frac{3\pi}{7}$.
+$$ \frac{\omega_1}{2\pi} = \frac{3\pi/7}{2\pi} = \frac{3}{14} \in \mathbb{Q} $$
+Since the ratio is rational, $x_1[n]$ is periodic.
+Fundamental period: $N_1 = \frac{2\pi \cdot k}{\omega_1} = \frac{2\pi \cdot 3}{3\pi/7} = 14$ samples (with $k=3$).
 
-### Graphical Representations
-Below are the graphical plots of the five elementary sequences:
+**(b)** $\omega_2 = 0.8 = \frac{4}{5}$.
+$$ \frac{\omega_2}{2\pi} = \frac{0.8}{2\pi} = \frac{0.4}{\pi} \notin \mathbb{Q} $$
+Because $\pi$ is irrational, $\frac{\omega_2}{2\pi}$ is irrational. Therefore, $x_2[n]$ is **aperiodic (non-periodic)**.
 
-![Elementary Discrete-Time Sequences](images/elementary_sequences.png)
-
-### 1. Unit Impulse Sequence $\delta[n]$
-Defines a single spike at the origin:
-$$\delta[n] = \begin{cases} 1, & n = 0 \\ 0, & n \neq 0 \end{cases}$$
-* **Sifting Property:** Any sequence can be represented as a weighted sum of delayed impulses:
-  $$x[n] = \sum_{k=-\infty}^{\infty} x[k] \delta[n-k]$$
-
-### 2. Unit Step Sequence $u[n]$
-Represents a DC signal switched on at $n=0$:
-$$u[n] = \begin{cases} 1, & n \ge 0 \\ 0, & n < 0 \end{cases}$$
-* **Relationship to Impulse:** $\delta[n] = u[n] - u[n-1]$ and $u[n] = \sum_{k=0}^{\infty} \delta[n-k]$.
-
-### 3. Unit Ramp Sequence $r[n]$
-Increases linearly for non-negative time:
-$$r[n] = n \cdot u[n] = \begin{cases} n, & n \ge 0 \\ 0, & n < 0 \end{cases}$$
-
-### 4. Exponential Sequence $x[n] = a^n u[n]$
-The behavior depends heavily on the value of $a$ (real or complex):
-* If $0 < a < 1$: Decaying exponential.
-* If $a > 1$: Growing exponential.
-* If $-1 < a < 0$: Decaying, alternating-sign sequence.
-
-### 5. Sinusoidal Sequence $x[n] = A \cos(\omega_0 n + \theta)$
-* $\omega_0$ is the digital angular frequency in radians per sample.
-* Range of unique frequencies is $-\pi \le \omega_0 \le \pi$ or $0 \le \omega_0 \le 2\pi$ due to frequency aliasing in discrete-time domain (higher frequencies wrap around).
+**(c)** For composite signal $x_3[n]$:
+* For $\cos\left( \frac{\pi}{6} n \right)$: $\omega_a = \pi/6 \implies \frac{\omega_a}{2\pi} = \frac{1}{12} \implies N_a = 12$.
+* For $\sin\left( \frac{\pi}{8} n \right)$: $\omega_b = \pi/8 \implies \frac{\omega_b}{2\pi} = \frac{1}{16} \implies N_b = 16$.
+Both terms are periodic. The overall fundamental period is the Least Common Multiple (LCM):
+$$ N_0 = \text{LCM}(N_a, N_b) = \text{LCM}(12, 16) = 48 \text{ samples} $$
 
 ---
+### Example 1.2: Energy and Power Calculation
+**Problem:** Classify the following signals as Energy, Power, or Neither, and compute the corresponding $E$ or $P$:
+(a) $x[n] = (0.6)^n u[n]$
+(b) $x[n] = e^{j(\frac{\pi}{4} n + \frac{\pi}{3})}$
 
-## 4.5 Properties & Operations on Signals
+**Solution:**
+**(a)** Total Energy:
+$$ E = \sum_{n=-\infty}^{\infty} |x[n]|^2 = \sum_{n=0}^{\infty} |(0.6)^n|^2 = \sum_{n=0}^{\infty} (0.36)^n $$
+Using the infinite geometric series formula $\sum_{n=0}^{\infty} r^n = \frac{1}{1-r}$ for $|r| < 1$:
+$$ E = \frac{1}{1 - 0.36} = \frac{1}{0.64} = \frac{25}{16} = 1.5625 \text{ Joules} $$
+Since $0 < E < \infty$, $x[n]$ is an **Energy Signal** with average power $P = 0$.
 
-Signals can be manipulated using several basic mathematical operations:
-
-### 1. Time Shifting
-A signal $x[n]$ is delayed or advanced by shifting the index:
-$$y[n] = x[n - n_0]$$
-* If $n_0 > 0$, the signal is **delayed** (shifted right).
-* If $n_0 < 0$, the signal is **advanced** (shifted left).
-
-### 2. Time Reversal (Folding)
-Reflecting the signal about the origin $n=0$:
-$$y[n] = x[-n]$$
-
-### 3. Time Scaling (Decimation & Interpolation)
-Alters the effective sampling rate of the sequence:
-* **Decimation (Downsampling):** $y[n] = x[D \cdot n]$, keeping every $D$-th sample.
-* **Interpolation (Upsampling):** $y[n] = x[n/I]$ if $n$ is a multiple of $I$, and $0$ otherwise.
-
-### 4. Arithmetic Operations
-* **Addition:** $y[n] = x_1[n] + x_2[n]$ (mixer)
-* **Multiplication:** $y[n] = x_1[n] \cdot x_2[n]$ (modulation/windowing)
-* **Scaling:** $y[n] = A \cdot x[n]$ (amplification/attenuation)
+**(b)** The signal has $|x[n]| = \left| e^{j(\frac{\pi}{4} n + \frac{\pi}{3})} \right| = 1$ for all $n$.
+Fundamental period: $\omega_0 = \pi/4 \implies N_0 = \frac{2\pi}{\pi/4} = 8$.
+Average Power:
+$$ P = \frac{1}{N_0} \sum_{n=0}^{N_0-1} |x[n]|^2 = \frac{1}{8} \sum_{n=0}^{7} 1^2 = \frac{8}{8} = 1 \text{ Watt} $$
+Total energy $E = \sum_{n=-\infty}^{\infty} 1 = \infty$.
+Therefore, $x[n]$ is a **Power Signal** with $P = 1\text{ W}$ and $E = \infty$.
 
 ---
+## 4. UNIVERSITY EXAMINATION QUESTIONS & MARKING RUBRIC
 
-## 4.6 Definition & Classification of a DSP System
+### Question 1 (15 Marks)
+**(a)** Define elementary discrete-time sequences: $\delta[n]$, $u[n]$, and $r[n]$. Express $u[n]$ in terms of $\delta[n]$ and vice-versa. *(5 Marks)*
+**(b)** A continuous-time signal $x_a(t) = 3\cos(100\pi t) + 2\sin(250\pi t)$ is sampled at $F_s = 200 \text{ Hz}$.
+1. Find the discrete-time sequence $x[n]$. *(3 Marks)*
+2. Determine whether $x[n]$ is periodic. If periodic, find the fundamental period $N_0$. *(4 Marks)*
+3. Calculate the average power $P$ of $x[n]$. *(3 Marks)*
 
-A **system** is a device or algorithm that operates on an input sequence $x[n]$ to produce an output sequence $y[n]$:
-$$y[n] = \mathcal{T}\{x[n]\}$$
-In DSP, the processor executes this transformation mathematically. A system is characterized by its properties:
+**Model Answer & Step-by-Step Marking Rubric:**
+* **Part (a):**
+  * Definitions of $\delta[n], u[n], r[n]$ with equations and sketches *(3 Marks)*
+  * $u[n] = \sum_{k=-\infty}^n \delta[k] = \sum_{m=0}^\infty \delta[n-m]$ and $\delta[n] = u[n] - u[n-1]$ *(2 Marks)*
+* **Part (b.1):**
+  * Substitute $t = n/F_s = n/200$:
+    $$ x[n] = 3\cos\left( 100\pi \frac{n}{200} \right) + 2\sin\left( 250\pi \frac{n}{200} \right) = 3\cos\left( \frac{\pi}{2} n \right) + 2\sin\left( \frac{5\pi}{4} n \right) $$
+    Since $\frac{5\pi}{4} = 2\pi - \frac{3\pi}{4}$, the principal alias is:
+    $$ x[n] = 3\cos(0.5\pi n) - 2\sin(0.75\pi n) $$ *(3 Marks)*
+* **Part (b.2):**
+  * $\omega_1 = 0.5\pi \implies \frac{\omega_1}{2\pi} = \frac{1}{4} \implies N_1 = 4$.
+  * $\omega_2 = 0.75\pi \implies \frac{\omega_2}{2\pi} = \frac{3}{8} \implies N_2 = 8$.
+  * $N_0 = \text{LCM}(4, 8) = 8$ samples. *(4 Marks)*
+* **Part (b.3):**
+  * Average power:
+    $$ P = \frac{3^2}{2} + \frac{2^2}{2} = 4.5 + 2.0 = 6.5 \text{ Watts} $$ *(3 Marks)*
 
-### 1. Linearity
-A system is linear if it satisfies both **Additivity (Superposition)** and **Homogeneity (Scaling)**.
-* **Superposition Property:** 
-  Feeding two inputs into identical systems and summing the outputs is equivalent to summing the inputs first and feeding them through the system:
-  $$\mathcal{T}\{x_1[n] + x_2[n]\} = \mathcal{T}\{x_1[n]\} + \mathcal{T}\{x_2[n]\}$$
-  ```
-  Method A (Process in Parallel, then Sum):
-  x1[n] ---> [ System T ] ---> y1[n] ---\
-                                         (+) ---> y_A[n] = y1[n] + y2[n]
-  x2[n] ---> [ System T ] ---> y2[n] ---/
+---
+## 5. PYTHON VERIFICATION SCRIPT
+```python
+import numpy as np
 
-  Method B (Sum first, then Process):
-  x1[n] ---\
-            (+) ---> [ x1[n]+x2[n] ] ---> [ System T ] ---> y_B[n] = T{x1[n]+x2[n]}
-  x2[n] ---/
-  
-  For Linearity, Method A output must equal Method B output: y_A[n] = y_B[n].
-  ```
+# Sampling verification
+Fs = 200
+n = np.arange(0, 16)
+xn = 3 * np.cos(np.pi / 2 * n) + 2 * np.sin(5 * np.pi / 4 * n)
 
-* **Homogeneity (Scaling) Property:**
-  Scaling the input before processing yields the same result as scaling the output after processing:
-  $$\mathcal{T}\{a \cdot x[n]\} = a \cdot \mathcal{T}\{x[n]\}$$
-  ```
-  Method A (Scale first, then Process):
-  x[n] ---> [ Scale by a ] ---> a*x[n] ---> [ System T ] ---> y_A[n] = T{a*x[n]}
-
-  Method B (Process first, then Scale):
-  x[n] ---> [ System T ] ---> y[n] ---> [ Scale by a ] ---> y_B[n] = a*y[n]
-  
-  For Linearity, Method A output must equal Method B output: y_A[n] = y_B[n].
-  ```
-
-#### Mathematical Proof: Why a Line Equation System is Non-Linear
-Consider a system described by the affine relation (similar to a straight line equation):
-$$y[n] = \mathcal{T}\{x[n]\} = m \cdot x[n] + c \quad (c \neq 0)$$
-Students often mistake this for a linear system because its plot is a straight line. Let's prove it is **non-linear**:
-
-1. **Test Homogeneity (Scaling):**
-   Scale the input by a factor $a$: $x_1[n] = a \cdot x[n]$.
-   The system response to this scaled input is:
-   $$y_1[n] = \mathcal{T}\{a \cdot x[n]\} = m \cdot (a \cdot x[n]) + c = a \cdot m \cdot x[n] + c$$
-   Now, scale the original output by $a$:
-   $$a \cdot y[n] = a \cdot (m \cdot x[n] + c) = a \cdot m \cdot x[n] + a \cdot c$$
-   Comparing the two:
-   $$y_1[n] - a \cdot y[n] = c - a \cdot c = c \cdot (1 - a)$$
-   Since $c \neq 0$, the two expressions are not equal for $a \neq 1$. Homogeneity is violated!
-
-2. **Test Additivity (Superposition):**
-   Sum two inputs: $x_3[n] = x_1[n] + x_2[n]$.
-   The system response is:
-   $$y_3[n] = \mathcal{T}\{x_1[n] + x_2[n]\} = m \cdot (x_1[n] + x_2[n]) + c = m \cdot x_1[n] + m \cdot x_2[n] + c$$
-   Now, sum the individual outputs:
-   $$y_1[n] + y_2[n] = (m \cdot x_1[n] + c) + (m \cdot x_2[n] + c) = m \cdot x_1[n] + m \cdot x_2[n] + 2c$$
-   Since $c \neq 2c$ for $c \neq 0$, $y_3[n] \neq y_1[n] + y_2[n]$. Superposition is violated!
-
-* **Conclusion:** The system is **non-linear**. It is only linear if $c = 0$.
-
-### 2. Time-Invariance
-A system is time-invariant if a time shift in the input results in an identical time shift in the output:
-$$\text{If } y[n] = \mathcal{T}\{x[n]\}, \quad \text{then } \mathcal{T}\{x[n-n_0]\} = y[n-n_0]$$
+# Compute fundamental period power
+N0 = 8
+P = np.mean(xn[:N0]**2)
+print(f"Discrete Signal Power P = {P:.4f} W (Theoretical = 6.5 W)")
 ```
-Method A (Delay first, then Process):
-x[n] ---> [ Delay by n0 ] ---> x[n-n0] ---> [ System T ] ---> y_A[n] = T{x[n-n0]}
-
-Method B (Process first, then Delay):
-x[n] ---> [ System T ] ---> y[n] ---> [ Delay by n0 ] ---> y_B[n] = y[n-n0]
-
-For Time-Invariance, Method A output must equal Method B output: y_A[n] = y_B[n].
-```
-
-### 3. Causality
-A system is causal if the output at $n_0$ depends only on present and past inputs: $x[n]$ for $n \le n_0$.
-
-### 4. Stability (BIBO)
-A system is BIBO stable if a bounded input $|x[n]| \le M_x < \infty$ produces a bounded output $|y[n]| \le M_y < \infty$.
-
----
-
-## 5. Checkpoint & Quick Review Questions (For Class Engagement)
-1. **Q1:** If $x[n] = \sin(\frac{3}{5} n)$, is the signal periodic?
-   * *Answer:* Check $\frac{\omega_0}{2\pi} = \frac{3/5}{2\pi} = \frac{3}{10\pi}$, which is irrational. Therefore, $x[n]$ is **aperiodic**.
-2. **Q2:** Why do we need an Anti-Aliasing Filter before the sampler in a typical DSP system?
-   * *Answer:* To limit the bandwidth of the analog signal to less than half the sampling rate ($f_s / 2$), preventing frequency overlap (aliasing) in the sampled spectrum.

@@ -1,336 +1,105 @@
-# Lecture 6: Inverse Z-Transform, System Response \& Difference Equations
-
-**Course:** EE3621 — Digital Signal Processing  
-**Target Audience:** III B.Tech EEE Students  
-**Duration:** 40 Minutes  
-
-* **Available Formats:** [LaTeX Source File](file:///C:/Users/sriph/Downloads/DSP/lecture_06.tex) | [Compiled PDF Notes](file:///C:/Users/sriph/Downloads/DSP/lecture_06.pdf)
+# Lecture 6: Inverse Z-Transform & Stability Analysis
+## EE3621: Digital Signal Processing | III B.Tech EEE
 
 ---
-
-## 1. Lecture Plan (40 Minutes Breakdown)
-* **00:00 – 05:00 (5 mins):** Motivation: Why do we need the Inverse Z-transform? Uniqueness of ROC.
-* **05:00 – 12:00 (7 mins):** Three Core Inversion Approaches (PFE, Power Series, Contour Integration).
-* **12:00 – 20:00 (8 mins):** Numerical Examples: Real Exponentials ($a^n$), Repeated Poles ($n a^n$), and Complex Conjugate Poles (Damped Cosine & Sine).
-* **20:00 – 27:00 (7 mins):** Equivalence of Time-Domain Convolution and Z-Domain Algebraic Dot Product.
-* **27:00 – 34:00 (7 mins):** Solving Linear Constant-Coefficient Difference Equations (LCCDE) with Initial Conditions ($Y_{zi} + Y_{zs}$).
-* **34:00 – 38:00 (4 mins):** Stability \& Causality Criteria from Pole Placement.
-* **38:00 – 40:00 (2 mins):** Checkpoints & Concept Review.
+## 1. LEARNING OBJECTIVES
+By the end of this lecture, students will be able to:
+1. **Apply** Partial Fraction Expansion to compute $x[n]$ for distinct, repeated, and complex poles under different ROC constraints.
+2. **Execute** polynomial long division to extract sample values for causal ($|z|>r_0$) and anti-causal ($|z|<r_0$) sequences.
+3. **Evaluate** inverse transforms using the Cauchy Residue Theorem.
+4. **Solve** Linear Constant-Coefficient Difference Equations (LCCDE) with non-zero initial conditions using the One-Sided (Unilateral) Z-Transform.
+5. **Determine** stability, causality, and frequency selectivity from pole-zero plots.
 
 ---
+## 2. MATHEMATICAL FOUNDATIONS
 
-## 2. Overview of the Inverse Z-Transform
+### 2.1 Inversion Methods Overview
+1. **Partial Fraction Expansion (PFE):** Most practical for rational $X(z) = \frac{B(z)}{A(z)}$.
+2. **Power Series (Long Division):** Expands $X(z) = \sum x[n] z^{-n}$ directly.
+3. **Contour Inversion Integral (Cauchy Residue Theorem):**
+   $$ x[n] = \frac{1}{2\pi j} \oint_{C} X(z) z^{n-1} dz = \sum_{\text{poles inside } C} \text{Res} \left[ X(z) z^{n-1} \right] $$
+   Where the residue at a simple pole $p_k$ is:
+   $$ \text{Res}[X(z) z^{n-1}]_{z = p_k} = \lim_{z \to p_k} (z - p_k) X(z) z^{n-1} $$
 
-The Z-transform maps a discrete sequence $x[n]$ to $X(z)$. The **Inverse Z-Transform** recovers the sequence $x[n]$ from $X(z)$ and its specified Region of Convergence (ROC):
-
-$$x[n] = \mathcal{Z}^{-1}\{X(z)\}$$
-
-Without the ROC, the inverse Z-transform is **not unique**. For example, the rational algebraic expression $X(z) = \frac{z}{z-a}$ corresponds to:
-* $x[n] = a^n u[n]$ if the ROC is $|z| > |a|$ (Right-Sided / Causal).
-* $x[n] = -a^n u[-n-1]$ if the ROC is $|z| < |a|$ (Left-Sided / Anti-Causal).
-
----
-
-## 3. The Three Inversion Methods
-
-### Method 1: Partial Fraction Expansion (PFE)
-For rational transfer functions $\frac{X(z)}{z} = \frac{B(z)}{A(z)}$:
-* **Distinct Poles $p_k$:** $\frac{X(z)}{z} = \sum_{k=1}^N \frac{A_k}{z-p_k}$, where $A_k = \left[ (z-p_k) \frac{X(z)}{z} \right]_{z=p_k}$.
-* **Repeated Poles (order $m$ at $p_1$):** $\frac{X(z)}{z} = \sum_{k=1}^m \frac{A_{1k}}{(z-p_1)^k} + \sum_{i=2}^N \frac{A_i}{z-p_i}$, where $A_{1k} = \frac{1}{(m-k)!} \left[ \frac{d^{m-k}}{dz^{m-k}} \left( (z-p_1)^m \frac{X(z)}{z} \right) \right]_{z=p_1}$.
-* **Complex Conjugate Poles ($p, p^* = r e^{\pm j\omega_0}$):** Produce damped sinusoidal modes $r^n \cos(\omega_0 n) u[n]$ and $r^n \sin(\omega_0 n) u[n]$.
-
-### Method 2: Power Series Expansion (Polynomial Long Division)
-Expands $X(z) = \sum_{n=-\infty}^\infty x[n] z^{-n}$ by direct division:
-* **Causal ($|z| > |p|$):** Divide numerator by denominator arranged in **descending powers of $z$** (ascending powers of $z^{-1}$) to yield $x[0] + x[1]z^{-1} + x[2]z^{-2} + \dots$.
-* **Anti-Causal ($|z| < |p|$):** Divide in **ascending powers of $z$** (descending powers of $z^{-1}$) to yield $x[-1]z^1 + x[-2]z^2 + \dots$.
-
-### Method 3: Contour Integration (Cauchy's Residue Theorem)
-$$x[n] = \frac{1}{2\pi j} \oint_{C} X(z) z^{n-1} dz = \sum \text{Residues of } \left[ X(z) z^{n-1} \right] \text{ at poles inside contour } C$$
+### 2.2 Partial Fraction Expansion Formulation
+Given $X(z) = \frac{b_0 + b_1 z^{-1} + \dots + b_M z^{-M}}{1 + a_1 z^{-1} + \dots + a_N z^{-N}}$.
+It is mathematically cleanest to expand $\frac{X(z)}{z}$ in terms of $z$:
+$$ \frac{X(z)}{z} = \frac{A_1}{z - p_1} + \frac{A_2}{z - p_2} + \dots + \frac{A_N}{z - p_N} $$
+Where residue $A_k = \left. (z - p_k) \frac{X(z)}{z} \right|_{z = p_k}$.
+Then:
+$$ X(z) = \sum_{k=1}^{N} A_k \frac{z}{z - p_k} = \sum_{k=1}^{N} A_k \frac{1}{1 - p_k z^{-1}} $$
+Inversion depends on the ROC for each pole $p_k$:
+* If ROC is outside pole ($|z| > |p_k|$): $A_k (p_k)^n u[n]$ (Causal).
+* If ROC is inside pole ($|z| < |p_k|$): $-A_k (p_k)^n u[-n-1]$ (Anti-causal).
 
 ---
+## 3. WORKED NUMERICAL EXAMPLES
 
-## 4. Worked Numerical 1: Comparing All 3 Inversion Approaches on $X(z)$
+### Example 6.1: Inversion under Different ROC Constraints
+**Problem:** Find $x[n]$ for $X(z) = \frac{1}{(1 - 0.5 z^{-1})(1 - 2 z^{-1})}$ for:
+(a) ROC: $|z| > 2$ (Causal).
+(b) ROC: $|z| < 0.5$ (Anti-causal).
+(c) ROC: $0.5 < |z| < 2$ (Two-sided).
 
-### Problem Statement
-Given $X(z) = \frac{1}{1 - 1.5 z^{-1} + 0.5 z^{-2}} = \frac{z^2}{(z - 1)(z - 0.5)}$, find $x[n]$ for:
-1. **Causal Sequence (ROC: $|z| > 1$)**
-2. **Anti-Causal Sequence (ROC: $|z| < 0.5$)**
-3. **Two-Sided / BIBO Stable Sequence (ROC: $0.5 < |z| < 1$)**
+**Solution:**
+Partial fraction expansion in $z^{-1}$:
+$$ X(z) = \frac{A}{1 - 0.5 z^{-1}} + \frac{B}{1 - 2 z^{-1}} $$
+$$ A = \left. (1 - 0.5 z^{-1}) X(z) \right|_{z^{-1} = 2} = \frac{1}{1 - 2(2)} = -\frac{1}{3} $$
+$$ B = \left. (1 - 2 z^{-1}) X(z) \right|_{z^{-1} = 0.5} = \frac{1}{1 - 0.5(0.5)} = \frac{4}{3} $$
+$$ X(z) = -\frac{1/3}{1 - 0.5 z^{-1}} + \frac{4/3}{1 - 2 z^{-1}} $$
 
----
-
-### Solution via Approach 1: Partial Fraction Expansion
-Form $\frac{X(z)}{z} = \frac{z}{(z - 1)(z - 0.5)} = \frac{A}{z - 1} + \frac{B}{z - 0.5}$.
-* $A = \left. \frac{z}{z - 0.5} \right|_{z = 1} = \frac{1}{1 - 0.5} = 2$
-* $B = \left. \frac{z}{z - 1} \right|_{z = 0.5} = \frac{0.5}{0.5 - 1} = -1$
-
-$$X(z) = 2 \left( \frac{z}{z - 1} \right) - 1 \left( \frac{z}{z - 0.5} \right) = \frac{2}{1 - z^{-1}} - \frac{1}{1 - 0.5 z^{-1}}$$
-
-* **1. Causal ($|z| > 1$):** $x[n] = \left[ 2(1)^n - (0.5)^n \right] u[n] \implies \{1.0, 1.5, 1.75, 1.875, \dots\}$.
-* **2. Anti-Causal ($|z| < 0.5$):** $x[n] = \left[ (0.5)^n - 2 \right] u[-n-1] \implies \{\dots, 14, 6, 2, 0\}$.
-* **3. Two-Sided ($0.5 < |z| < 1$):** $x[n] = -(0.5)^n u[n] - 2 u[-n-1]$.
-
----
-
-### Solution via Approach 2: Power Series (Long Division)
-* **Causal ($|z| > 1$):**
-  $$1 \div (1 - 1.5 z^{-1} + 0.5 z^{-2}) = 1 + 1.5 z^{-1} + 1.75 z^{-2} + 1.875 z^{-3} + \dots$$
-  $\implies x[0] = 1.0, \quad x[1] = 1.5, \quad x[2] = 1.75, \quad x[3] = 1.875$.
-* **Anti-Causal ($|z| < 0.5$):**
-  $$1 \div (0.5 z^{-2} - 1.5 z^{-1} + 1) = 0 z^1 + 2 z^2 + 6 z^3 + 14 z^4 + \dots$$
-  $\implies x[-1] = 0, \quad x[-2] = 2, \quad x[-3] = 6, \quad x[-4] = 14$.
+* **(a) ROC: $|z| > 2$:** Both poles are inside ROC $\implies$ Both terms causal:
+  $$ x[n] = -\frac{1}{3} (0.5)^n u[n] + \frac{4}{3} (2)^n u[n] $$
+* **(b) ROC: $|z| < 0.5$:** Both poles are outside ROC $\implies$ Both terms anti-causal:
+  $$ x[n] = \frac{1}{3} (0.5)^n u[-n-1] - \frac{4}{3} (2)^n u[-n-1] $$
+* **(c) ROC: $0.5 < |z| < 2$:** $|z| > 0.5$ (causal for $p=0.5$) and $|z| < 2$ (anti-causal for $p=2$):
+  $$ x[n] = -\frac{1}{3} (0.5)^n u[n] - \frac{4}{3} (2)^n u[-n-1] $$
 
 ---
+## 4. UNIVERSITY EXAMINATION QUESTIONS & MARKING RUBRIC
 
-### Solution via Approach 3: Contour Integration
-Integrand $F(z) = \frac{z^{n+1}}{(z - 1)(z - 0.5)}$.
-* $\text{Res}_{z=1} = \left. \frac{z^{n+1}}{z - 0.5} \right|_{z=1} = 2(1)^n$
-* $\text{Res}_{z=0.5} = \left. \frac{z^{n+1}}{z - 1} \right|_{z=0.5} = -(0.5)^n$
+### Question 1 (15 Marks)
+Solve the difference equation with initial conditions using the unilateral Z-transform:
+$$ y[n] - 0.7 y[n-1] + 0.1 y[n-2] = x[n], \quad n \ge 0 $$
+Given $x[n] = u[n]$ and initial conditions $y[-1] = 1, \; y[-2] = 2$. *(15 Marks)*
 
-Summing enclosed residues yields identical analytical expressions and sample values across all ROCs!
-
----
-
-## 5. Worked Numerical 2: Inversion of Complex Conjugate Poles (Sinusoids \& Damped Cosines)
-
-### Problem Statement
-Find the causal inverse Z-transform of:
-$$X(z) = \frac{z^2 - \frac{\sqrt{2}}{2} z}{z^2 - \sqrt{2} z + 1}, \quad \text{ROC: } |z| > 1$$
-
-### Analytical Solution
-The denominator polynomial has complex conjugate roots on the unit circle:
-$$z^2 - \sqrt{2} z + 1 = 0 \implies p_{1,2} = \frac{\sqrt{2} \pm j\sqrt{2}}{2} = e^{\pm j\pi/4} \quad (r = 1, \omega_0 = \pi/4)$$
-
-Recall the standard transform pairs:
-$$\mathcal{Z}\left\{ r^n \cos(\omega_0 n) u[n] \right\} = \frac{z (z - r \cos\omega_0)}{z^2 - 2r\cos\omega_0 z + r^2}$$
-$$\mathcal{Z}\left\{ r^n \sin(\omega_0 n) u[n] \right\} = \frac{z (r \sin\omega_0)}{z^2 - 2r\cos\omega_0 z + r^2}$$
-
-Here $r = 1$ and $\omega_0 = \pi/4 \implies r \cos\omega_0 = \cos(\pi/4) = \frac{\sqrt{2}}{2}$.
-The numerator is exactly $z(z - \cos(\pi/4)) = z^2 - \frac{\sqrt{2}}{2} z$.
-
-Therefore, by direct pattern recognition:
-$$x[n] = \cos\left( \frac{\pi}{4} n \right) u[n]$$
-
-* **Sample Values:**
-  - $n=0$: $x[0] = \cos(0) = 1.0$
-  - $n=1$: $x[1] = \cos(\pi/4) = \frac{\sqrt{2}}{2} \approx 0.7071$
-  - $n=2$: $x[2] = \cos(\pi/2) = 0.0$
-  - $n=3$: $x[3] = \cos(3\pi/4) = -\frac{\sqrt{2}}{2} \approx -0.7071$
-  - $n=4$: $x[4] = \cos(\pi) = -1.0$
-
-### General Damped Case:
-For a general second-order section $X(z) = \frac{z(z - r\cos\omega_0) + K z(r\sin\omega_0)}{z^2 - 2r\cos\omega_0 z + r^2}$ with ROC $|z| > r$:
-$$x[n] = r^n \left[ \cos(\omega_0 n) + K \sin(\omega_0 n) \right] u[n] = A r^n \cos(\omega_0 n - \phi) u[n]$$
-where $A = \sqrt{1 + K^2}$ and $\phi = \tan^{-1}(K)$.
+**Model Answer & Step-by-Step Marking Rubric:**
+* **Unilateral Z-transform property:**
+  $\mathcal{Z}\{y[n-1]\} = z^{-1} Y(z) + y[-1]$
+  $\mathcal{Z}\{y[n-2]\} = z^{-2} Y(z) + z^{-1} y[-1] + y[-2]$ *(3 Marks)*
+* **Transform difference equation:**
+  $[Y(z)] - 0.7 [z^{-1} Y(z) + 1] + 0.1 [z^{-2} Y(z) + z^{-1}(1) + 2] = \frac{1}{1 - z^{-1}}$
+  $Y(z) [1 - 0.7 z^{-1} + 0.1 z^{-2}] - 0.7 + 0.1 z^{-1} + 0.2 = \frac{1}{1 - z^{-1}}$
+  $Y(z) [1 - 0.7 z^{-1} + 0.1 z^{-2}] = 0.5 - 0.1 z^{-1} + \frac{1}{1 - z^{-1}} = \frac{(0.5 - 0.1 z^{-1})(1 - z^{-1}) + 1}{1 - z^{-1}} = \frac{1.5 - 0.6 z^{-1} + 0.1 z^{-2}}{1 - z^{-1}}$ *(4 Marks)*
+* **Factor denominator:**
+  $1 - 0.7 z^{-1} + 0.1 z^{-2} = (1 - 0.5 z^{-1})(1 - 0.2 z^{-1})$.
+  $$ Y(z) = \frac{1.5 - 0.6 z^{-1} + 0.1 z^{-2}}{(1 - z^{-1})(1 - 0.5 z^{-1})(1 - 0.2 z^{-1})} $$ *(3 Marks)*
+* **Partial Fraction Expansion:**
+  $$ Y(z) = \frac{A}{1 - z^{-1}} + \frac{B}{1 - 0.5 z^{-1}} + \frac{C}{1 - 0.2 z^{-1}} $$
+  * $A = \left. \frac{1.5 - 0.6(1) + 0.1(1)}{(1 - 0.5)(1 - 0.2)} \right|_{z^{-1}=1} = \frac{1.0}{0.5 \times 0.8} = \frac{1.0}{0.4} = 2.5$.
+  * $B = \left. \frac{1.5 - 0.6(2) + 0.1(4)}{(1 - 2)(1 - 0.4)} \right|_{z^{-1}=2} = \frac{1.5 - 1.2 + 0.4}{(-1)(0.6)} = \frac{0.7}{-0.6} = -1.1667 = -\frac{7}{6}$.
+  * $C = \left. \frac{1.5 - 0.6(5) + 0.1(25)}{(1 - 5)(1 - 2.5)} \right|_{z^{-1}=5} = \frac{1.5 - 3.0 + 2.5}{(-4)(-1.5)} = \frac{1.0}{6.0} = \frac{1}{6}$. *(3 Marks)*
+* **Inverse Transform:**
+  $$ y[n] = \left[ 2.5 - \frac{7}{6} (0.5)^n + \frac{1}{6} (0.2)^n \right] u[n] $$ *(2 Marks)*
 
 ---
-
-## 6. Worked Numerical 3: Inversion with Repeated Poles ($a^n$ and $n a^n$)
-
-### Problem Statement
-Find the causal inverse Z-transform of:
-$$X(z) = \frac{z^2}{(z - 0.5)^2}, \quad \text{ROC: } |z| > 0.5$$
-
-### Solution via PFE
-$$\frac{X(z)}{z} = \frac{z}{(z - 0.5)^2} = \frac{A_1}{z - 0.5} + \frac{A_2}{(z - 0.5)^2}$$
-
-* For repeated pole $p = 0.5$:
-  $$A_2 = \left[ (z - 0.5)^2 \frac{X(z)}{z} \right]_{z = 0.5} = [z]_{z=0.5} = 0.5$$
-  $$A_1 = \left[ \frac{d}{dz} \left( (z - 0.5)^2 \frac{X(z)}{z} \right) \right]_{z = 0.5} = \left[ \frac{d}{dz}(z) \right]_{z=0.5} = 1.0$$
-
-Multiply back by $z$:
-$$X(z) = 1.0 \left( \frac{z}{z - 0.5} \right) + 0.5 \left( \frac{z}{(z - 0.5)^2} \right)$$
-
-Using the standard transform pairs $\frac{z}{z-a} \longleftrightarrow a^n u[n]$ and $\frac{a z}{(z-a)^2} \longleftrightarrow n a^n u[n]$:
-$$x[n] = (0.5)^n u[n] + n(0.5)^n u[n] = (n + 1)(0.5)^n u[n]$$
-
-* **Sample Values:**
-  - $n=0$: $x[0] = (1)(1) = 1.0$
-  - $n=1$: $x[1] = (2)(0.5) = 1.0$
-  - $n=2$: $x[2] = (3)(0.25) = 0.75$
-  - $n=3$: $x[3] = (4)(0.125) = 0.50$
-  - $n=4$: $x[4] = (5)(0.0625) = 0.3125$
-
----
-
-## 7. Convolution in Time Domain $\longleftrightarrow$ Z-Domain Dot Product \& Inverse Z
-
-### Visual Illustration: Convolution Theorem Equivalence
-
-![Convolution Property Equivalence](images/convolution_time_vs_z_domain.png)
-
-### Why Transform-Domain Convolution is Vastly Superior:
-In the discrete-time domain, computing linear convolution:
-$$y[n] = x[n] * h[n] = \sum_{k=-\infty}^{\infty} x[k] h[n-k]$$
-requires flipping $h[k] \to h[-k]$, sliding by $n$ steps, determining non-zero overlap intervals, and evaluating tedious piecewise geometric series.
-
-In the Z-domain, convolution simplifies into **algebraic multiplication (dot product)**:
-$$Y(z) = X(z) \cdot H(z)$$
-The time-domain output $y[n]$ is then directly obtained by taking the **Inverse Z-Transform** of $Y(z)$ via Partial Fractions!
-
----
-
-### Worked Numerical on Convolution Equivalence
-
-**Given:**
-* Input sequence: $x[n] = (0.5)^n u[n]$
-* System impulse response: $h[n] = (0.8)^n u[n]$
-
-#### Method A: Classical Time-Domain Convolution Sum
-For $n \ge 0$:
-$$y[n] = \sum_{k=0}^{n} (0.5)^k (0.8)^{n-k} = (0.8)^n \sum_{k=0}^{n} \left( \frac{0.5}{0.8} \right)^k = (0.8)^n \left[ \frac{1 - (5/8)^{n+1}}{1 - 5/8} \right]$$
-$$y[n] = (0.8)^n \cdot \frac{8}{3} \left[ 1 - \frac{5}{8}\left(\frac{5}{8}\right)^n \right] = \frac{8}{3}(0.8)^n - \frac{5}{3}(0.5)^n, \quad n \ge 0$$
-
-#### Method B: Z-Domain Product + Inverse Z-Transform
-1. **Take Z-Transforms:**
-   $$X(z) = \frac{z}{z - 0.5}, \quad |z| > 0.5$$
-   $$H(z) = \frac{z}{z - 0.8}, \quad |z| > 0.8$$
-
-2. **Multiply in Z-Domain:**
-   $$Y(z) = X(z) \cdot H(z) = \frac{z^2}{(z - 0.5)(z - 0.8)}, \quad |z| > 0.8$$
-
-3. **Take Inverse Z-Transform via PFE:**
-   $$\frac{Y(z)}{z} = \frac{z}{(z - 0.5)(z - 0.8)} = \frac{A}{z - 0.5} + \frac{B}{z - 0.8}$$
-   * $A = \left. \frac{z}{z - 0.8} \right|_{z=0.5} = \frac{0.5}{0.5 - 0.8} = -\frac{5}{3}$
-   * $B = \left. \frac{z}{z - 0.5} \right|_{z=0.8} = \frac{0.8}{0.8 - 0.5} = \frac{8}{3}$
-
-   $$Y(z) = -\frac{5}{3}\left(\frac{z}{z-0.5}\right) + \frac{8}{3}\left(\frac{z}{z-0.8}\right)$$
-   $$y[n] = \left[ \frac{8}{3}(0.8)^n - \frac{5}{3}(0.5)^n \right] u[n]$$
-
-*Both methods yield the exact same result, but Method B required zero summation manipulations!*
-
----
-
-## 8. Solving Linear Difference Equations (LCCDE) via Unilateral Z-Transform
-
-### Visual Illustration: Difference Equation Solution Architecture
-
-![Difference Equation Solution Architecture](images/difference_equation_z_transform_flow.png)
-
-### Why the Z-Transform Method is Vastly Superior to Classical Time-Domain Methods:
-
-| Classical Time-Domain Method | Unilateral Z-Transform Method |
-| :--- | :--- |
-| Must find homogeneous solution $y_h[n]$ from characteristic equation roots. | Replaces difference operators with algebraic powers of $z^{-1}$ directly. |
-| Must guess form of particular solution $y_p[n]$ based on input. | Handles arbitrary inputs automatically via standard transform lookup tables. |
-| Must set up and solve simultaneous linear equations to find constants $C_1, C_2$. | Initial conditions $y[-1], y[-2]$ are directly incorporated via the time-delay property. |
-| Complex, multi-step, error-prone for orders $N \ge 2$. | Output naturally decomposes into **Zero-Input Response** $y_{zi}[n]$ and **Zero-State Response** $y_{zs}[n]$. |
-
----
-
-### Unilateral Z-Transform Time-Shift Property
-For a causal difference equation evaluated for $n \ge 0$:
-$$\mathcal{Z}\{y[n-1]\} = z^{-1} Y(z) + y[-1]$$
-$$\mathcal{Z}\{y[n-2]\} = z^{-2} Y(z) + z^{-1} y[-1] + y[-2]$$
-
----
-
-### Comprehensive Worked Numerical: Difference Equation with Initial Conditions
-
-#### Problem Statement
-Solve the second-order discrete difference equation:
-$$y[n] - 0.7 y[n-1] + 0.1 y[n-2] = x[n] \quad \text{for } n \ge 0$$
-with input $x[n] = u[n]$ (unit step) and initial conditions:
-$$y[-1] = 2, \quad y[-2] = 1$$
-
----
-
-#### Step 1: Apply Unilateral Z-Transform
-$$Y(z) - 0.7 \left[ z^{-1} Y(z) + y[-1] \right] + 0.1 \left[ z^{-2} Y(z) + z^{-1} y[-1] + y[-2] \right] = X(z)$$
-
-Substitute initial conditions $y[-1] = 2$ and $y[-2] = 1$:
-$$Y(z) \left( 1 - 0.7 z^{-1} + 0.1 z^{-2} \right) - 0.7(2) + 0.1\left( 2 z^{-1} + 1 \right) = X(z)$$
-$$Y(z) \left( 1 - 0.7 z^{-1} + 0.1 z^{-2} \right) - 1.4 + 0.2 z^{-1} + 0.1 = X(z)$$
-$$Y(z) \left( 1 - 0.7 z^{-1} + 0.1 z^{-2} \right) - 1.3 + 0.2 z^{-1} = X(z)$$
-
-Rearranging:
-$$Y(z) \left( 1 - 0.7 z^{-1} + 0.1 z^{-2} \right) = \underbrace{(1.3 - 0.2 z^{-1})}_{\text{Initial Condition Term}} + X(z)$$
-
-Divide by characteristic polynomial $A(z) = 1 - 0.7 z^{-1} + 0.1 z^{-2} = (1 - 0.5 z^{-1})(1 - 0.2 z^{-1})$:
-$$Y(z) = \underbrace{\frac{1.3 - 0.2 z^{-1}}{1 - 0.7 z^{-1} + 0.1 z^{-2}}}_{Y_{zi}(z) \text{ (Zero-Input Response)}} + \underbrace{\frac{1}{1 - 0.7 z^{-1} + 0.1 z^{-2}} X(z)}_{Y_{zs}(z) \text{ (Zero-State Response)}}$$
-
----
-
-#### Step 2: Compute Zero-Input Response $y_{zi}[n]$
-$$Y_{zi}(z) = \frac{1.3 z^2 - 0.2 z}{z^2 - 0.7 z + 0.1} = \frac{z(1.3 z - 0.2)}{(z - 0.5)(z - 0.2)}$$
-$$\frac{Y_{zi}(z)}{z} = \frac{1.3 z - 0.2}{(z - 0.5)(z - 0.2)} = \frac{A}{z - 0.5} + \frac{B}{z - 0.2}$$
-
-* $A = \left. \frac{1.3 z - 0.2}{z - 0.2} \right|_{z=0.5} = \frac{1.3(0.5) - 0.2}{0.5 - 0.2} = \frac{0.45}{0.3} = 1.5$
-* $B = \left. \frac{1.3 z - 0.2}{z - 0.5} \right|_{z=0.2} = \frac{1.3(0.2) - 0.2}{0.2 - 0.5} = \frac{0.06}{-0.3} = -0.2$
-
-$$\implies y_{zi}[n] = \left[ 1.5(0.5)^n - 0.2(0.2)^n \right] u[n]$$
-
----
-
-#### Step 3: Compute Zero-State Response $y_{zs}[n]$
-With $X(z) = \mathcal{Z}\{u[n]\} = \frac{z}{z - 1}$:
-$$Y_{zs}(z) = \frac{z^3}{(z - 0.5)(z - 0.2)(z - 1)}$$
-$$\frac{Y_{zs}(z)}{z} = \frac{z^2}{(z - 0.5)(z - 0.2)(z - 1)} = \frac{C_1}{z - 0.5} + \frac{C_2}{z - 0.2} + \frac{C_3}{z - 1}$$
-
-* $C_1 = \left. \frac{z^2}{(z - 0.2)(z - 1)} \right|_{z=0.5} = \frac{0.25}{(0.3)(-0.5)} = -\frac{0.25}{0.15} = -\frac{5}{3} \approx -1.667$
-* $C_2 = \left. \frac{z^2}{(z - 0.5)(z - 1)} \right|_{z=0.2} = \frac{0.04}{(-0.3)(-0.8)} = \frac{0.04}{0.24} = \frac{1}{6} \approx 0.167$
-* $C_3 = \left. \frac{z^2}{(z - 0.5)(z - 0.2)} \right|_{z=1} = \frac{1}{(0.5)(0.8)} = \frac{1}{0.4} = \frac{5}{2} = 2.5$
-
-$$\implies y_{zs}[n] = \left[ 2.5 - \frac{5}{3}(0.5)^n + \frac{1}{6}(0.2)^n \right] u[n]$$
-
----
-
-#### Step 4: Total Complete Response $y[n] = y_{zi}[n] + y_{zs}[n]$
-$$y[n] = \left[ 1.5(0.5)^n - 0.2(0.2)^n + 2.5 - \frac{5}{3}(0.5)^n + \frac{1}{6}(0.2)^n \right] u[n]$$
-
-Combine like terms:
-* Constant term: $2.5$
-* $(0.5)^n$ coefficient: $1.5 - \frac{5}{3} = \frac{3}{2} - \frac{5}{3} = -\frac{1}{6}$
-* $(0.2)^n$ coefficient: $-0.2 + \frac{1}{6} = -\frac{1}{5} + \frac{1}{6} = -\frac{1}{30}$
-
-$$\mathbf{y[n] = \left[ 2.5 - \frac{1}{6}(0.5)^n - \frac{1}{30}(0.2)^n \right] u[n]}$$
-
-#### Verification at Initial Indices:
-* $n=0$: $y[0] = 2.5 - \frac{1}{6} - \frac{1}{30} = 2.5 - \frac{6}{30} = 2.5 - 0.2 = \mathbf{2.3}$.  
-  *(From difference equation: $y[0] = 0.7 y[-1] - 0.1 y[-2] + x[0] = 0.7(2) - 0.1(1) + 1 = 1.4 - 0.1 + 1 = \mathbf{2.3}$ $\checkmark$)*
-* $n=1$: $y[1] = 2.5 - \frac{1}{6}(0.5) - \frac{1}{30}(0.2) = 2.5 - \frac{1}{12} - \frac{1}{150} \approx \mathbf{2.41}$.  
-  *(From difference equation: $y[1] = 0.7(2.3) - 0.1(2) + 1 = 1.61 - 0.2 + 1 = \mathbf{2.41}$ $\checkmark$)*
-
----
-
-## 9. Stability, Causality \& Pole Locations
-
-### Visual Illustration: Z-Plane Stability Regions & Pole Dynamics
-
-![Z-Plane Stability Regions & Pole Dynamics](images/pole_zero_stability_l6.png)
-
-* **Physical Insight:** 
-  - **Inside Unit Circle ($|z| < 1$):** Poles generate decaying modes ($|p|^n \to 0$ as $n \to \infty$), guaranteeing bounded-input bounded-output (BIBO) stability.
-  - **On Unit Circle ($|z| = 1$):** Poles generate sustained oscillations or step functions without decaying (Marginal Stability / Oscillators).
-  - **Outside Unit Circle ($|z| > 1$):** Poles produce exponentially explosive modes ($|p|^n \to \infty$), causing immediate system saturation/overflow.
-
----
-
-### Visual Illustration: Impulse Response Modes Across the Z-Plane
-
-![Impulse Response Modes](images/impulse_response_modes.png)
-
-* **Waveform Characteristics:**
-  - **Positive Real Pole ($z=0.7$):** Smooth monotonic exponential decay.
-  - **Negative Real Pole ($z=-0.7$):** Alternating sign ($\pm$) decaying oscillation with frequency $\omega = \pi$.
-  - **Complex Conjugate Pair ($0.8 e^{\pm j\pi/4}$):** Damped sinusoidal oscillation with envelope decay $0.8^n$.
-  - **Unit Circle Conjugate Pair ($e^{\pm j\pi/4}$):** Pure undamped sinusoidal oscillation with permanent energy.
-
----
-
-### Visual Illustration: Partial Fraction Expansion Decomposition
-
-![Partial Fraction Expansion Mode Decomposition](images/pfe_decomposition_modes.png)
-
-* **Linear Superposition:** The overall system impulse response $h[n] = 2(0.8)^n u[n] - (0.4)^n u[n]$ is the exact linear superposition of its individual first-order pole modes.
-
----
-
-## 10. Checkpoint \& Review Questions
-
-1. **Q1:** How does the Z-transform convert time-domain convolution into algebra?
-   * *Answer:* Time-domain convolution $y[n] = x[n]*h[n]$ maps to polynomial dot product $Y(z) = X(z)H(z)$. Finding $y[n]$ requires only algebraic multiplication followed by Partial Fraction Expansion.
-2. **Q2:** Why does solving difference equations via Unilateral Z-transform avoid solving simultaneous ODE constants?
-   * *Answer:* Initial conditions $y[-1], y[-2]$ enter directly into the algebraic polynomial equation through the time-delay property $\mathcal{Z}\{y[n-k]\}$, splitting the response into Zero-Input ($Y_{zi}$) and Zero-State ($Y_{zs}$) terms immediately.
-3. **Q3:** What time-domain sequence corresponds to complex conjugate poles $z = r e^{\pm j\omega_0}$ inside the unit circle?
-   * *Answer:* A damped sinusoidal oscillation of the form $A r^n \cos(\omega_0 n + \theta) u[n]$, with exponential envelope decay $r^n$.
+## 5. PYTHON VERIFICATION SCRIPT
+```python
+import numpy as np
+
+# Simulate LCCDE iteratively
+N = 10
+y = np.zeros(N + 2)
+y[0] = 2  # y[-2]
+y[1] = 1  # y[-1]
+
+for n in range(2, N + 2):
+    y[n] = 0.7 * y[n-1] - 0.1 * y[n-2] + 1.0
+
+n_idx = np.arange(0, N)
+y_sim = y[2:]
+y_analytic = 2.5 - (7/6)*(0.5**n_idx) + (1/6)*(0.2**n_idx)
+
+print("Simulated y[n]:", np.round(y_sim[:5], 4))
+print("Analytic y[n]: ", np.round(y_analytic[:5], 4))
+```
