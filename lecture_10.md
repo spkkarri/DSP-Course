@@ -26,10 +26,35 @@ Using the twiddle symmetry $W_N^{k + N/2} = -W_N^k$:
 $$ X[k] = X_e[k] + W_N^k X_o[k], \quad 0 \le k < N/2 $$
 $$ X[k + N/2] = X_e[k] - W_N^k X_o[k], \quad 0 \le k < N/2 $$
 
+---
+
 ### 2.2 The DIT Butterfly Processing Element
+
+![Radix-2 DIT Butterfly Flow Graph](images/fft_butterfly.png)
+
 The basic 2-point butterfly computation takes inputs $A$ and $B$, multiplies $B$ by twiddle factor $W_N^r$, and computes:
 $$ A_{\text{out}} = A + W_N^r B $$
 $$ B_{\text{out}} = A - W_N^r B $$
+
+```
+   A (in) ───────────────────●───────────────────────> A_out = A + W_N^r * B
+                              \                     /
+                               \                   /
+                                \   (+1)          /
+                                 \               /
+                                  \             /
+                                   \           /
+                                    \         /
+                                     \  (-1) /
+                                      \     /
+                                       \   /
+                                        \ /
+                                         X
+                                        / \
+                                       /   \
+   B (in) ───[ x W_N^r ]──────────────●─────\────────> B_out = A - W_N^r * B
+```
+
 * **Multiplications per butterfly:** 1 complex multiplication.
 * **Additions per butterfly:** 2 complex additions.
 * **Butterflies per stage:** $N/2$.
@@ -37,7 +62,12 @@ $$ B_{\text{out}} = A - W_N^r B $$
 * **Total Complex Multiplications:** $\frac{N}{2} \log_2 N$.
 * **Total Complex Additions:** $N \log_2 N$.
 
-### 2.3 Bit-Reversal Permutation
+---
+
+### 2.3 Bit-Reversal Permutation & Decimation Tree
+
+![Bit Reversal Decimation Tree](images/dit_bit_reversal_tree.png)
+
 For an $N=8$ DIT-FFT, the input array is ordered by reversing the 3-bit binary representation of index $n$:
 
 | Natural Index $n$ | Binary $(b_2 b_1 b_0)$ | Reversed Binary $(b_0 b_1 b_2)$ | Bit-Reversed Index $n_{\text{rev}}$ | Input Assigned |
@@ -50,6 +80,36 @@ For an $N=8$ DIT-FFT, the input array is ordered by reversing the 3-bit binary r
 | 5 | 101 | 101 | 5 | $x[5]$ |
 | 6 | 110 | 011 | 3 | $x[3]$ |
 | 7 | 111 | 111 | 7 | $x[7]$ |
+
+---
+
+### 2.4 Complete 8-Point DIT-FFT Signal Flow Graph (SFG)
+
+```
+Input (Bit-Reversed)       Stage 1 (2-pt)          Stage 2 (4-pt)          Stage 3 (8-pt)         Output (Natural)
+x[0] ───────────────────────●───────────────────────●───────────────────────●────────────────────> X[0]
+                             \                     / \                     / \
+                              \                   /   \                   /   \
+x[4] ───[x W_8^0]────────────●──────────────────/───\───────────────────/─────\──────────────────> X[4]
+                               \                 /     \                 /       \
+                                \               /       \               /         \
+x[2] ────────────────────────────●─────────────/─────────●─────────────/───────────●──────────────> X[2]
+                                  \           /           \           /             \
+                                   \         /             \         /               \
+x[6] ───[x W_8^0]─────────────────●─────────/───[x W_8^2]──●────────/─────────────────\────────────> X[6]
+                                     \     /                 \     /                   \
+                                      \   /                   \   /                     \
+x[1] ──────────────────────────────────●───────────────────────●─────────────────────────●────────> X[1]
+                                        \                     / \                       /
+                                         \                   /   \   [x W_8^1]         /
+x[5] ───[x W_8^0]─────────────────────────●─────────────────/─────\──●────────────────/───────────> X[5]
+                                            \             /       \ \                /
+                                             \           /         \ \   [x W_8^2]  /
+x[3] ─────────────────────────────────────────●─────────/───────────●─\──●─────────/──────────────> X[3]
+                                               \       /             \ \  \       /
+                                                \     /               \ \  \  [x W_8^3]
+x[7] ───[x W_8^0]────────────────────────────────●───/─────────────────●──●──●────●───────────────> X[7]
+```
 
 ---
 ## 3. WORKED NUMERICAL EXAMPLES
