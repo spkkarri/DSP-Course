@@ -715,9 +715,199 @@
       }
     }
 
-    /* Print styles */
+        /* ── PRINT STYLES (Light Theme exclusively for printing) ── */
     @media print {
-      aside, header .header-search, .toolbar, .toc-panel, .breadcrumb { display: none !important; }
+      @page {
+        size: A4;
+        margin: 15mm 15mm 15mm 15mm;
+      }
+      
+      /* Hide navigation chrome and screen-only controls */
+      header,
+      aside,
+      .sidebar-overlay,
+      .toolbar,
+      .toc-panel,
+      .breadcrumb,
+      .reading-header,
+      .download-btn,
+      .header-search,
+      .search-results,
+      .sidebar-toggle-btn,
+      .unit-stats-bar,
+      .quick-jump-bar {
+        display: none !important;
+      }
+
+      /* Reset app layout to printable light document */
+      html, body {
+        background: #ffffff !important;
+        color: #0f172a !important;
+        height: auto !important;
+        overflow: visible !important;
+        font-size: 11pt !important;
+        line-height: 1.5 !important;
+      }
+
+      .app-body, main, .content-scroll, .content-card, .reading-card {
+        display: block !important;
+        background: #ffffff !important;
+        color: #0f172a !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        border: none !important;
+        box-shadow: none !important;
+        height: auto !important;
+        overflow: visible !important;
+      }
+
+      /* Typography */
+      .md-content {
+        color: #0f172a !important;
+      }
+
+      .md-content h1 {
+        color: #0f172a !important;
+        border-bottom: 2pt solid #1e3a8a !important;
+        padding-bottom: 6pt !important;
+        margin-top: 0 !important;
+        margin-bottom: 12pt !important;
+        font-size: 18pt !important;
+        page-break-after: avoid;
+      }
+
+      .md-content h2 {
+        color: #1e3a8a !important;
+        border-bottom: 1pt solid #cbd5e1 !important;
+        padding-bottom: 4pt !important;
+        margin-top: 18pt !important;
+        margin-bottom: 8pt !important;
+        font-size: 14pt !important;
+        page-break-after: avoid;
+      }
+
+      .md-content h3 {
+        color: #1e40af !important;
+        margin-top: 14pt !important;
+        margin-bottom: 6pt !important;
+        font-size: 12pt !important;
+        page-break-after: avoid;
+      }
+
+      .md-content p, .md-content li {
+        color: #1e293b !important;
+        font-size: 10.5pt !important;
+      }
+
+      .md-content li::marker {
+        color: #1e3a8a !important;
+      }
+
+      .md-content strong {
+        color: #000000 !important;
+        font-weight: 700 !important;
+      }
+
+      .md-content em {
+        color: #334155 !important;
+      }
+
+      /* MathJax in print */
+      .md-content .MJX-TEX,
+      .md-content mjx-container,
+      .md-content mjx-container * {
+        color: #000000 !important;
+        fill: #000000 !important;
+      }
+
+      mjx-container[display="true"] {
+        margin: 10pt 0 !important;
+        page-break-inside: avoid;
+      }
+
+      /* Tables */
+      .md-content table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        margin: 12pt 0 !important;
+        page-break-inside: avoid;
+        font-size: 9.5pt !important;
+        box-shadow: none !important;
+      }
+
+      .md-content th {
+        background: #f1f5f9 !important;
+        color: #0f172a !important;
+        border: 1pt solid #cbd5e1 !important;
+        padding: 6pt 10pt !important;
+        font-weight: 700 !important;
+      }
+
+      .md-content td {
+        background: #ffffff !important;
+        color: #1e293b !important;
+        border: 1pt solid #cbd5e1 !important;
+        padding: 6pt 10pt !important;
+      }
+
+      .md-content tr:nth-child(even) td {
+        background: #f8fafc !important;
+      }
+
+      /* Code Blocks */
+      .md-content pre {
+        background: #f8fafc !important;
+        color: #0f172a !important;
+        border: 1pt solid #cbd5e1 !important;
+        border-radius: 4pt !important;
+        padding: 10pt 14pt !important;
+        margin: 10pt 0 !important;
+        page-break-inside: avoid;
+      }
+
+      .md-content pre::before {
+        display: none !important;
+      }
+
+      .md-content pre code {
+        background: transparent !important;
+        color: #0f172a !important;
+        font-size: 9pt !important;
+      }
+
+      .md-content code {
+        background: #f1f5f9 !important;
+        border: 1pt solid #e2e8f0 !important;
+        color: #0f172a !important;
+        padding: 1pt 4pt !important;
+        border-radius: 3pt !important;
+        font-size: 0.9em !important;
+      }
+
+      /* Blockquotes */
+      .md-content blockquote {
+        background: #f8fafc !important;
+        border-left: 3pt solid #3b82f6 !important;
+        color: #1e293b !important;
+        padding: 8pt 14pt !important;
+        margin: 10pt 0 !important;
+        page-break-inside: avoid;
+      }
+
+      /* Images */
+      .md-content img {
+        max-width: 85% !important;
+        page-break-inside: avoid;
+        filter: none !important;
+      }
+
+      /* Horizontal Rules */
+      .md-content hr {
+        border: none !important;
+        border-top: 1pt solid #e2e8f0 !important;
+        margin: 16pt 0 !important;
+      }
+    }
       body { background: white; color: black; }
       .content-scroll { padding: 20px; }
       .md-content h1, .md-content h2 { color: #333; border-color: #999; }
