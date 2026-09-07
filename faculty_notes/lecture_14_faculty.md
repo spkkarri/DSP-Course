@@ -155,17 +155,18 @@ The Overlap-Save reconstruction matches the direct linear convolution exactly ac
   * Detailed structural comparison covering input buffering, convolution, and output synthesis *(4 Marks)*
   * Explanation: OLS avoids output additions, making it ideal for DMA streaming and parallel SIMD/GPU memory copy pipelines *(3 Marks)*
 * **Part (b):**
-  * $M=2 \implies M-1=1$ overlap sample. $N=4, L=3$.
+  * Parameter formulation: $M = 2 \implies M - 1 = 1$ overlap sample, $N = 4, L = 3$.
   * Block partitioning:
-    $x_0 = \{0, 2, -1, 3\}$
-    $x_1 = \{3, 1, 2, 0\}$
-    $x_2 = \{0, 1, 4, 0\}$ *(2 Marks)*
-  * Circular convolution with $h = \{1, -1, 0, 0\}$:
-    $\tilde{y}_0 = \{0, 2, -1, 3\} \circledast_4 \{1, -1, 0, 0\} = \{-3, \mathbf{2, -3, 4}\}$ (Discard index 0)
-    $\tilde{y}_1 = \{3, 1, 2, 0\} \circledast_4 \{1, -1, 0, 0\} = \{3, \mathbf{-2, 1, -2}\}$ (Discard index 0)
-    $\tilde{y}_2 = \{0, 1, 4, 0\} \circledast_4 \{1, -1, 0, 0\} = \{0, \mathbf{1, 3, -4}\}$ (Discard index 0) *(4 Marks)*
-  * Concatenation of saved parts:
-    $y[n] = \{2, -3, 4, -2, 1, -2, 1, 3, -4\}$ *(2 Marks)*
+    * $x_0[n] = \{ 0, 2, -1, 3 \}$ (prepend 1 zero)
+    * $x_1[n] = \{ 3, 1, 2, 0 \}$ (overlap $x[2]=3$)
+    * $x_2[n] = \{ 0, 1, 4, 0 \}$ (overlap $x[5]=0$, pad 1 zero) *(2 Marks)*
+  * Circular convolution with $h[n] = \{ 1, -1, 0, 0 \}$ ($N = 4$):
+    * $\tilde{y}_0[n] = \{ 0, 2, -1, 3 \} \circledast_4 \{ 1, -1, 0, 0 \} = \{ -3, \mathbf{2, -3, 4} \}$ (Discard index 0)
+    * $\tilde{y}_1[n] = \{ 3, 1, 2, 0 \} \circledast_4 \{ 1, -1, 0, 0 \} = \{ 3, \mathbf{-2, 1, -2} \}$ (Discard index 0)
+    * $\tilde{y}_2[n] = \{ 0, 1, 4, 0 \} \circledast_4 \{ 1, -1, 0, 0 \} = \{ 0, \mathbf{1, 3, -4} \}$ (Discard index 0) *(4 Marks)*
+  * Concatenation of saved parts (zero output additions):
+    $$ y[n] = \{ \mathbf{2, -3, 4}, \; \mathbf{-2, 1, -2}, \; \mathbf{1, 3, -4} \} $$
+    $$ y[n] = \{ \underset{\uparrow}{2}, -3, 4, -2, 1, -2, 1, 3, -4 \} $$ *(2 Marks)*
 
 ---
 ## 5. PYTHON VERIFICATION SCRIPT

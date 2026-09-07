@@ -69,12 +69,17 @@ $$ y[n] = \{ \underset{\uparrow}{1}, 4, 4, 2, 6, 6, -1, -1, 4, 6, 4, 1 \} $$
   * Mathematical formulation of block decomposition and overlap additions *(4 Marks)*
   * Explanation of $N \ge L + M - 1$ to prevent circular aliasing *(3 Marks)*
 * **Part (b):**
-  * Block setup: $x_0 = \{1, 2, 0, -1\}, \; x_1 = \{3, 1, 2, -1\}$ *(2 Marks)*
-  * Convolutions:
-    $y_0 = \{1, 2, 0, -1\} * \{1, 1, 1\} = \{1, 3, 3, 1, -1, -1\}$
-    $y_1 = \{3, 1, 2, -1\} * \{1, 1, 1\} = \{3, 4, 6, 2, 1, -1\}$ *(4 Marks)*
-  * Assembly:
-    $y[n] = \{1, 3, 3, 1, (-1+3), (-1+4), 6, 2, 1, -1\} = \{1, 3, 3, 1, 2, 3, 6, 2, 1, -1\}$ *(2 Marks)*
+  * Parameter formulation: $L = 4, M = 3 \implies N \ge L + M - 1 = 6$.
+  * Block setup:
+    * $x_0[n] = \{ 1, 2, 0, -1, 0, 0 \}$ (padded to $N=6$)
+    * $x_1[n] = \{ 3, 1, 2, -1, 0, 0 \}$ (padded to $N=6$) *(2 Marks)*
+  * Block convolutions ($y_m[n] = x_m * h$):
+    * $y_0[n] = \{ 1, 2, 0, -1 \} * \{ 1, 1, 1 \} = \{ 1, 3, 3, 1, -1, -1 \}$
+    * $y_1[n] = \{ 3, 1, 2, -1 \} * \{ 1, 1, 1 \} = \{ 3, 4, 6, 2, 1, -1 \}$ *(4 Marks)*
+  * Overlap-Addition assembly ($L = 4$ shift):
+    $$ \begin{array}{rcccccccccc} y_0: & 1 & 3 & 3 & 1 & \mathbf{-1} & \mathbf{-1} & & & & \\ y_1: & & & & & \mathbf{3} & \mathbf{4} & 6 & 2 & 1 & -1 \\ \hline y[n]: & 1 & 3 & 3 & 1 & 2 & 3 & 6 & 2 & 1 & -1 \end{array} $$
+    Result:
+    $$ y[n] = \{ \underset{\uparrow}{1}, 3, 3, 1, 2, 3, 6, 2, 1, -1 \} $$ *(2 Marks)*
 
 ---
 ## 5. PYTHON VERIFICATION SCRIPT
