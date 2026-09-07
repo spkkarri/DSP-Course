@@ -78,6 +78,7 @@ Draw the complete signal flow graph using Direct Form II biquads. *(9 Marks)*
 ## 5. PYTHON VERIFICATION SCRIPT
 ```python
 import scipy.signal as signal
+import numpy as np
 
 b = [1, 1/3]
 a = np.convolve([1, -0.5], [1, -0.25, 0.5])

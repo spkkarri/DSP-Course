@@ -1,4 +1,4 @@
-<Faculty Notes — Lecture 20: Lattice & Lattice-Ladder & Finite Word-Length>
+Faculty Notes — Lecture 20: Lattice & Lattice-Ladder & Finite Word-Length
 ## EE3621: Digital Signal Processing | III B.Tech EEE
 ### Faculty Reference Document — Textbook Replacement
 
@@ -37,7 +37,7 @@ By the end of this lecture, students will be able to:
      $$ \alpha_{m-1}(i) = \frac{\alpha_m(i) - k_m \alpha_m(m - i)}{1 - k_m^2}, \quad i = 1, 2, \dots, m-1 $$
      $$ k_{m-1} = \alpha_{m-1}(m-1) $$
 
-### 2.3 Finite Word-Length Effects Summary
+### 2.2 Finite Word-Length Effects Summary
 1. **Coefficient Quantization:** Shifts poles in the $z$-plane; high-order direct forms are severely sensitive; lattice and cascade forms are highly robust.
 2. **Round-off Noise:** Fixed-point truncation error modeled as white noise with variance $\sigma_e^2 = \frac{2^{-2B}}{12}$ for $B$-bit quantization. Output noise power:
    $$ \sigma_{y}^2 = \sigma_e^2 \sum_{n=0}^{\infty} |h[n]|^2 = \sigma_e^2 \frac{1}{2\pi j} \oint H(z) H(z^{-1}) z^{-1} dz $$

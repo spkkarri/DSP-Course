@@ -40,8 +40,8 @@ Exploiting Hermitian symmetry ($H[N-k] = H^*[k]$):
 | :---: | :---: | :---: |
 | **0 (No transition band)** | None ($H[k] \in \{0, 1\}$) | $-16$ dB |
 | **1 Transition Sample** | $T_1 \approx 0.38$ | $-45$ dB |
-| **2 Transition Samples** | $T_1 \approx 0.59, \; T_2 \approx 0.11$ | $-75$ dB |
-| **3 Transition Samples** | $T_1 \approx 0.70, \; T_2 \approx 0.25, \; T_3 \approx 0.02$ | $-95$ dB |
+| **2 Transition Samples** | $T_1 \approx 0.59; \; T_2 \approx 0.11$ | $-75$ dB |
+| **3 Transition Samples** | $T_1 \approx 0.70; \; T_2 \approx 0.25; \; T_3 \approx 0.02$ | $-95$ dB |
 
 ---
 ## 3. WORKED NUMERICAL EXAMPLES

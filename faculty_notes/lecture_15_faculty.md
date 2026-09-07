@@ -53,18 +53,18 @@ Where $\beta_{1k} = -2\text{Re}(z_k)$ and $\beta_{2k} = |z_k|^2$.
 
 ### Example 15.1: Direct and Cascade Realization of a 4th-Order FIR Filter
 **Problem:** Realize the FIR filter given by transfer function:
-$$ H(z) = 1 + 2.5 z^{-1} + 2.75 z^{-2} + 1.25 z^{-3} + 0.25 z^{-4} $$
+$$ H(z) = 1 + 2.5 z^{-1} + 2.5 z^{-2} + 1.25 z^{-3} + 0.25 z^{-4} $$
 in (a) Direct Form, (b) Transposed Direct Form, and (c) Cascade Form.
 
 **Solution:**
 **(a) Direct Form:**
-$y[n] = x[n] + 2.5 x[n-1] + 2.75 x[n-2] + 1.25 x[n-3] + 0.25 x[n-4]$.
+$y[n] = x[n] + 2.5 x[n-1] + 2.5 x[n-2] + 1.25 x[n-3] + 0.25 x[n-4]$.
 Requires 4 delay elements $z^{-1}$, 5 multipliers (or 4 non-trivial), and 4 two-input adders.
 
 **(b) Transposed Direct Form:**
 $y[n] = x[n] + v_1[n-1]$
 $v_1[n] = 2.5 x[n] + v_2[n-1]$
-$v_2[n] = 2.75 x[n] + v_3[n-1]$
+$v_2[n] = 2.5 x[n] + v_3[n-1]$
 $v_3[n] = 1.25 x[n] + v_4[n-1]$
 $v_4[n] = 0.25 x[n]$.
 
@@ -80,7 +80,7 @@ The system is realized as the direct cascade of $H_1(z)$ followed by $H_2(z)$.
 
 ### Question 1 (15 Marks)
 **(a)** State the Flow Graph Reversal Theorem and explain how it is used to derive the Transposed Direct Form FIR structure. *(6 Marks)*
-**(b)** Realize the linear-phase FIR filter $H(z) = 1 - \frac{1}{2} z^{-1} + \frac{3}{4} z^{-2} - \frac{1}{2} z^{-3} + z^{-4}$ in Cascade Form using real second-order sections. Draw the complete SFG. *(9 Marks)*
+**(b)** Realize the linear-phase FIR filter $H(z) = 1 - \frac{1}{2} z^{-1} + \frac{3}{2} z^{-2} - \frac{1}{2} z^{-3} + z^{-4}$ in Cascade Form using real second-order sections. Draw the complete SFG. *(9 Marks)*
 
 **Model Answer & Step-by-Step Marking Rubric:**
 * **Part (a):**
@@ -88,7 +88,7 @@ The system is realized as the direct cascade of $H_1(z)$ followed by $H_2(z)$.
   * Derivation of state equations and explanation of critical path pipelining advantage *(3 Marks)*
 * **Part (b):**
   * Factor $H(z)$ by finding roots or grouping quadratic factors:
-    $H(z) = (1 - z^{-1} + z^{-2})(1 + 0.5 z^{-1} + z^{-2}) = 1 - 0.5 z^{-1} + 0.75 z^{-2} - 0.5 z^{-3} + z^{-4}$ *(4 Marks)*
+    $H(z) = (1 - z^{-1} + z^{-2})(1 + 0.5 z^{-1} + z^{-2}) = 1 - 0.5 z^{-1} + 1.5 z^{-2} - 0.5 z^{-3} + z^{-4}$ *(4 Marks)*
   * Section 1: $H_1(z) = 1 - z^{-1} + z^{-2}$
   * Section 2: $H_2(z) = 1 + 0.5 z^{-1} + z^{-2}$ *(2 Marks)*
   * Neatly drawn SFG showing cascade interconnection with labeled branch gains and unit delays *(3 Marks)*
@@ -99,7 +99,7 @@ The system is realized as the direct cascade of $H_1(z)$ followed by $H_2(z)$.
 import numpy as np
 import scipy.signal as signal
 
-b = [1.0, 2.5, 2.75, 1.25, 0.25]
+b = [1.0, 2.5, 2.5, 1.25, 0.25]
 sos = signal.tf2sos(b, [1.0])
 print("Cascade SOS Sections:")
 print(sos)

@@ -11,7 +11,7 @@ This capstone lecture synthesizes all four units of EE3621 Digital Signal Proces
 2. Formulate Adaptive Noise Cancellation (ANC) with primary input $d[n] = s[n] + n_0[n]$ and reference noise $x[n]$.
 3. Derive the **Widrow-Hoff Least Mean Squares (LMS)** stochastic gradient weight update:
    $$ \mathbf{w}[n+1] = \mathbf{w}[n] + 2\mu e[n] \mathbf{x}[n] $$
-4. Establish the LMS stability step-size condition: $0 < \mu < \frac{1}{\lambda_{\max}} < \frac{1}{\text{Tr}(\mathbf{R})}$.
+4. Establish the LMS stability step-size condition: $0 < \mu < \frac{1}{\text{Tr}(\mathbf{R})} < \frac{1}{\lambda_{\max}}$.
 5. Synthesize the 4 Units of the curriculum: Signals/LTI/DTFT/Z-Transform (Unit I) $\to$ DFT/FFT/Block Filtering (Unit II) $\to$ Filter Realization Structures (Unit III) $\to$ FIR & IIR Filter Design (Unit IV).
 
 ---

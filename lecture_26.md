@@ -50,8 +50,8 @@ By the end of this lecture, students will be able to:
 2. **Calculate Cutoff Frequency $\Omega_c$:**
    $$ \Omega_c = \frac{\Omega_p}{\epsilon^{1/N}} = \frac{100}{(0.5088)^{1/5}} = \frac{100}{0.8735} = \mathbf{114.48 \text{ rad/s}} $$
 3. **Poles ($N=5$):**
-   * $s_1, s_5 = 114.48 e^{j (180^\circ \pm 36^\circ)} = 114.48 (-0.8090 \pm j 0.5878) = -92.62 \pm j 67.29$
-   * $s_2, s_4 = 114.48 e^{j (180^\circ \pm 72^\circ)} = 114.48 (-0.3090 \pm j 0.9511) = -35.37 \pm j 108.88$
+   * $s_1, s_5 = 114.48 e^{j (180^\circ \pm 72^\circ)} = 114.48 (-0.3090 \pm j 0.9511) = -35.37 \pm j 108.88$
+   * $s_2, s_4 = 114.48 e^{j (180^\circ \pm 36^\circ)} = 114.48 (-0.8090 \pm j 0.5878) = -92.62 \pm j 67.29$
    * $s_3 = 114.48 e^{j 180^\circ} = -114.48$
 4. **Transfer Function $H_a(s)$:**
    $$ H_a(s) = \frac{\Omega_c^5}{(s + 114.48)(s^2 + 185.24s + 13106)(s^2 + 70.74s + 13106)} $$

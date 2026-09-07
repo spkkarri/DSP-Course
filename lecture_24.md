@@ -29,26 +29,26 @@ Exploiting Hermitian symmetry ($H[N-k] = H^*[k]$):
 | :---: | :---: | :---: |
 | **0 (No transition band)** | None ($H[k] \in \{0, 1\}$) | $-16$ dB |
 | **1 Transition Sample** | $T_1 \approx 0.38$ | $-45$ dB |
-| **2 Transition Samples** | $T_1 \approx 0.59, \; T_2 \approx 0.11$ | $-75$ dB |
-| **3 Transition Samples** | $T_1 \approx 0.70, \; T_2 \approx 0.25, \; T_3 \approx 0.02$ | $-95$ dB |
+| **2 Transition Samples** | $T_1 \approx 0.59; \; T_2 \approx 0.11$ | $-75$ dB |
+| **3 Transition Samples** | $T_1 \approx 0.70; \; T_2 \approx 0.25; \; T_3 \approx 0.02$ | $-95$ dB |
 
 ---
 ## 3. WORKED NUMERICAL EXAMPLES
 
 ### Example 24.1: Frequency-Sampling Lowpass Filter Design
 **Problem:** Design a 7-point ($N=7$) linear-phase FIR lowpass filter with frequency samples:
-$$ |H[k]| = \{ 1, 1, 0, 0, 0, 0, 1 \} \quad \text{for } k = 0, 1, 2, 3, 4, 5, 6 $$
+$$ |H[k]| = 1, 1, 0, 0, 0, 0, 1 \quad \text{for } k = 0, 1, 2, 3, 4, 5, 6 $$
 
 **Solution:**
 * Length $N = 7$ (Odd), $\tau = \frac{7-1}{2} = 3$.
-* Non-zero samples: $|H[0]| = 1, \; |H[1]| = |H[6]| = 1$.
+* Non-zero samples: $|H[0]| = 1; \; |H[1]| = |H[6]| = 1$.
 * Using the real summation formula:
   $$ h[n] = \frac{H[0]}{7} + \frac{2}{7} |H[1]| \cos\left[ \frac{2\pi (1)}{7} (n - 3) \right] = \frac{1}{7} + \frac{2}{7} \cos\left[ \frac{2\pi}{7} (n - 3) \right] $$
   * $h[3] = \frac{1}{7} + \frac{2}{7} \cos(0) = \frac{3}{7} \approx 0.4286$
   * $h[2] = h[4] = \frac{1}{7} + \frac{2}{7} \cos\left( \frac{2\pi}{7} \right) = \frac{1 + 2(0.6235)}{7} = \frac{2.2470}{7} \approx 0.3210$
   * $h[1] = h[5] = \frac{1}{7} + \frac{2}{7} \cos\left( \frac{4\pi}{7} \right) = \frac{1 + 2(-0.2225)}{7} = \frac{0.5550}{7} \approx 0.0793$
   * $h[0] = h[6] = \frac{1}{7} + \frac{2}{7} \cos\left( \frac{6\pi}{7} \right) = \frac{1 + 2(-0.9010)}{7} = \frac{-0.8019}{7} \approx -0.1146$
-$$ h[n] = \{ \underset{\uparrow}{-0.1146}, 0.0793, 0.3210, 0.4286, 0.3210, 0.0793, -0.1146 \} $$
+$$ h[n] = \underset{\uparrow}{-0.1146}, 0.0793, 0.3210, 0.4286, 0.3210, 0.0793, -0.1146 $$
 
 ---
 ## 4. UNIVERSITY EXAMINATION QUESTIONS & MARKING RUBRIC

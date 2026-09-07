@@ -23,7 +23,7 @@ Where $C = b_N / a_N$ if $M = N$ (and $C = 0$ if $M < N$).
 ---
 ## 3. WORKED NUMERICAL EXAMPLES
 
-### Example 19.1: Parallel Realization of a 3rd-Order IIR Filter
+### Example 19.1: Parallel Realization of a 2nd-Order IIR Filter
 **Problem:** Realize $H(z) = \frac{1 + 2 z^{-1} + z^{-2}}{1 - 0.75 z^{-1} + 0.125 z^{-2}}$ in Parallel Form.
 
 **Solution:**
