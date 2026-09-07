@@ -61,13 +61,13 @@ $$ N = L + M - 1 $$
   * $x_2[n] = \{ 2, 1, 0, 0, 0, 0 \}$
 * Filter padded: $h[n] = \{ 1, 2, 1, 0, 0, 0 \}$.
 * **Block Convolutions ($y_m[n] = x_m * h$):**
-  * $y_0[n] = \{ 1, 2, -1, 2 \} * \{ 1, 2, 1 \} = \{ \underset{\uparrow}{1}, 4, 4, 1, 3, 2 \}$
-  * $y_1[n] = \{ 3, -2, 0, 1 \} * \{ 1, 2, 1 \} = \{ \underset{\uparrow}{3}, 4, -1, 0, 2, 1 \}$
+  * $y_0[n] = \{ 1, 2, -1, 2 \} * \{ 1, 2, 1 \} = \{ \underset{\uparrow}{1}, 4, 4, 2, 3, 2 \}$
+  * $y_1[n] = \{ 3, -2, 0, 1 \} * \{ 1, 2, 1 \} = \{ \underset{\uparrow}{3}, 4, -1, -1, 2, 1 \}$
   * $y_2[n] = \{ 2, 1, 0, 0 \} * \{ 1, 2, 1 \} = \{ \underset{\uparrow}{2}, 5, 4, 1, 0, 0 \}$
 * **Overlap-Addition ($L = 4$ shift):**
-  $$ \begin{array}{rcccccccccccc} y_0: & 1 & 4 & 4 & 1 & \mathbf{3} & \mathbf{2} & & & & & & \\ y_1: & & & & & \mathbf{3} & \mathbf{4} & -1 & 0 & \mathbf{2} & \mathbf{1} & & \\ y_2: & & & & & & & & & \mathbf{2} & \mathbf{5} & 4 & 1 \\ \hline y[n]: & 1 & 4 & 4 & 1 & 6 & 6 & -1 & 0 & 4 & 6 & 4 & 1 \end{array} $$
+  $$ \begin{array}{rcccccccccccc} y_0: & 1 & 4 & 4 & 2 & \mathbf{3} & \mathbf{2} & & & & & & \\ y_1: & & & & & \mathbf{3} & \mathbf{4} & -1 & -1 & \mathbf{2} & \mathbf{1} & & \\ y_2: & & & & & & & & & \mathbf{2} & \mathbf{5} & 4 & 1 \\ \hline y[n]: & 1 & 4 & 4 & 2 & 6 & 6 & -1 & -1 & 4 & 6 & 4 & 1 \end{array} $$
 Result:
-$$ y[n] = \{ \underset{\uparrow}{1}, 4, 4, 1, 6, 6, -1, 0, 4, 6, 4, 1 \} $$
+$$ y[n] = \{ \underset{\uparrow}{1}, 4, 4, 2, 6, 6, -1, -1, 4, 6, 4, 1 \} $$
 
 ---
 ## 4. UNIVERSITY EXAMINATION QUESTIONS & MARKING RUBRIC

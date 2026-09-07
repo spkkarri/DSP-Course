@@ -1145,8 +1145,22 @@ async function loadLecture(n) {
       mangle: false
     });
 
+    // Protect LaTeX math blocks ($$...$$ and $...$) from marked.js underscore mangling
+    const mathTokens = [];
+    let safeMd = md.replace(/\$\$([\s\S]*?)\$\$/g, match => {
+      mathTokens.push(match);
+      return `@@MATH_BLOCK_${mathTokens.length - 1}@@`;
+    });
+    safeMd = safeMd.replace(/\$([^\$\n]+?)\$/g, match => {
+      mathTokens.push(match);
+      return `@@MATH_INLINE_${mathTokens.length - 1}@@`;
+    });
+
     // Render markdown → HTML
-    let html = marked.parse(md);
+    let html = marked.parse(safeMd);
+
+    // Restore protected math blocks
+    html = html.replace(/@@MATH_(?:BLOCK|INLINE)_(\d+)@@/g, (_, idx) => mathTokens[parseInt(idx, 10)]);
 
     // Show content
     const el = document.getElementById('mdContent');

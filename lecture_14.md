@@ -34,23 +34,100 @@ $$ y[mL + r] = \tilde{y}_m[r + M - 1], \quad 0 \le r \le L-1 $$
 ## 3. WORKED NUMERICAL EXAMPLES
 
 ### Example 14.1: Complete Overlap-Save Filtering
-**Problem:** Filter $x[n] = \{ \underset{\uparrow}{1}, 2, -1, 2, 3, -2, 0, 1, 2, 1 \}$ with $h[n] = \{ \underset{\uparrow}{1}, 2, 1 \}$ ($M=3$) using Overlap-Save with $N = 6$ ($L = 4$).
+**Problem:** Filter the input sequence $x[n] = \{ \underset{\uparrow}{1}, 2, -1, 2, 3, -2, 0, 1, 2, 1 \}$ of length $L_x = 10$ with the FIR impulse response $h[n] = \{ \underset{\uparrow}{1}, 2, 1 \}$ of length $M = 3$ using the Overlap-Save method with circular FFT length $N = 6$ ($L = 4$).
 
 **Solution:**
-* $M = 3 \implies M - 1 = 2$ overlap samples. $N = 6 \implies L = N - M + 1 = 4$.
-* **Construct Blocks of Length $N=6$:**
-  * $x_0[n] = \{ 0, 0, 1, 2, -1, 2 \}$ (Prepended 2 zeros)
-  * $x_1[n] = \{ -1, 2, 3, -2, 0, 1 \}$ (Overlap from last 2 of block 0: $-1, 2$)
-  * $x_2[n] = \{ 0, 1, 2, 1, 0, 0 \}$ (Overlap: $0, 1$; plus zero padding at end)
-* **Compute 6-Point Circular Convolution ($\tilde{y}_m = x_m \circledast_6 \{1, 2, 1, 0, 0, 0\}$):**
-  * $\tilde{y}_0 = \{ \underbrace{3, 2}_{\text{Discard}}, \mathbf{1, 4, 4, 1} \}$
-  * $\tilde{y}_1 = \{ \underbrace{2, 1}_{\text{Discard}}, \mathbf{6, 6, -1, 0} \}$
-  * $\tilde{y}_2 = \{ \underbrace{2, 1}_{\text{Discard}}, \mathbf{4, 6, 4, 1} \}$
-* **Concatenate Saved Parts:**
-  $$ y[n] = \{ \mathbf{1, 4, 4, 1}, \mathbf{6, 6, -1, 0}, \mathbf{4, 6, 4, 1} \} $$
-Result:
-$$ y[n] = \{ \underset{\uparrow}{1}, 4, 4, 1, 6, 6, -1, 0, 4, 6, 4, 1 \} $$
-Identical to the Overlap-Add result.
+
+#### Step 1: Filter and Block Parameter Formulation
+* Filter length: $M = 3$
+* Number of overlap samples: $M - 1 = 2$
+* Circular convolution / FFT block length: $N = 6$
+* New input samples processed per block: $L = N - M + 1 = 6 - 3 + 1 = 4$
+* Zero-pad the filter $h[n]$ to length $N = 6$:
+  $$ h[n] = \{ 1, 2, 1, 0, 0, 0 \} $$
+
+#### Step 2: Construct Input Blocks of Length $N = 6$
+Each block is formed by taking $M - 1 = 2$ overlap samples from the preceding block followed by $L = 4$ new input samples:
+$$ x_m[n] = x[mL + n - (M - 1)], \quad 0 \le n \le N - 1 $$
+
+* **Block 0 ($m = 0$):** Prepend $M - 1 = 2$ zeros:
+  $$ x_0[n] = \{ 0, 0, x[0], x[1], x[2], x[3] \} = \{ 0, 0, 1, 2, -1, 2 \} $$
+* **Block 1 ($m = 1$):** Overlap the last 2 samples of block 0 ($x[2] = -1, x[3] = 2$):
+  $$ x_1[n] = \{ x[2], x[3], x[4], x[5], x[6], x[7] \} = \{ -1, 2, 3, -2, 0, 1 \} $$
+* **Block 2 ($m = 2$):** Overlap the last 2 samples of block 1 ($x[6] = 0, x[7] = 1$), zero-pad at end:
+  $$ x_2[n] = \{ x[6], x[7], x[8], x[9], 0, 0 \} = \{ 0, 1, 2, 1, 0, 0 \} $$
+
+#### Step 3: Circular Convolution Formula & Mathematical Formulation
+The circular convolution of two $N$-point sequences $x_m[n]$ and $h[n]$ is defined by:
+$$ \tilde{y}_m[n] = x_m[n] \circledast_N h[n] = \sum_{k=0}^{N-1} h[k] \, x_m[((n - k))_N], \quad 0 \le n \le N - 1 $$
+where the double-parentheses index $((n - k))_N = (n - k) \bmod N$ represents the modulo-$N$ periodic circular time-shift.
+
+Since $h[n] = \{1, 2, 1, 0, 0, 0\}$ with $N = 6$, only $h[0] = 1$, $h[1] = 2$, and $h[2] = 1$ are non-zero. Substituting these into the formula yields the 3-tap circular difference equation:
+$$ \tilde{y}_m[n] = 1 \cdot x_m[((n))_6] + 2 \cdot x_m[((n - 1))_6] + 1 \cdot x_m[((n - 2))_6], \quad 0 \le n \le 5 $$
+
+In matrix form, this circular convolution corresponds to multiplying the input vector by the $6 \times 6$ circulant matrix $H_c$:
+$$ \begin{bmatrix} \tilde{y}_m[0] \\ \tilde{y}_m[1] \\ \tilde{y}_m[2] \\ \tilde{y}_m[3] \\ \tilde{y}_m[4] \\ \tilde{y}_m[5] \end{bmatrix} = \begin{bmatrix} 1 & 0 & 0 & 0 & 1 & 2 \\ 2 & 1 & 0 & 0 & 0 & 1 \\ 1 & 2 & 1 & 0 & 0 & 0 \\ 0 & 1 & 2 & 1 & 0 & 0 \\ 0 & 0 & 1 & 2 & 1 & 0 \\ 0 & 0 & 0 & 1 & 2 & 1 \end{bmatrix} \begin{bmatrix} x_m[0] \\ x_m[1] \\ x_m[2] \\ x_m[3] \\ x_m[4] \\ x_m[5] \end{bmatrix} $$
+
+Notice that for $n = 0$ and $n = 1$, terms wrap around from the end of the block ($x_m[4]$ and $x_m[5]$), causing **time-domain circular aliasing**. For $n = 2, 3, 4, 5$, no wrap-around occurs, so the output matches the exact **linear convolution**.
+
+#### Step 4: Detailed Step-by-Step Block Computations
+
+**1. Block 0 ($m = 0$):** $x_0[n] = \{ 0, 0, 1, 2, -1, 2 \}$
+* $n = 0$: $\tilde{y}_0[0] = x_0[0] + 2x_0[5] + x_0[4] = 0 + 2(2) + (-1) = 3$ $\implies$ **DISCARD (Aliased)**
+* $n = 1$: $\tilde{y}_0[1] = x_0[1] + 2x_0[0] + x_0[5] = 0 + 2(0) + 2 = 2$ $\implies$ **DISCARD (Aliased)**
+* $n = 2$: $\tilde{y}_0[2] = x_0[2] + 2x_0[1] + x_0[0] = 1 + 2(0) + 0 = 1$ $\implies$ **SAVE ($y[0] = 1$)**
+* $n = 3$: $\tilde{y}_0[3] = x_0[3] + 2x_0[2] + x_0[1] = 2 + 2(1) + 0 = 4$ $\implies$ **SAVE ($y[1] = 4$)**
+* $n = 4$: $\tilde{y}_0[4] = x_0[4] + 2x_0[3] + x_0[2] = -1 + 2(2) + 1 = 4$ $\implies$ **SAVE ($y[2] = 4$)**
+* $n = 5$: $\tilde{y}_0[5] = x_0[5] + 2x_0[4] + x_0[3] = 2 + 2(-1) + 2 = 2$ $\implies$ **SAVE ($y[3] = 2$)**
+
+Output for Block 0:
+$$ \tilde{y}_0[n] = \{ \underbrace{3, 2}_{\text{Discard (Aliased)}}, \quad \underbrace{\mathbf{1, 4, 4, 2}}_{\text{Save (Linear Conv)}} \} $$
+
+**2. Block 1 ($m = 1$):** $x_1[n] = \{ -1, 2, 3, -2, 0, 1 \}$
+* $n = 0$: $\tilde{y}_1[0] = x_1[0] + 2x_1[5] + x_1[4] = -1 + 2(1) + 0 = 1$ $\implies$ **DISCARD (Aliased)**
+* $n = 1$: $\tilde{y}_1[1] = x_1[1] + 2x_1[0] + x_1[5] = 2 + 2(-1) + 1 = 1$ $\implies$ **DISCARD (Aliased)**
+* $n = 2$: $\tilde{y}_1[2] = x_1[2] + 2x_1[1] + x_1[0] = 3 + 2(2) + (-1) = 6$ $\implies$ **SAVE ($y[4] = 6$)**
+* $n = 3$: $\tilde{y}_1[3] = x_1[3] + 2x_1[2] + x_1[1] = -2 + 2(3) + 2 = 6$ $\implies$ **SAVE ($y[5] = 6$)**
+* $n = 4$: $\tilde{y}_1[4] = x_1[4] + 2x_1[3] + x_1[2] = 0 + 2(-2) + 3 = -1$ $\implies$ **SAVE ($y[6] = -1$)**
+* $n = 5$: $\tilde{y}_1[5] = x_1[5] + 2x_1[4] + x_1[3] = 1 + 2(0) + (-2) = -1$ $\implies$ **SAVE ($y[7] = -1$)**
+
+Output for Block 1:
+$$ \tilde{y}_1[n] = \{ \underbrace{1, 1}_{\text{Discard (Aliased)}}, \quad \underbrace{\mathbf{6, 6, -1, -1}}_{\text{Save (Linear Conv)}} \} $$
+
+**3. Block 2 ($m = 2$):** $x_2[n] = \{ 0, 1, 2, 1, 0, 0 \}$
+* $n = 0$: $\tilde{y}_2[0] = x_2[0] + 2x_2[5] + x_2[4] = 0 + 2(0) + 0 = 0$ $\implies$ **DISCARD (Aliased)**
+* $n = 1$: $\tilde{y}_2[1] = x_2[1] + 2x_2[0] + x_2[5] = 1 + 2(0) + 0 = 1$ $\implies$ **DISCARD (Aliased)**
+* $n = 2$: $\tilde{y}_2[2] = x_2[2] + 2x_2[1] + x_2[0] = 2 + 2(1) + 0 = 4$ $\implies$ **SAVE ($y[8] = 4$)**
+* $n = 3$: $\tilde{y}_2[3] = x_2[3] + 2x_2[2] + x_2[1] = 1 + 2(2) + 1 = 6$ $\implies$ **SAVE ($y[9] = 6$)**
+* $n = 4$: $\tilde{y}_2[4] = x_2[4] + 2x_2[3] + x_2[2] = 0 + 2(1) + 2 = 4$ $\implies$ **SAVE ($y[10] = 4$)**
+* $n = 5$: $\tilde{y}_2[5] = x_2[5] + 2x_2[4] + x_2[3] = 0 + 2(0) + 1 = 1$ $\implies$ **SAVE ($y[11] = 1$)**
+
+Output for Block 2:
+$$ \tilde{y}_2[n] = \{ \underbrace{0, 1}_{\text{Discard (Aliased)}}, \quad \underbrace{\mathbf{4, 6, 4, 1}}_{\text{Save (Linear Conv)}} \} $$
+
+#### Step 5: Output Assembly by Direct Concatenation
+In Overlap-Save, the total linear convolution output requires **zero arithmetic additions**; the saved segments are concatenated directly:
+$$ y[n] = \{ \mathbf{1, 4, 4, 2}, \quad \mathbf{6, 6, -1, -1}, \quad \mathbf{4, 6, 4, 1} \} $$
+$$ y[n] = \{ \underset{\uparrow}{1}, 4, 4, 2, 6, 6, -1, -1, 4, 6, 4, 1 \} $$
+
+#### Step 6: Analytical Verification via Direct Linear Convolution
+The length of linear convolution is $L_{\text{total}} = L_x + M - 1 = 10 + 3 - 1 = 12$:
+$$ y_{\text{lin}}[n] = x[n] * h[n] = \sum_{k=0}^{2} h[k] \, x[n - k] $$
+* $y[0] = 1(1) = 1$
+* $y[1] = 2(1) + 1(2) = 4$
+* $y[2] = -1(1) + 2(2) + 1(1) = 4$
+* $y[3] = 2(1) - 1(2) + 2(1) = 2$
+* $y[4] = 3(1) + 2(2) - 1(1) = 6$
+* $y[5] = -2(1) + 3(2) + 2(1) = 6$
+* $y[6] = 0(1) - 2(2) + 3(1) = -1$
+* $y[7] = 1(1) + 0(2) - 2(1) = -1$
+* $y[8] = 2(1) + 1(2) + 0(1) = 4$
+* $y[9] = 1(1) + 2(2) + 1(1) = 6$
+* $y[10] = 0(1) + 1(2) + 2(1) = 4$
+* $y[11] = 0(1) + 0(2) + 1(1) = 1$
+
+$$ y_{\text{lin}}[n] = \{ \underset{\uparrow}{1}, 4, 4, 2, 6, 6, -1, -1, 4, 6, 4, 1 \} $$
+The Overlap-Save reconstruction matches the direct linear convolution exactly across all 12 points.
 
 ---
 ## 4. UNIVERSITY EXAMINATION QUESTIONS & MARKING RUBRIC
