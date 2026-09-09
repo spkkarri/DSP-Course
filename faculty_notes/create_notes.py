@@ -928,7 +928,8 @@ for line in lines:
 
 os.makedirs(r"C:\Users\sriph\Downloads\DSP\faculty_notes", exist_ok=True)
 file_path = r"C:\Users\sriph\Downloads\DSP\faculty_notes\lecture_29_faculty.md"
-with open(file_path, "w", encoding="utf-8") as f:
+if False:
+    with open(file_path, "w", encoding="utf-8") as f:
     f.write('\n'.join(final_lines))
 
 print(f"Written to {file_path}")

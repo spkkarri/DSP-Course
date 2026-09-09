@@ -550,6 +550,7 @@ pathlib.Path(directory).mkdir(parents=True, exist_ok=True)
 
 file_path = os.path.join(directory, 'lecture_12_faculty.md')
 
-with open(file_path, 'w', encoding='utf-8') as f:
+if False:
+    with open(file_path, 'w', encoding='utf-8') as f:
     f.write(content)
 print(f"Successfully wrote {len(content.splitlines())} lines to {file_path}")

@@ -584,8 +584,5 @@ $h = \begin{bmatrix} 1 & 2 & 1 \\ 2 & 4 & 2 \\ 1 & 2 & 1 \end{bmatrix}$. \textbf
 \end{document}
 '''
 
-with open("lecture_27.md", "w", encoding="utf-8") as f:
-    f.write(md_content)
-
 with open("lecture_27.tex", "w", encoding="utf-8") as f:
     f.write(tex_content)
