@@ -289,4 +289,101 @@ Polyphase & $E_k(z) = \sum h[Mn+k]z^{-n}$ & $H(z) = \sum_{k=0}^{M-1} z^{-k} E_k(
     \textit{Answer:} The original system is $x[n] \to \uparrow 4 \to H_{old}(z) \to y[n]$. Notice $H_{old}(z)$ is a function of $z^4$, so we can write it as $H_{new}(z^4)$ where $H_{new}(z) = 1 - z^{-2} + 0.5z^{-3}$. By the Second Noble Identity, upsampling by $4$ then filtering with $H_{new}(z^4)$ equals filtering with $H_{new}(z)$ then upsampling by $4$. The cheaper system is $x[n] \to H_{new}(z) \to \uparrow 4 \to y[n]$.
 \end{enumerate}
 
+
+\newpage
+
+\newpage
+\section{Pedagogical Guide: Aliasing, Reconstruction, and FFT Filtering}
+
+Your intuition is 100\% spot on! The standard and most effective way to teach these concepts is by using \textbf{``Triangle'' Spectral Analysis} to visually demonstrate the \textbf{Duality of Aliasing}. The ``better approach'' is to teach these topics not as separate mathematical chores, but as two sides of the exact same coin: \textbf{Frequency Aliasing} (when sampling) and \textbf{Time Aliasing} (when using the FFT).
+
+Here is a step-by-step pedagogical progression you can use to explain these concepts explicitly in class.
+
+\subsection{Part 1: Sampling, Reconstruction \& Frequency Aliasing}
+\textit{The problem of making time discrete.}
+
+\subsubsection{1. The ``Triangle'' Baseband Spectrum}
+Don't use complex real-world spectra yet. Represent a generic continuous-time analog signal's spectrum as a \textbf{Triangle} in the frequency domain. 
+\begin{itemize}
+    \item \textbf{Why a triangle?} It clearly shows the signal has maximum energy at DC ($f=0$), tapers off, and has a strict, hard boundary at a maximum frequency ($f_{max}$). It also makes it visually obvious when two spectra overlap.
+\end{itemize}
+
+\subsubsection{2. The Act of Sampling (Replication)}
+Explain that the mathematical act of sampling in the time domain is equivalent to \textbf{replicating} that triangle infinitely in the frequency domain, spaced exactly by the sampling frequency ($f_s$).
+
+\subsubsection{3. Visualizing Aliasing}
+\begin{itemize}
+    \item \textbf{No Aliasing ($f_s \geq 2f_{max}$):} The triangles sit side-by-side with empty space (guard bands) between them.
+    \item \textbf{Aliasing ($f_s < 2f_{max}$):} The bases of the triangles overlap. 
+    \item \textbf{The visual payoff:} When the triangles overlap, their amplitudes add together. The sharp corner of the triangle is destroyed, and the shape is permanently warped. This warped triangle proves that high frequencies have folded back and corrupted the low frequencies.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/sampling_frequency_replication.png}
+    \caption{Sampling Replication and Spectral Aliasing using Triangles.}
+\end{figure}
+
+\subsubsection{4. Perfect Reconstruction}
+How do we get the continuous signal back? We pass it through a DAC and an analog low-pass filter. 
+\begin{itemize}
+    \item \textbf{Visually:} Draw a rectangular box (an ideal low-pass filter) exactly over the center triangle.
+    \item If the triangles were separated, the rectangle perfectly isolates the original triangle. Perfect reconstruction!
+    \item If they overlapped, the rectangle captures the warped, overlapping tails. The original signal is lost forever.
+\end{itemize}
+
+\subsection{Part 2: FFT Linear Filtering \& Time Aliasing}
+\textit{The problem of making frequency discrete.}
+
+Now, pivot to the FFT. Students often think they can just take the FFT of a signal, multiply it by the FFT of a filter, and take the IFFT to get the filtered signal. 
+
+\subsubsection{1. The ``Circular'' Trap}
+Explain the core rule of DSP duality: Just as making time discrete caused frequency to become periodic, \textbf{making frequency discrete (which the FFT does) causes time to become periodic!} Because the FFT assumes the time signal loops infinitely, multiplying two FFTs results in \textbf{Circular Convolution}, not Linear Convolution.
+
+\subsubsection{2. Visualizing Time Aliasing}
+Use rectangular pulses in the time domain as your visual aid here (instead of frequency triangles). Convolving two rectangles in time creates a triangle/trapezoid.
+\begin{itemize}
+    \item If your FFT size ($N$) is too small, the tail of that resulting triangle wraps around the circle and overlaps with the beginning of the signal.
+    \item \textbf{The Aha! Moment:} Tell the students, \textit{``Remember how sampling too slowly caused the frequency triangles to overlap? Using an FFT size that is too small causes the time-domain signals to overlap! This is called \textbf{Time Aliasing}.''}
+\end{itemize}
+
+\subsubsection{3. The Solution: Zero-Padding}
+To prevent frequency aliasing, we increase the sampling rate (add space between triangles). 
+To prevent time aliasing, we \textbf{Zero-Pad} the signals (add empty space at the end of the time vectors). 
+If signal A has length $M$ and filter B has length $N$, the FFT size must be at least $L \geq M + N - 1$. The zeros act as a ``buffer'' so the tail of the convolution has room to die out before wrapping around.
+
+\subsection{Part 3: Overlap-Add and Overlap-Save}
+\textit{Scaling it to infinite streams.}
+
+If we have a 1-hour audio file, we can't take a 1-hour FFT. We must chop the signal into blocks. But chopping it up causes boundary issues during convolution.
+
+\subsubsection{1. Overlap-Add (The ``Tail'' Method)}
+\begin{itemize}
+    \item \textbf{Concept:} We take a block of data, zero-pad it, and FFT filter it. The linear convolution creates a ``tail'' that spills past the original block length.
+    \item \textbf{Action:} We must mathematically \textbf{ADD} that overlapping tail to the beginning of the \textit{next} block to get the correct result.
+\end{itemize}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/overlap_add.png}
+    \caption{Overlap-Add block processing.}
+\end{figure}
+
+\subsubsection{2. Overlap-Save (The ``Trash'' Method)}
+\begin{itemize}
+    \item \textbf{Concept:} Instead of zero-padding, we deliberately allow Time Aliasing to happen!
+    \item \textbf{Action:} We take overlapping blocks of input data. We circular-convolve via FFT. We know the first $M-1$ samples are corrupted by time-aliasing wrap-around. So, we simply throw them in the trash and \textbf{SAVE} the remaining uncorrupted samples.
+\end{itemize}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{images/overlap_save.png}
+    \caption{Overlap-Save block processing.}
+\end{figure}
+
+\subsection{Summary of the ``Better Approach''}
+By using the \textbf{Triangle} concept in frequency to teach Nyquist, and then immediately mirroring that exact same overlapping logic in the time domain to teach FFT Circular Convolution, you unify the two hardest topics in DSP. 
+\begin{itemize}
+    \item \textbf{Under-sampling $\rightarrow$ Frequency Overlap (Spectral Aliasing)}
+    \item \textbf{Under-sizing the FFT $\rightarrow$ Time Overlap (Circular/Time Aliasing)}
+\end{itemize}
+
 \end{document}
