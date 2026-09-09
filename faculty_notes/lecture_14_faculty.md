@@ -1,86 +1,180 @@
-# Lecture 14: Fast Convolution — The Overlap-Save Method
+<Faculty Notes — Lecture 14: Linear Filtering: Overlap-Save (OLS) Method>
 ## EE3621: Digital Signal Processing | III B.Tech EEE
+### Faculty Reference Document — Textbook Replacement
+
+---
+## PREFACE FOR FACULTY
+The **Overlap-Save (OLS)** method (also called Overlap-Discard) is an alternative block-filtering method where input blocks overlap by $M-1$ samples. Rather than adding output tails as in OLA, the corrupted aliased samples are simply discarded from the circular convolution output.
+
+**Pedagogical Strategy:**
+1. Formulate input block partitioning with $M-1$ sample overlap: $x_m[n] = x[mL + n - (M-1)]$.
+2. Explain why the first $M-1$ points of circular convolution represent wrap-around aliasing.
+3. Demonstrate that the remaining $L$ points exactly equal the linear convolution.
+4. Compare Overlap-Add and Overlap-Save:
+   * OLA: Disjoint inputs $\to$ Overlapping output additions.
+   * OLS: Overlapping inputs $\to$ Discard aliased output prefix; direct concatenation.
+5. Explain why OLS is preferred in SIMD/GPU architectures because it requires zero output additions (pure memory copy).
 
 ---
 ## 1. LEARNING OBJECTIVES
 By the end of this lecture, students will be able to:
-1. **Understand** the intuitive mechanism of Time-Aliasing during FFT circular convolution.
-2. **Visualize** the Overlap-Save block processing pipeline without heavy mathematics.
-3. **Compare** the structural differences between Overlap-Add (Lecture 13) and Overlap-Save.
-4. **Execute** a simple numerical block filtering using the Overlap-Save method.
+1. **Formulate** overlapping input blocks for the Overlap-Save algorithm.
+2. **Execute** numerical filtering via Overlap-Save and identify aliased regions.
+3. **Compare** OLA and OLS in terms of memory access, register operations, and arithmetic complexity.
+4. **Select** optimal block sizes for real-time DSP implementation.
 
 ---
-## 2. THE INTUITION: WHY OVERLAP-SAVE?
+## 2. MATHEMATICAL FOUNDATIONS
 
-In Lecture 13, we explored the **Overlap-Add (OLA)** method. In OLA, we chopped our infinite audio stream into independent blocks, padded them with zeros, and used the FFT. Because of the zeros, the linear convolution created a "tail" that spilled over the block length. We had to physically **add** those overlapping tails together to reconstruct the signal.
+### 2.1 Overlap-Save Block Formulation
+Let FIR filter $h[n]$ have length $M$. Choose block length $L$ such that total FFT length is $N = L + M - 1$.
+Construct input blocks $x_m[n]$ of length $N$ by prepending the last $M-1$ points from block $m-1$:
+$$ x_m[n] = x[mL + n - (M-1)], \quad 0 \le n \le N-1 $$
+For the first block ($m=0$), prepend $M-1$ zeros:
+$$ x_0[n] = \{ \underbrace{0, 0, \dots, 0}_{M-1 \text{ zeros}}, x[0], x[1], \dots, x[L-1] \} $$
 
-**The Overlap-Save (OLS) Alternative:**
-What if we want to avoid that final addition step? (Addition takes extra CPU cycles and memory management). 
-* What happens if we just feed full blocks of data into the FFT without padding them with zeros?
-* **The Problem:** The FFT inherently computes **Circular Convolution**. If the signal isn't padded, the "tail" of the convolution doesn't have empty space to stretch into. Instead, it wraps around the circle and crashes into the beginning of your block. This corruption is called **Time Aliasing**.
-* **The Brilliant Solution (The "Trash" Method):** If a filter has $M$ taps, we know exactly how much of the signal gets corrupted: exactly the first $M-1$ samples. 
-Instead of trying to prevent the corruption, Overlap-Save deliberately lets it happen! We intentionally overlap our input blocks so that the FFT corrupts old data we already processed. Then, we simply throw the corrupted $M-1$ samples in the **trash** and **save** the good ones.
+### 2.2 Circular Convolution & Discard Mechanism
+Zero-pad $h[n]$ to length $N$. Compute the $N$-point circular convolution:
+$$ \tilde{y}_m[n] = x_m[n] \circledast_N h[n] = \text{IDFT}_N\{\text{DFT}_N\{x_m\} \cdot \text{DFT}_N\{h\}\} $$
+The output contains:
+* Samples $n = 0, 1, \dots, M-2$: **Corrupted by circular wrap-around aliasing $\implies$ DISCARD**.
+* Samples $n = M-1, M, \dots, N-1$: **Valid linear convolution samples $\implies$ SAVE**.
 
----
-## 3. STEP-BY-STEP VISUAL WALKTHROUGH
-
-Instead of heavy matrix math, let's look at the purely visual, diagrammatic flow of Overlap-Save.
-
-### Step 1: Overlapping the Input Blocks
-We take blocks of length $N$. Unlike Overlap-Add (where blocks sit side-by-side), Overlap-Save blocks physically overlap by $M-1$ samples. 
-The first $M-1$ samples of **Block 2** are simply a copy of the last $M-1$ samples of **Block 1**.
-
-### Step 2: Circular Convolution (The FFT Magic)
-We take the FFT of the block, multiply it by the FFT of the filter, and take the Inverse FFT. 
-Because it's circular, the end of the signal wraps around and mathematically mangles the beginning of the block.
-
-### Step 3: The Trash Can (Discarding the Garbage)
-We look at the resulting block of length $N$. We take a pair of scissors and cut off the first $M-1$ samples. They are time-aliased garbage. We throw them away.
-
-### Step 4: Direct Concatenation (Saving)
-We take the remaining $L$ good samples (where $L = N - M + 1$) and place them directly into our output stream. **No addition is required!** We just snap the saved blocks together like Lego bricks.
-
-### Pictorial Representation
-![Overlap Save Process](../images/overlap_save.png)
-*(Notice how the overlapped input data leads to discarded garbage at the front of every output block, leaving perfectly seamless output data).*
+### 2.3 Synthesis of Output
+The total linear convolution $y[n]$ is formed by direct concatenation of the saved portions:
+$$ y[mL + r] = \tilde{y}_m[r + M - 1], \quad 0 \le r \le L-1 $$
 
 ---
-## 4. INTUITIVE NUMERICAL EXAMPLE
+## 3. WORKED NUMERICAL EXAMPLES
 
-Let's see this in action without the confusing modulo matrices.
+### Example 14.1: Complete Overlap-Save Filtering
+**Problem:** Filter the input sequence $x[n] = \{ \underset{\uparrow}{1}, 2, -1, 2, 3, -2, 0, 1, 2, 1 \}$ of length $L_x = 10$ with the FIR impulse response $h[n] = \{ \underset{\uparrow}{1}, 2, 1 \}$ of length $M = 3$ using the Overlap-Save method with circular FFT length $N = 6$ ($L = 4$).
 
-**The Setup:**
-* Input signal $x[n] = \{1, 2, 3, 4, 5, 6, 7, 8\}$
-* Filter $h[n] = \{1, 1\}$ (Length $M=2$. This means $M-1 = \mathbf{1}$ sample of overlap/garbage).
-* Let's use an FFT block size of $N=4$.
+**Solution:**
 
-**Step 1: Chop and Overlap the Input**
-Since $M-1 = 1$, every block must overlap the previous block by 1 sample. The very first block prepends a zero.
-* **Block 1:** $\{0, 1, 2, 3\}$
-* **Block 2:** $\{3, 4, 5, 6\}$ *(Notice the '3' is copied from the end of Block 1)*
-* **Block 3:** $\{6, 7, 8, 0\}$ *(Notice the '6' is copied from Block 2, padded with 0 at the end)*
+#### Step 1: Filter and Block Parameter Formulation
+* Filter length: $M = 3$
+* Number of overlap samples: $M - 1 = 2$
+* Circular convolution / FFT block length: $N = 6$
+* New input samples processed per block: $L = N - M + 1 = 6 - 3 + 1 = 4$
+* Zero-pad the filter $h[n]$ to length $N = 6$:
+  $$ h[n] = \{ 1, 2, 1, 0, 0, 0 \} $$
 
-**Step 2 & 3: Circular Convolution & The Trash Can**
-If we circularly convolve each block with $\{1, 1, 0, 0\}$:
-* **Output 1 Raw:** $\{\mathbf{3}, 1, 3, 5\}$ $\rightarrow$ The first sample ('3') wrapped around and is corrupted!
-  * **Action:** Throw the first sample in the trash. **Save:** $\{1, 3, 5\}$
-* **Output 2 Raw:** $\{\mathbf{9}, 7, 9, 11\}$ $\rightarrow$ The first sample ('9') is corrupted!
-  * **Action:** Throw the first sample in the trash. **Save:** $\{7, 9, 11\}$
-* **Output 3 Raw:** $\{\mathbf{6}, 13, 15, 8\}$ $\rightarrow$ The first sample ('6') is corrupted!
-  * **Action:** Throw the first sample in the trash. **Save:** $\{13, 15, 8\}$
+#### Step 2: Construct Input Blocks of Length $N = 6$
+Each block is formed by taking $M - 1 = 2$ overlap samples from the preceding block followed by $L = 4$ new input samples:
+$$ x_m[n] = x[mL + n - (M - 1)], \quad 0 \le n \le N - 1 $$
 
-**Step 4: Concatenate**
-Snap the saved blocks together perfectly:
-$$ y[n] = \{1, 3, 5, 7, 9, 11, 13, 15, 8\} $$
-*(You can verify this matches standard linear convolution perfectly!)*
+* **Block 0 ($m = 0$):** Prepend $M - 1 = 2$ zeros:
+  $$ x_0[n] = \{ 0, 0, x[0], x[1], x[2], x[3] \} = \{ 0, 0, 1, 2, -1, 2 \} $$
+* **Block 1 ($m = 1$):** Overlap the last 2 samples of block 0 ($x[2] = -1, x[3] = 2$):
+  $$ x_1[n] = \{ x[2], x[3], x[4], x[5], x[6], x[7] \} = \{ -1, 2, 3, -2, 0, 1 \} $$
+* **Block 2 ($m = 2$):** Overlap the last 2 samples of block 1 ($x[6] = 0, x[7] = 1$), zero-pad at end:
+  $$ x_2[n] = \{ x[6], x[7], x[8], x[9], 0, 0 \} = \{ 0, 1, 2, 1, 0, 0 \} $$
+
+#### Step 3: Circular Convolution Formula & Mathematical Formulation
+The circular convolution of two $N$-point sequences $x_m[n]$ and $h[n]$ is defined by:
+$$ \tilde{y}_m[n] = x_m[n] \circledast_N h[n] = \sum_{k=0}^{N-1} h[k] \, x_m[((n - k))_N], \quad 0 \le n \le N - 1 $$
+where the double-parentheses index $((n - k))_N = (n - k) \bmod N$ represents the modulo-$N$ periodic circular time-shift.
+
+Since $h[n] = \{1, 2, 1, 0, 0, 0\}$ with $N = 6$, only $h[0] = 1$, $h[1] = 2$, and $h[2] = 1$ are non-zero. Substituting these into the formula yields the 3-tap circular difference equation:
+$$ \tilde{y}_m[n] = 1 \cdot x_m[((n))_6] + 2 \cdot x_m[((n - 1))_6] + 1 \cdot x_m[((n - 2))_6], \quad 0 \le n \le 5 $$
+
+In matrix form, this circular convolution corresponds to multiplying the input vector by the $6 \times 6$ circulant matrix $H_c$:
+$$ \begin{bmatrix} \tilde{y}_m[0] \\ \tilde{y}_m[1] \\ \tilde{y}_m[2] \\ \tilde{y}_m[3] \\ \tilde{y}_m[4] \\ \tilde{y}_m[5] \end{bmatrix} = \begin{bmatrix} 1 & 0 & 0 & 0 & 1 & 2 \\ 2 & 1 & 0 & 0 & 0 & 1 \\ 1 & 2 & 1 & 0 & 0 & 0 \\ 0 & 1 & 2 & 1 & 0 & 0 \\ 0 & 0 & 1 & 2 & 1 & 0 \\ 0 & 0 & 0 & 1 & 2 & 1 \end{bmatrix} \begin{bmatrix} x_m[0] \\ x_m[1] \\ x_m[2] \\ x_m[3] \\ x_m[4] \\ x_m[5] \end{bmatrix} $$
+
+Notice that for $n = 0$ and $n = 1$, terms wrap around from the end of the block ($x_m[4]$ and $x_m[5]$), causing **time-domain circular aliasing**. For $n = 2, 3, 4, 5$, no wrap-around occurs, so the output matches the exact **linear convolution**.
+
+#### Step 4: Detailed Step-by-Step Block Computations
+
+**1. Block 0 ($m = 0$):** $x_0[n] = \{ 0, 0, 1, 2, -1, 2 \}$
+* $n = 0$: $\tilde{y}_0[0] = x_0[0] + 2x_0[5] + x_0[4] = 0 + 2(2) + (-1) = 3$ $\implies$ **DISCARD (Aliased)**
+* $n = 1$: $\tilde{y}_0[1] = x_0[1] + 2x_0[0] + x_0[5] = 0 + 2(0) + 2 = 2$ $\implies$ **DISCARD (Aliased)**
+* $n = 2$: $\tilde{y}_0[2] = x_0[2] + 2x_0[1] + x_0[0] = 1 + 2(0) + 0 = 1$ $\implies$ **SAVE ($y[0] = 1$)**
+* $n = 3$: $\tilde{y}_0[3] = x_0[3] + 2x_0[2] + x_0[1] = 2 + 2(1) + 0 = 4$ $\implies$ **SAVE ($y[1] = 4$)**
+* $n = 4$: $\tilde{y}_0[4] = x_0[4] + 2x_0[3] + x_0[2] = -1 + 2(2) + 1 = 4$ $\implies$ **SAVE ($y[2] = 4$)**
+* $n = 5$: $\tilde{y}_0[5] = x_0[5] + 2x_0[4] + x_0[3] = 2 + 2(-1) + 2 = 2$ $\implies$ **SAVE ($y[3] = 2$)**
+
+Output for Block 0:
+$$ \tilde{y}_0[n] = \{ \underbrace{3, 2}_{\text{Discard (Aliased)}}, \quad \underbrace{\mathbf{1, 4, 4, 2}}_{\text{Save (Linear Conv)}} \} $$
+
+**2. Block 1 ($m = 1$):** $x_1[n] = \{ -1, 2, 3, -2, 0, 1 \}$
+* $n = 0$: $\tilde{y}_1[0] = x_1[0] + 2x_1[5] + x_1[4] = -1 + 2(1) + 0 = 1$ $\implies$ **DISCARD (Aliased)**
+* $n = 1$: $\tilde{y}_1[1] = x_1[1] + 2x_1[0] + x_1[5] = 2 + 2(-1) + 1 = 1$ $\implies$ **DISCARD (Aliased)**
+* $n = 2$: $\tilde{y}_1[2] = x_1[2] + 2x_1[1] + x_1[0] = 3 + 2(2) + (-1) = 6$ $\implies$ **SAVE ($y[4] = 6$)**
+* $n = 3$: $\tilde{y}_1[3] = x_1[3] + 2x_1[2] + x_1[1] = -2 + 2(3) + 2 = 6$ $\implies$ **SAVE ($y[5] = 6$)**
+* $n = 4$: $\tilde{y}_1[4] = x_1[4] + 2x_1[3] + x_1[2] = 0 + 2(-2) + 3 = -1$ $\implies$ **SAVE ($y[6] = -1$)**
+* $n = 5$: $\tilde{y}_1[5] = x_1[5] + 2x_1[4] + x_1[3] = 1 + 2(0) + (-2) = -1$ $\implies$ **SAVE ($y[7] = -1$)**
+
+Output for Block 1:
+$$ \tilde{y}_1[n] = \{ \underbrace{1, 1}_{\text{Discard (Aliased)}}, \quad \underbrace{\mathbf{6, 6, -1, -1}}_{\text{Save (Linear Conv)}} \} $$
+
+**3. Block 2 ($m = 2$):** $x_2[n] = \{ 0, 1, 2, 1, 0, 0 \}$
+* $n = 0$: $\tilde{y}_2[0] = x_2[0] + 2x_2[5] + x_2[4] = 0 + 2(0) + 0 = 0$ $\implies$ **DISCARD (Aliased)**
+* $n = 1$: $\tilde{y}_2[1] = x_2[1] + 2x_2[0] + x_2[5] = 1 + 2(0) + 0 = 1$ $\implies$ **DISCARD (Aliased)**
+* $n = 2$: $\tilde{y}_2[2] = x_2[2] + 2x_2[1] + x_2[0] = 2 + 2(1) + 0 = 4$ $\implies$ **SAVE ($y[8] = 4$)**
+* $n = 3$: $\tilde{y}_2[3] = x_2[3] + 2x_2[2] + x_2[1] = 1 + 2(2) + 1 = 6$ $\implies$ **SAVE ($y[9] = 6$)**
+* $n = 4$: $\tilde{y}_2[4] = x_2[4] + 2x_2[3] + x_2[2] = 0 + 2(1) + 2 = 4$ $\implies$ **SAVE ($y[10] = 4$)**
+* $n = 5$: $\tilde{y}_2[5] = x_2[5] + 2x_2[4] + x_2[3] = 0 + 2(0) + 1 = 1$ $\implies$ **SAVE ($y[11] = 1$)**
+
+Output for Block 2:
+$$ \tilde{y}_2[n] = \{ \underbrace{0, 1}_{\text{Discard (Aliased)}}, \quad \underbrace{\mathbf{4, 6, 4, 1}}_{\text{Save (Linear Conv)}} \} $$
+
+#### Step 5: Output Assembly by Direct Concatenation
+In Overlap-Save, the total linear convolution output requires **zero arithmetic additions**; the saved segments are concatenated directly:
+$$ y[n] = \{ \mathbf{1, 4, 4, 2}, \quad \mathbf{6, 6, -1, -1}, \quad \mathbf{4, 6, 4, 1} \} $$
+$$ y[n] = \{ \underset{\uparrow}{1}, 4, 4, 2, 6, 6, -1, -1, 4, 6, 4, 1 \} $$
+
+#### Step 6: Analytical Verification via Direct Linear Convolution
+The length of linear convolution is $L_{\text{total}} = L_x + M - 1 = 10 + 3 - 1 = 12$:
+$$ y_{\text{lin}}[n] = x[n] * h[n] = \sum_{k=0}^{2} h[k] \, x[n - k] $$
+* $y[0] = 1(1) = 1$
+* $y[1] = 2(1) + 1(2) = 4$
+* $y[2] = -1(1) + 2(2) + 1(1) = 4$
+* $y[3] = 2(1) - 1(2) + 2(1) = 2$
+* $y[4] = 3(1) + 2(2) - 1(1) = 6$
+* $y[5] = -2(1) + 3(2) + 2(1) = 6$
+* $y[6] = 0(1) - 2(2) + 3(1) = -1$
+* $y[7] = 1(1) + 0(2) - 2(1) = -1$
+* $y[8] = 2(1) + 1(2) + 0(1) = 4$
+* $y[9] = 1(1) + 2(2) + 1(1) = 6$
+* $y[10] = 0(1) + 1(2) + 2(1) = 4$
+* $y[11] = 0(1) + 0(2) + 1(1) = 1$
+
+$$ y_{\text{lin}}[n] = \{ \underset{\uparrow}{1}, 4, 4, 2, 6, 6, -1, -1, 4, 6, 4, 1 \} $$
+The Overlap-Save reconstruction matches the direct linear convolution exactly across all 12 points.
 
 ---
-## 5. SUMMARY: OVERLAP-ADD VS. OVERLAP-SAVE
+## 4. UNIVERSITY EXAMINATION QUESTIONS & MARKING RUBRIC
 
-| Feature | Overlap-Add (OLA) | Overlap-Save (OLS) |
-| :--- | :--- | :--- |
-| **Input Blocks** | Non-overlapping | Overlapping by $M-1$ samples |
-| **Zero Padding** | Yes (Padded with $M-1$ zeros) | No |
-| **FFT Effect** | Tails expand into the zero-padding | Wrap-around corrupts the head |
-| **Output Assembly** | Must **ADD** overlapping tails | **DISCARD** heads, directly concatenate |
-| **Hardware Benefit** | Simple input slicing | Extremely fast output (No adders needed) |
+### Question 1 (15 Marks)
+**(a)** Compare the Overlap-Add and Overlap-Save methods in detail. Under what conditions is Overlap-Save preferred? *(7 Marks)*
+**(b)** Filter $x[n] = \{ \underset{\uparrow}{2}, -1, 3, 1, 2, 0, 1, 4 \}$ with $h[n] = \{ \underset{\uparrow}{1}, -1 \}$ using the Overlap-Save method with $N = 4$ ($L = 3$). *(8 Marks)*
+
+**Model Answer & Step-by-Step Marking Rubric:**
+* **Part (a):**
+  * Detailed structural comparison covering input buffering, convolution, and output synthesis *(4 Marks)*
+  * Explanation: OLS avoids output additions, making it ideal for DMA streaming and parallel SIMD/GPU memory copy pipelines *(3 Marks)*
+* **Part (b):**
+  * Parameter formulation: $M = 2 \implies M - 1 = 1$ overlap sample, $N = 4, L = 3$.
+  * Block partitioning:
+    * $x_0[n] = \{ 0, 2, -1, 3 \}$ (prepend 1 zero)
+    * $x_1[n] = \{ 3, 1, 2, 0 \}$ (overlap $x[2]=3$)
+    * $x_2[n] = \{ 0, 1, 4, 0 \}$ (overlap $x[5]=0$, pad 1 zero) *(2 Marks)*
+  * Circular convolution with $h[n] = \{ 1, -1, 0, 0 \}$ ($N = 4$):
+    * $\tilde{y}_0[n] = \{ 0, 2, -1, 3 \} \circledast_4 \{ 1, -1, 0, 0 \} = \{ -3, \mathbf{2, -3, 4} \}$ (Discard index 0)
+    * $\tilde{y}_1[n] = \{ 3, 1, 2, 0 \} \circledast_4 \{ 1, -1, 0, 0 \} = \{ 3, \mathbf{-2, 1, -2} \}$ (Discard index 0)
+    * $\tilde{y}_2[n] = \{ 0, 1, 4, 0 \} \circledast_4 \{ 1, -1, 0, 0 \} = \{ 0, \mathbf{1, 3, -4} \}$ (Discard index 0) *(4 Marks)*
+  * Concatenation of saved parts (zero output additions):
+    $$ y[n] = \{ \mathbf{2, -3, 4}, \; \mathbf{-2, 1, -2}, \; \mathbf{1, 3, -4} \} $$
+    $$ y[n] = \{ \underset{\uparrow}{2}, -3, 4, -2, 1, -2, 1, 3, -4 \} $$ *(2 Marks)*
+
+---
+## 5. PYTHON VERIFICATION SCRIPT
+```python
+import numpy as np
+
+x = np.array([2, -1, 3, 1, 2, 0, 1, 4])
+h = np.array([1, -1])
+y = np.convolve(x, h)
+print("Direct Linear Convolution:", y)
+```
