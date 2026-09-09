@@ -29,6 +29,11 @@ $$ H(e^{j\omega}) = \frac{1}{M} \frac{\sin(\omega M / 2)}{\sin(\omega / 2)} e^{-
 | **Quantization Effects** | Low sensitivity; free from feedback limit cycles | High sensitivity; susceptible to limit cycles & overflow |
 | **Analog Emulation** | Cannot easily emulate analog prototypes | Directly designed from analog Butterworth/Chebyshev |
 
+
+### Pictorial Representations
+![Moving Average Zplane](images/moving_average_zplane.png)
+![Moving Average Frequency](images/moving_average_frequency.png)
+
 ---
 ## 3. WORKED NUMERICAL EXAMPLES
 

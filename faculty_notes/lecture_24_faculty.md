@@ -43,6 +43,11 @@ Exploiting Hermitian symmetry ($H[N-k] = H^*[k]$):
 | **2 Transition Samples** | $T_1 \approx 0.59; \; T_2 \approx 0.11$ | $-75$ dB |
 | **3 Transition Samples** | $T_1 \approx 0.70; \; T_2 \approx 0.25; \; T_3 \approx 0.02$ | $-95$ dB |
 
+
+### Pictorial Representations
+![Freq Sampling Discrete](../images/freq_sampling_discrete.png)
+![Transition Samples](../images/transition_samples.png)
+
 ---
 ## 3. WORKED NUMERICAL EXAMPLES
 

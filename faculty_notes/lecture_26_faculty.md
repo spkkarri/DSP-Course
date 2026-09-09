@@ -45,6 +45,11 @@ By the end of this lecture, students will be able to:
 * **Order Formula:**
   $$ N \ge \frac{\text{arcosh}(\lambda / \epsilon)}{\text{arcosh}(\Omega_s / \Omega_p)} = \frac{\ln\left[ \frac{\lambda}{\epsilon} + \sqrt{\left(\frac{\lambda}{\epsilon}\right)^2 - 1} \right]}{\ln\left[ \frac{\Omega_s}{\Omega_p} + \sqrt{\left(\frac{\Omega_s}{\Omega_p}\right)^2 - 1} \right]} $$
 
+
+### Pictorial Representations
+![Analog Poles](../images/analog_poles.png)
+![Analog Responses](../images/analog_responses.png)
+
 ---
 ## 3. WORKED NUMERICAL EXAMPLES
 

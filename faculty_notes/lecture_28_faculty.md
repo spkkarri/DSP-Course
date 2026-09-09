@@ -42,6 +42,11 @@ $$ \mathbf{\Omega = \frac{2}{T_d} \tan\left( \frac{\omega}{2} \right)} $$
 * **Prewarping Formulas:**
   $$ \Omega_p = \frac{2}{T_d} \tan\left( \frac{\omega_p}{2} \right), \qquad \Omega_s = \frac{2}{T_d} \tan\left( \frac{\omega_s}{2} \right) $$
 
+
+### Pictorial Representations
+![Bilinear S To Z](../images/bilinear_s_to_z.png)
+![Bilinear Frequency Warping](../images/bilinear_frequency_warping.png)
+
 ---
 ## 3. WORKED NUMERICAL EXAMPLES
 

@@ -48,6 +48,11 @@ Each second-order section realizes a pair of complex conjugate zeros $(z_k, z_k^
 $$ 1 + \beta_{1k} z^{-1} + \beta_{2k} z^{-2} = (1 - z_k z^{-1})(1 - z_k^* z^{-1}) $$
 Where $\beta_{1k} = -2\text{Re}(z_k)$ and $\beta_{2k} = |z_k|^2$.
 
+
+### Pictorial Representations
+![Fir Direct Form](../images/fir_direct_form.png)
+![Fir Cascade Form](../images/fir_cascade_form.png)
+
 ---
 ## 3. WORKED NUMERICAL EXAMPLES
 

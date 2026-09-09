@@ -26,6 +26,11 @@ Substitute $z^{-1} \to g(z^{-1})$ into prototype lowpass filter $H_{\text{LP}}(z
 2. **Lowpass to Lowpass (New Cutoff $\omega_p$):**
    $$ z^{-1} \to \frac{z^{-1} - \alpha}{1 - \alpha z^{-1}}, \qquad \alpha = \frac{\sin\left( \frac{\theta_p - \omega_p}{2} \right)}{\sin\left( \frac{\theta_p + \omega_p}{2} \right)} $$
 
+
+### Pictorial Representations
+![Matched Zplane](images/matched_zplane.png)
+![Spectral Transformation Mappings](images/spectral_transformation_mappings.png)
+
 ---
 ## 3. WORKED NUMERICAL EXAMPLES
 

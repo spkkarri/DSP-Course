@@ -43,6 +43,11 @@ By the end of this lecture, students will be able to:
    $$ \sigma_{y}^2 = \sigma_e^2 \sum_{n=0}^{\infty} |h[n]|^2 = \sigma_e^2 \frac{1}{2\pi j} \oint H(z) H(z^{-1}) z^{-1} dz $$
 3. **Limit Cycle Oscillations:** Nonlinear oscillations in recursive filters caused by arithmetic quantization (deadbands) and two's complement overflow. Mitigated by using saturation arithmetic.
 
+
+### Pictorial Representations
+![Fir Lattice Stage](../images/fir_lattice_stage.png)
+![Lattice Ladder](../images/lattice_ladder.png)
+
 ---
 ## 3. WORKED NUMERICAL EXAMPLES
 

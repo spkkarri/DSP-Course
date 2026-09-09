@@ -44,6 +44,11 @@ $$ r[n] = s[n] * c[n] + v[n] $$
 | **Unit III (L15–L20)** | FIR Direct/Cascade, Linear Phase, IIR DF-I/DF-II, Cascade SOS, Parallel, Lattice | **CO4:** Synthesize robust digital filter structures and analyze quantization effects. |
 | **Unit IV (L21–L30)** | FIR Windows, Frequency Sampling, Analog Prototypes, BLT, MZT, Equalization, LMS | **CO5:** Design FIR and IIR digital filters and apply them to engineering systems. |
 
+
+### Pictorial Representations
+![Adaptive Noise Cancellation](images/adaptive_noise_cancellation.png)
+![Equalizer Response](images/equalizer_response.png)
+
 ---
 ## 3. WORKED NUMERICAL EXAMPLES
 

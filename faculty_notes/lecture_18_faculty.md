@@ -38,6 +38,11 @@ $$ 1 + a_{k1} z^{-1} + a_{k2} z^{-2} = (1 - p_k z^{-1})(1 - p_k^* z^{-1}) = 1 - 
    * Low-$Q$ sections first $\to$ High-$Q$ sections last.
    * Prevents premature signal saturation in early stages.
 
+
+### Pictorial Representations
+![Iir Cascade](../images/iir_cascade.png)
+![Iir Parallel](../images/iir_parallel.png)
+
 ---
 ## 3. WORKED NUMERICAL EXAMPLES
 

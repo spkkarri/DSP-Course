@@ -43,6 +43,11 @@ $$ H(z) = \frac{1 - z^{-M}}{M} \sum_{k=0}^{M-1} \frac{H[k]}{1 - W_M^{-k} z^{-1}}
 * **Comb Filter:** $H_{\text{comb}}(z) = \frac{1 - z^{-M}}{M}$ (FIR, zeros at $z = e^{j 2\pi k / M}$).
 * **Resonator Bank:** $H_k(z) = \frac{H[k]}{1 - W_M^{-k} z^{-1}}$ (All-pole, pole at $z = e^{j 2\pi k / M}$).
 
+
+### Pictorial Representations
+![Linear Phase Fir](../images/linear_phase_fir.png)
+![Frequency Sampling Structure](../images/frequency_sampling_structure.png)
+
 ---
 ## 3. WORKED NUMERICAL EXAMPLES
 

@@ -52,6 +52,11 @@ If $z_0 = r e^{j\theta}$ is a zero, then:
 3. $1/z_0^* = \frac{1}{r} e^{j\theta}$ is a zero.
 Zeros off the unit circle always occur in groups of 4 (quadruplets).
 
+
+### Pictorial Representations
+![Zero Quadruplet](../images/zero_quadruplet.png)
+![Fir Types](../images/fir_types.png)
+
 ---
 ## 3. WORKED NUMERICAL EXAMPLES
 

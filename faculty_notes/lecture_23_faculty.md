@@ -41,6 +41,11 @@ Where $I_0(x) = \sum_{k=0}^{\infty} \left[ \frac{(x/2)^k}{k!} \right]^2$.
 * **Filter Length $N$ Calculation:**
   $$ N \ge \frac{A_s - 7.95}{14.36 \cdot \Delta f} + 1, \quad \Delta f = \frac{\omega_s - \omega_p}{2\pi} $$
 
+
+### Pictorial Representations
+![Window Comparison Shapes](../images/window_comparison_shapes.png)
+![Sidelobe Suppression](../images/sidelobe_suppression.png)
+
 ---
 ## 3. WORKED NUMERICAL EXAMPLES
 

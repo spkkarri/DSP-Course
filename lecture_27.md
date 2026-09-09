@@ -30,6 +30,11 @@ $$ H(z) = T_d \sum_{k=1}^{N} \frac{A_k}{1 - e^{p_k T_d} z^{-1}} $$
   * If $\sigma_k = 0$ ($j\Omega$ axis) $\implies |z_k| = 1$ (On unit circle).
   * If $\sigma_k > 0$ (Right-half $s$-plane) $\implies |z_k| > 1$ (Outside unit circle $\implies$ **Unstable**).
 
+
+### Pictorial Representations
+![Impulse Invariance Mapping](images/impulse_invariance_mapping.png)
+![Aliasing Demonstration](images/aliasing_demonstration.png)
+
 ---
 ## 3. WORKED NUMERICAL EXAMPLES
 

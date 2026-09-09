@@ -40,6 +40,11 @@ By the end of this lecture, students will be able to:
 3. **Hann (Hanning) Window:**
    $$ w[n] = 0.5 - 0.5\cos\left( \frac{2\pi n}{N-1} \right), \quad \Delta\omega = \frac{8\pi}{N}, \quad \text{Peak Sidelobe: } -31 \text{ dB}, \quad A_s = 44 \text{ dB} $$
 
+
+### Pictorial Representations
+![Window Shapes](../images/window_shapes.png)
+![Gibbs Phenomenon](../images/gibbs_phenomenon.png)
+
 ---
 ## 3. WORKED NUMERICAL EXAMPLES
 

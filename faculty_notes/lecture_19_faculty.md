@@ -33,6 +33,10 @@ Where $C = b_N / a_N$ if $M = N$ (and $C = 0$ if $M < N$).
 * **Complex conjugate pole pairs** $p_k, p_k^*$ yield 2nd-order sections:
   $$ \frac{R_k}{1 - p_k z^{-1}} + \frac{R_k^*}{1 - p_k^* z^{-1}} = \frac{2\text{Re}(R_k) - 2\text{Re}(R_k p_k^*) z^{-1}}{1 - 2\text{Re}(p_k) z^{-1} + |p_k|^2 z^{-2}} = \frac{\gamma_{0k} + \gamma_{1k} z^{-1}}{1 + a_{1k} z^{-1} + a_{2k} z^{-2}} $$
 
+
+### Pictorial Representations
+![Iir Parallel Sfg](../images/iir_parallel_sfg.png)
+
 ---
 ## 3. WORKED NUMERICAL EXAMPLES
 

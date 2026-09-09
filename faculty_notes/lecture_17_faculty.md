@@ -49,6 +49,11 @@ $$ y[n] = b_0 x[n] + v_1[n-1] $$
 $$ v_k[n] = b_k x[n] - a_k y[n] + v_{k+1}[n-1], \quad k = 1, 2, \dots, N-1 $$
 $$ v_N[n] = b_N x[n] - a_N y[n] $$
 
+
+### Pictorial Representations
+![Iir Direct Form I](../images/iir_direct_form_i.png)
+![Iir Direct Form Ii](../images/iir_direct_form_ii.png)
+
 ---
 ## 3. WORKED NUMERICAL EXAMPLES
 
