@@ -9,10 +9,6 @@
 \usepackage{float}
 \usepackage{xcolor}
 
-\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Lecture 26: DSP for Power Systems --- Harmonic Analysis \& Phasor Estimation \\ \large (III B.Tech EEE)}
-\author{Lecture Notes (40-Minute Plan)}
-\date{}
-
 \definecolor{darkbg}{HTML}{0d121f}
 \definecolor{lighttext}{HTML}{e2e8f0}
 \definecolor{primary}{HTML}{8b5cf6}
@@ -28,96 +24,126 @@
 }
 
 \begin{document}
-
-\maketitle
-
-\section{Lecture Plan (40 Minutes Breakdown)}
-\begin{itemize}
-    \item \textbf{00:00 -- 05:00 (5 mins):} Power Quality Issues, Harmonics, THD.
-    \item \textbf{05:00 -- 12:00 (7 mins):} Fourier Analysis of Power Signals, DFT.
-    \item \textbf{12:00 -- 17:00 (5 mins):} DFT Spectral Leakage and mitigation.
-    \item \textbf{17:00 -- 22:00 (5 mins):} Phasor Measurement Units (PMUs), TVE.
-    \item \textbf{22:00 -- 27:00 (5 mins):} Recursive (Sliding) DFT.
-    \item \textbf{27:00 -- 32:00 (5 mins):} Kalman Filter for Phasor Tracking.
-    \item \textbf{32:00 -- 35:00 (3 mins):} Protection Relay DSP \& Anti-Aliasing.
-    \item \textbf{35:00 -- 40:00 (5 mins):} Active/Reactive Power from DFT \& Checkpoints.
-\end{itemize}
+\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Lecture 26: Analog Filter Approximations (Butterworth \& Chebyshev) for IIR Design \\ \large (III B.Tech EEE)}\maketitle
 
 \noindent\rule{\textwidth}{0.5pt}
-
-\section{Power Quality Issues}
-Nonlinear loads (VFDs, UPS, rectifiers) draw non-sinusoidal currents. The Total Harmonic Distortion (THD) quantifies this:
-\begin{equation}
-THD_V = \frac{\sqrt{\sum_{k=2}^N V_k^2}}{V_1}
-\end{equation}
-High THD causes motor overheating, transformer derating, and capacitor bank failures.
-
-\section{Fourier Analysis of Power Signals}
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.85\textwidth]{images/power_harmonics_waveform_thd.png}
-    \caption{Power Grid Voltage Distortion and Harmonic Spectrum with Total Harmonic Distortion (THD) Calculation.}
-\end{figure}
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.85\textwidth]{images/sliding_dft_phasor_tracking.png}
-    \caption{Recursive Sliding-DFT Architecture for Real-Time GPS-Synchronized Phasor Measurement Units (PMUs).}
-\end{figure}
-
-
-The fundamental frequency $f_0 = 50/60$ Hz is sampled at $f_s$, requiring an integer number of samples per cycle $N = f_s / f_0$. The DFT yields complex harmonic phasors:
-\begin{equation}
-V_k = \frac{2}{N} \sum_{n=0}^{N-1} x[n] e^{-j \frac{2\pi}{N} k n}
-\end{equation}
-
-\section{DFT Leakage in Power Systems}
-When $f_0$ drifts (e.g., to $49.8$ Hz), the $N$-sample window no longer perfectly spans one cycle. This non-integer cycle lengths cause spectral leakage. Mitigation involves windowing and interpolation-based frequency estimation.
-
-\section{Phasor Measurement Units (PMUs)}
-Synchrophasors are time-synchronized by GPS (1-PPS). The IEEE C37.118 standard requires the Total Vector Error (TVE) to be strictly less than $1\%$:
-\begin{equation}
-\text{Phasor} = \frac{V_{peak}}{\sqrt{2}} e^{j\phi}
-\end{equation}
-\begin{equation}
-\text{TVE} = \sqrt{ \frac{(\hat{X}_r - X_r)^2 + (\hat{X}_i - X_i)^2}{X_r^2 + X_i^2} } \times 100\%
-\end{equation}
-
-\section{Recursive DFT (Sliding DFT)}
-To track real-time phasors efficiently, we update the DFT sample-by-sample. 
-Derivation:
-\begin{align}
-X_k[n] &= \sum_{m=0}^{N-1} x[n-m] W_N^{k(N-1-m)} \\
-X_k[n] &= \left( X_k[n-1] - x[n-N]W_N^0 + x[n]W_N^{kN} \right) W_N^{-k} \\
-X_k[n] &= \left( X_k[n-1] + x[n] - x[n-N] \right) e^{j \frac{2\pi}{N} k}
-\end{align}
-This reduces computation from $O(N \log N)$ for a full FFT to $O(1)$ per harmonic per sample.
-
-\section{Kalman Filter for Phasor Tracking}
-The state model uses phasor amplitude and phase as states, and noisy voltage samples as measurements.
-\begin{align}
-\mathbf{x}_k &= \mathbf{x}_{k-1} + \mathbf{w}_k \\
-z_k &= \mathbf{H}_k \mathbf{x}_k + v_k
-\end{align}
-where $\mathbf{H}_k = [ \cos(k \theta_0) \quad -\sin(k \theta_0) ]$.
-
-\section{Protection Relay DSP}
-Overcurrent, distance, and differential relays use DFT-based phasor estimation. Anti-aliasing filters are designed to cutoff below the Nyquist frequency.
-Analog lowpass prototypes for these anti-aliasing filters are shown in the figures below.
-
-\section{Active and Reactive Power from DFT}
-\begin{align}
-P &= \frac{1}{2}\sum_k |V_k||I_k|\cos(\phi_{Vk}-\phi_{Ik}) \\
-Q &= \frac{1}{2}\sum_k |V_k||I_k|\sin(\phi_{Vk}-\phi_{Ik})
-\end{align}
-
-\section{Checkpoint Questions}
+\section*{1. LEARNING OBJECTIVES}
+By the end of this lecture, students will be able to:
 \begin{enumerate}
-    \item \textbf{THD Calculation:} Calculate THD given $V_1=230, V_3=40, V_5=30$.
-    \\ \textit{Answer:} $THD_V = \frac{\sqrt{40^2+30^2}}{230} = 21.74\%$.
-    \item \textbf{Samples per Cycle:} For $f_s=2880$ Hz and $f_0=60$ Hz, $N=48$. The 5th harmonic (300 Hz) corresponds to $k=5$.
-    \item \textbf{Recursive DFT Efficiency:} Recursive updates require just 1 complex multiplication per step, compared to $O(N \log N)$ for a full FFT.
+\item \textbf{Calculate} required filter order $N$ and cutoff $\Omega_c$ for Butterworth and Chebyshev analog lowpass prototypes.
+\item \textbf{Determine} stable left-half $s$-plane pole locations for Butterworth and Chebyshev filters.
+\item \textbf{Synthesize} continuous-time transfer functions $H_a(s)$ from given attenuation specifications.
+\item \textbf{Compare} Butterworth, Chebyshev Type I, and Chebyshev Type II responses.
+
+\noindent\rule{\textwidth}{0.5pt}
+\section*{2. MATHEMATICAL FOUNDATIONS}
+
+\subsection*{2.1 Butterworth Filter Approximation}
+\begin{itemize}
+\item \textbf{Magnitude Squared Function:}
+\end{itemize}
 \end{enumerate}
+  $$ |H_a(j\Omega)|^2 = \frac{1}{1 + \epsilon^2 (\Omega / \Omega_p)^{2N}} = \frac{1}{1 + (\Omega / \Omega_c)^{2N}} $$
+\begin{itemize}
+\item \textbf{Order Formula:}
+\end{itemize}
+  $$ N \ge \frac{\log_{10} \sqrt{\frac{10^{0.1 A_s} - 1}{10^{0.1 A_p} - 1}}}{\log_{10}(\Omega_s / \Omega_p)} = \frac{\log_{10}(\lambda / \epsilon)}{\log_{10}(\Omega_s / \Omega_p)} $$
+\begin{itemize}
+\item \textbf{3-dB Cutoff Frequency $\Omega_c$:}
+\end{itemize}
+  $$ \Omega_c = \frac{\Omega_p}{(10^{0.1 A_p} - 1)^{1/(2N)}} $$
+\begin{itemize}
+\item \textbf{Pole Locations in $s$-Plane:}
+\end{itemize}
+  $2N$ poles uniformly spaced on circle of radius $\Omega_c$. The $N$ stable left-half plane poles are:
+  $$ s_k = \Omega_c e^{j \frac{\pi}{2} [1 + (2k-1)/N]}, \quad k = 1, 2, \dots, N $$
+
+\subsection*{2.2 Chebyshev Type I Filter Approximation}
+\begin{itemize}
+\item \textbf{Magnitude Squared Function:}
+\end{itemize}
+  $$ |H_a(j\Omega)|^2 = \frac{1}{1 + \epsilon^2 C_N^2(\Omega / \Omega_p)}, \quad \epsilon = \sqrt{10^{0.1 A_p} - 1} $$
+\begin{itemize}
+\item \textbf{Chebyshev Polynomials:}
+\end{itemize}
+  $$ C_N(x) = \begin{cases} \cos(N \arccos x), \& |x| \le 1 \\ \cosh(N \text{arcosh } x), \& |x| > 1 \end{cases} $$
+  Recursion: $C_{N+1}(x) = 2x C_N(x) - C_{N-1}(x)$ with $C_0(x) = 1, C_1(x) = x$.
+\begin{itemize}
+\item \textbf{Order Formula:}
+\end{itemize}
+  $$ N \ge \frac{\text{arcosh}(\lambda / \epsilon)}{\text{arcosh}(\Omega_s / \Omega_p)} = \frac{\ln\left[ \frac{\lambda}{\epsilon} + \sqrt{\left(\frac{\lambda}{\epsilon}\right)^2 - 1} \right]}{\ln\left[ \frac{\Omega_s}{\Omega_p} + \sqrt{\left(\frac{\Omega_s}{\Omega_p}\right)^2 - 1} \right]} $$
+
+
+\subsection*{Pictorial Representations}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{images/analog_poles.png}
+\caption{Analog Poles}
+\end{figure}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{images/analog_responses.png}
+\caption{Analog Responses}
+\end{figure}
+
+\noindent\rule{\textwidth}{0.5pt}
+\section*{3. WORKED NUMERICAL EXAMPLES}
+
+\subsection*{Example 26.1: Analog Butterworth Lowpass Filter Design}
+\textbf{Problem:} Design an analog Butterworth lowpass filter to satisfy:
+\begin{itemize}
+\item Passband loss $\le 1\text{ dB}$ at $\Omega_p = 100\text{ rad/s}$ ($A_p = 1\text{ dB}$)
+\item Stopband attenuation $\ge 20\text{ dB}$ at $\Omega_s = 200\text{ rad/s}$ ($A_s = 20\text{ dB}$)
+
+\end{itemize}
+\textbf{Solution:}
+\begin{enumerate}
+\item \textbf{Calculate Order $N$:}
+\end{enumerate}
+   * $\epsilon = \sqrt{10^{0.1(1)} - 1} = \sqrt{1.2589 - 1} = \sqrt{0.2589} = 0.5088$
+   * $\lambda = \sqrt{10^{0.1(20)} - 1} = \sqrt{100 - 1} = \sqrt{99} = 9.9499$
+   * Ratio $\frac{\lambda}{\epsilon} = \frac{9.9499}{0.5088} = 19.555$
+   * Frequency ratio $\frac{\Omega_s}{\Omega_p} = \frac{200}{100} = 2.0$
+   $$ N \ge \frac{\log_{10}(19.555)}{\log_{10}(2.0)} = \frac{1.2913}{0.3010} = 4.29 \implies \mathbf{N = 5} $$
+\begin{enumerate}
+\item \textbf{Calculate Cutoff Frequency $\Omega_c$:}
+\end{enumerate}
+   $$ \Omega_c = \frac{\Omega_p}{\epsilon^{1/N}} = \frac{100}{(0.5088)^{1/5}} = \frac{100}{0.8735} = \mathbf{114.48 \text{ rad/s}} $$
+\begin{enumerate}
+\item \textbf{Poles ($N=5$):}
+\end{enumerate}
+   * $s_1, s_5 = 114.48 e^{j (180^\circ \pm 72^\circ)} = 114.48 (-0.3090 \pm j 0.9511) = -35.37 \pm j 108.88$
+   * $s_2, s_4 = 114.48 e^{j (180^\circ \pm 36^\circ)} = 114.48 (-0.8090 \pm j 0.5878) = -92.62 \pm j 67.29$
+   * $s_3 = 114.48 e^{j 180^\circ} = -114.48$
+\begin{enumerate}
+\item \textbf{Transfer Function $H_a(s)$:}
+\end{enumerate}
+   $$ H_a(s) = \frac{\Omega_c^5}{(s + 114.48)(s^2 + 185.24s + 13106)(s^2 + 70.74s + 13106)} $$
+
+\noindent\rule{\textwidth}{0.5pt}
+\section*{4. UNIVERSITY EXAMINATION QUESTIONS \& MARKING RUBRIC}
+
+\subsection*{Question 1 (15 Marks)}
+\textbf{(a)} Derive the expressions for the order $N$ and cutoff frequency $\Omega_c$ of an analog Butterworth lowpass filter. *(8 Marks)*
+\textbf{(b)} Design an analog Chebyshev Type I lowpass filter with $1\text{ dB}$ passband ripple up to $\Omega_p = 10\text{ rad/s}$ and stopband attenuation $\ge 30\text{ dB}$ at $\Omega_s = 25\text{ rad/s}$. Find order $N$. *(7 Marks)*
+
+\textbf{Model Answer \& Step-by-Step Marking Rubric:}
+\begin{itemize}
+\item \textbf{Part (a):} Complete derivation from magnitude equations at $\Omega_p$ and $\Omega_s$ *(8 Marks)*
+\item \textbf{Part (b):}
+\end{itemize}
+  * $\epsilon = \sqrt{10^{0.1} - 1} = 0.5088, \; \lambda = \sqrt{10^3 - 1} = 31.607$
+  * $\frac{\lambda}{\epsilon} = \frac{31.607}{0.5088} = 62.12$
+  * $\frac{\Omega_s}{\Omega_p} = \frac{25}{10} = 2.5$
+  * $N \ge \frac{\text{arcosh}(62.12)}{\text{arcosh}(2.5)} = \frac{\ln(62.12 + \sqrt{62.12^2 - 1})}{\ln(2.5 + \sqrt{2.5^2 - 1})} = \frac{4.822}{1.5668} = 3.078 \implies \mathbf{N = 4}$ *(7 Marks)*
+
+\noindent\rule{\textwidth}{0.5pt}
+\section*{5. PYTHON VERIFICATION SCRIPT}
+\begin{verbatim}
+import scipy.signal as signal
+
+N, Wn = signal.buttord(100, 200, 1, 20, analog=True)
+print(f"Butterworth Order: {N}, Cutoff: {Wn:.2f} rad/s")
+\end{verbatim}
 
 \end{document}

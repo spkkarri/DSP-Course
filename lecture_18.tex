@@ -9,10 +9,6 @@
 \usepackage{float}
 \usepackage{xcolor}
 
-\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Lecture 18: Wavelet Transform \& Multiresolution Analysis \\ \large (III B.Tech EEE)}
-\author{Lecture Notes (40-Minute Plan)}
-\date{}
-
 \definecolor{darkbg}{HTML}{0d121f}
 \definecolor{lighttext}{HTML}{e2e8f0}
 \definecolor{primary}{HTML}{8b5cf6}
@@ -28,125 +24,111 @@
 }
 
 \begin{document}
-
-\maketitle
-
-\section{Lecture Plan (40 Minutes Breakdown)}
-\begin{itemize}
-    \item \textbf{00:00 -- 07:00 (7 mins):} \textbf{Why Wavelets?} Limitations of STFT, time-frequency resolution trade-offs, and constant-Q analysis.
-    \item \textbf{07:00 -- 14:00 (7 mins):} \textbf{Continuous Wavelet Transform (CWT):} Definition, mother wavelet, scaling and translation, admissibility condition.
-    \item \textbf{14:00 -- 18:00 (4 mins):} \textbf{Common Mother Wavelets:} Haar, Morlet, Mexican Hat, Daubechies.
-    \item \textbf{18:00 -- 25:00 (7 mins):} \textbf{Multiresolution Analysis (MRA):} Nested subspaces, scaling function, wavelet function, two-scale relations.
-    \item \textbf{25:00 -- 32:00 (7 mins):} \textbf{Discrete Wavelet Transform (DWT):} Filter banks, Mallat's Algorithm, perfect reconstruction.
-    \item \textbf{32:00 -- 37:00 (5 mins):} \textbf{Numerical Example:} Haar DWT of a 4-point signal.
-    \item \textbf{37:00 -- 40:00 (3 mins):} \textbf{Applications \& Checkpoints:} JPEG 2000, ECG, Q\&A.
-\end{itemize}
+\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Lecture 18: IIR Cascade Realization \& Second-Order Sections (SOS) \\ \large (III B.Tech EEE)}\maketitle
 
 \noindent\rule{\textwidth}{0.5pt}
-
-\section{Why Wavelets? The Limitations of STFT}
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.85\textwidth]{images/stft_vs_wavelet_tiling.png}
-    \caption{Time-Frequency Tiling: Rigid STFT Grid vs. Adaptive Multiresolution Wavelet Plane.}
-\end{figure}
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.85\textwidth]{images/dwt_filterbank_mallat.png}
-    \caption{Mallat's Pyramidal Multiresolution Discrete Wavelet Transform (DWT) 3-Level Filter Bank.}
-\end{figure}
-
-
-The Fourier Transform provides frequency content but loses time information. The Short-Time Fourier Transform (STFT) addresses this by multiplying the signal $x(t)$ with a sliding window $w(t)$:
-\begin{equation}
-X(t, \omega) = \int_{-\infty}^{\infty} x(\tau) w(\tau - t) e^{-j\omega \tau} d\tau
-\end{equation}
-
-\textbf{Physical Intuition:} A narrow window provides excellent time resolution but poor frequency resolution. A wide window provides excellent frequency resolution but poor time resolution. In STFT, the window size is fixed, so resolution is the same at all frequencies. Wavelets solve this using \textbf{constant-Q analysis}: narrow windows at high frequencies (for transients) and wide windows at low frequencies (for slow drifts).
-
-\section{Continuous Wavelet Transform (CWT)}
-The CWT is defined as:
-\begin{equation}
-W_x(a,b) = \frac{1}{\sqrt{|a|}} \int_{-\infty}^{\infty} x(t)\psi^*\left(\frac{t-b}{a}\right)dt
-\end{equation}
-Where $\psi(t)$ is the mother wavelet, $a > 0$ is the scale, and $b$ is the translation.
-
-For the inverse transform to exist, $\psi(t)$ must satisfy the \textbf{admissibility condition}:
-\begin{equation}
-C_\psi = \int_0^\infty \frac{|\Psi(\omega)|^2}{\omega}d\omega < \infty
-\end{equation}
-
-\textbf{Theorem: Zero Mean Property}\\
-If $C_\psi < \infty$ and $\Psi(\omega)$ is continuous at $\omega = 0$, then $\Psi(0) = 0$.
-
-\textit{Proof:}
-Assume $\Psi(0) = c \neq 0$. As $\omega \to 0$, $|\Psi(\omega)|^2 \to |c|^2$. The integrand becomes $\frac{|c|^2}{\omega}$, and $\int_0^\epsilon \frac{|c|^2}{\omega} d\omega \to \infty$, violating $C_\psi < \infty$. Thus, $\Psi(0) = 0$.
-
-\section{Common Mother Wavelets}
-\begin{itemize}
-    \item \textbf{Haar Wavelet:} Simplest, a step function. Good for transitions.
-    \item \textbf{Morlet Wavelet:} $\psi(t) = e^{-t^2/2}e^{j\omega_0 t}$. Modulated Gaussian, optimal joint time-frequency resolution.
-    \item \textbf{Mexican Hat:} $\psi(t) = -\frac{d^2}{dt^2}e^{-t^2/2}$. Second derivative of a Gaussian, used in edge detection.
-    \item \textbf{Daubechies:} Compactly supported orthogonal wavelets, used in compression.
-\end{itemize}
-
-\section{Multiresolution Analysis (MRA)}
-MRA defines nested subspaces $V_j$:
-\begin{equation}
-\dots \subset V_2 \subset V_1 \subset V_0 \subset V_{-1} \subset \dots
-\end{equation}
-A scaling function $\phi(t)$ spans $V_0$. The wavelet function $\psi(t)$ spans the orthogonal complement $W_0$, where $V_{-1} = V_0 \oplus W_0$.
-
-This leads to the \textbf{two-scale relations}:
-\begin{align}
-\phi(t) &= \sqrt{2}\sum_{k} h_0[k]\phi(2t-k) \\
-\psi(t) &= \sqrt{2}\sum_{k} h_1[k]\phi(2t-k)
-\end{align}
-
-\section{Discrete Wavelet Transform (DWT)}
-The DWT uses a filter bank. The signal is passed through lowpass $H_0$ and highpass $H_1$, then downsampled by 2 to yield approximation $cA$ and detail $cD$.
-The Quadrature Mirror Filter (QMF) relation is:
-\begin{equation}
-h_1[k] = (-1)^k h_0[N-1-k]
-\end{equation}
-Mallat's algorithm iteratively applies this to $cA$. A $J$-level DWT yields $J+1$ subbands.
-
-\subsection{Perfect Reconstruction}
-The synthesis filter bank conditions for Perfect Reconstruction (PR) are:
-\begin{align}
-G_0(z)H_0(-z) + G_1(z)H_1(-z) &= 0 \quad (\text{Alias Cancellation}) \\
-G_0(z)H_0(z) + G_1(z)H_1(z) &= 2z^{-L} \quad (\text{Distortion-free})
-\end{align}
-
-\section{Numerical Example: Haar DWT}
-1-level Haar DWT of $x = [4, 6, 8, 2]$ using $h_0 = \frac{1}{\sqrt{2}}[1,1], h_1 = \frac{1}{\sqrt{2}}[1,-1]$.
-
-\textbf{Approximation $cA$:}
-\begin{align*}
-cA[0] &= 4\left(\frac{1}{\sqrt{2}}\right) + 6\left(\frac{1}{\sqrt{2}}\right) = 5\sqrt{2} \\
-cA[1] &= 8\left(\frac{1}{\sqrt{2}}\right) + 2\left(\frac{1}{\sqrt{2}}\right) = 5\sqrt{2}
-\end{align*}
-
-\textbf{Detail $cD$:}
-\begin{align*}
-cD[0] &= 4\left(\frac{1}{\sqrt{2}}\right) + 6\left(-\frac{1}{\sqrt{2}}\right) = -\sqrt{2} \\
-cD[1] &= 8\left(\frac{1}{\sqrt{2}}\right) + 2\left(-\frac{1}{\sqrt{2}}\right) = 3\sqrt{2}
-\end{align*}
-
-\section{Applications}
-\begin{itemize}
-    \item \textbf{Image Compression:} JPEG 2000 uses DWT avoiding blocking artifacts.
-    \item \textbf{ECG Denoising:} Thresholding DWT details to remove noise.
-    \item \textbf{Seismic \& Edge Detection.}
-\end{itemize}
-
-\section{Checkpoints}
+\section*{1. LEARNING OBJECTIVES}
+By the end of this lecture, students will be able to:
 \begin{enumerate}
-    \item \textbf{Why STFT struggles?} Fixed window width causes a rigid time-frequency trade-off. Wavelets solve this with variable windows.
-    \item \textbf{Proof of zero mean:} If mean $\neq 0$, $\Psi(0) \neq 0$. The admissibility integral $\int \frac{|\Psi|^2}{\omega}$ would diverge at $\omega=0$.
-    \item \textbf{3-level DWT subbands:} Yields 4 subbands: $cD_1, cD_2, cD_3, cA_3$.
+\item \textbf{Factor} high-order IIR transfer functions into second-order biquad sections (SOS).
+\item \textbf{Apply} pole-zero pairing rules to minimize frequency response peaking.
+\item \textbf{Order} biquad sections to optimize signal-to-noise ratio (SNR) and prevent overflow.
+\item \textbf{Draw} complete Cascade realization signal flow graphs.
+
+\noindent\rule{\textwidth}{0.5pt}
+\section*{2. MATHEMATICAL FOUNDATIONS}
+
+\subsection*{2.1 The Cascade Realization Formulation}
 \end{enumerate}
+$$ H(z) = g \prod_{k=1}^{K} H_k(z) = g \prod_{k=1}^{K} \frac{b_{k0} + b_{k1} z^{-1} + b_{k2} z^{-2}}{1 + a_{k1} z^{-1} + a_{k2} z^{-2}}, \quad K = \lceil N/2 \rceil $$
+Each biquad $H_k(z)$ realizes one real pole pair and one real zero pair:
+$$ 1 + a_{k1} z^{-1} + a_{k2} z^{-2} = (1 - p_k z^{-1})(1 - p_k^* z^{-1}) = 1 - 2r_k \cos(\theta_k) z^{-1} + r_k^2 z^{-2} $$
+
+\subsection*{2.2 Pairing and Ordering Rules}
+\begin{enumerate}
+\item \textbf{Pole-Zero Pairing:}
+\end{enumerate}
+   * Pair the complex pole pair $p_k$ having highest $Q$ (closest to unit circle) with the zero pair $z_k$ closest to it in angle $\theta$.
+   * This cancels large resonance peaks, keeping the section gain $|H_k(e^{j\omega})|$ relatively flat.
+\begin{enumerate}
+\item \textbf{Section Ordering:}
+\end{enumerate}
+   * Arrange sections in order of \textbf{increasing pole radius $r_k$} (increasing $Q$ / peaking).
+   * Low-$Q$ sections first $\to$ High-$Q$ sections last.
+   * Prevents premature signal saturation in early stages.
+
+
+\subsection*{Pictorial Representations}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{images/iir_cascade.png}
+\caption{Iir Cascade}
+\end{figure}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{images/iir_parallel.png}
+\caption{Iir Parallel}
+\end{figure}
+
+\noindent\rule{\textwidth}{0.5pt}
+\section*{3. WORKED NUMERICAL EXAMPLES}
+
+\subsection*{Example 18.1: 4th-Order IIR Cascade Realization}
+\textbf{Problem:} Realize $H(z) = \frac{(1 + z^{-1})(1 - \sqrt{2} z^{-1} + z^{-2})}{(1 - 0.9 e^{j\pi/4} z^{-1})(1 - 0.9 e^{-j\pi/4} z^{-1})(1 - 0.6 z^{-1})(1 + 0.5 z^{-1})}$ in Cascade Form with optimal pairing.
+
+\textbf{Solution:}
+\begin{enumerate}
+\item \textbf{Poles:}
+\end{enumerate}
+   * Complex pair: $p_{1,2} = 0.9 e^{\pm j\pi/4} \implies 1 - 2(0.9)\cos(\pi/4) z^{-1} + 0.81 z^{-2} = 1 - 1.2728 z^{-1} + 0.81 z^{-2}$. (Radius $r = 0.9$, high $Q$).
+   * Real poles: $p_3 = 0.6, \; p_4 = -0.5 \implies (1 - 0.6 z^{-1})(1 + 0.5 z^{-1}) = 1 - 0.1 z^{-1} - 0.3 z^{-2}$. (Low $Q$).
+\begin{enumerate}
+\item \textbf{Zeros:}
+\end{enumerate}
+   * Complex pair: $z_{1,2} = 1 \cdot e^{\pm j\pi/4} \implies 1 - \sqrt{2} z^{-1} + z^{-2} = 1 - 1.4142 z^{-1} + z^{-2}$ (at angle $\pi/4$).
+   * Real zeros: $z_3 = -1 \implies (1 + z^{-1})$.
+\begin{enumerate}
+\item \textbf{Optimal Pairing:}
+\end{enumerate}
+   * Pair poles at angle $\pi/4$ ($p_{1,2}$) with zeros at angle $\pi/4$ ($z_{1,2}$).
+   * Section 1 (Low $Q$): $H_1(z) = \frac{1 + z^{-1}}{1 - 0.1 z^{-1} - 0.3 z^{-2}}$.
+   * Section 2 (High $Q$): $H_2(z) = \frac{1 - 1.4142 z^{-1} + z^{-2}}{1 - 1.2728 z^{-1} + 0.81 z^{-2}}$.
+\begin{enumerate}
+\item \textbf{Ordering:} Section 1 followed by Section 2.
+
+\noindent\rule{\textwidth}{0.5pt}
+\section*{4. UNIVERSITY EXAMINATION QUESTIONS \& MARKING RUBRIC}
+
+\subsection*{Question 1 (15 Marks)}
+\end{enumerate}
+\textbf{(a)} Why are direct form structures not suitable for implementing high-order IIR filters? Explain coefficient quantization sensitivity. *(6 Marks)*
+\textbf{(b)} Realize the transfer function in Cascade Form:
+$$ H(z) = \frac{1 + \frac{1}{3} z^{-1}}{\left(1 - \frac{1}{2} z^{-1}\right)\left(1 - \frac{1}{4} z^{-1} + \frac{1}{2} z^{-2}\right)} $$
+Draw the complete signal flow graph using Direct Form II biquads. *(9 Marks)*
+
+\textbf{Model Answer \& Step-by-Step Marking Rubric:}
+\begin{itemize}
+\item \textbf{Part (a):}
+\end{itemize}
+  * Root sensitivity explanation: Roots of $A(z)$ depend non-linearly on polynomial coefficients. In high-order polynomials, $1\%$ coefficient perturbation can displace poles by $50\%$ or move them outside $|z|=1$ *(6 Marks)*
+\begin{itemize}
+\item \textbf{Part (b):}
+\end{itemize}
+  * Split into 1st-order and 2nd-order sections:
+    $H_1(z) = \frac{1 + \frac{1}{3} z^{-1}}{1 - \frac{1}{2} z^{-1}}, \quad H_2(z) = \frac{1}{1 - \frac{1}{4} z^{-1} + \frac{1}{2} z^{-2}}$ *(4 Marks)*
+  * Neatly drawn Cascade SFG of $H_1(z)$ cascaded into $H_2(z)$ using canonical DF-II sections *(5 Marks)*
+
+\noindent\rule{\textwidth}{0.5pt}
+\section*{5. PYTHON VERIFICATION SCRIPT}
+\begin{verbatim}
+import scipy.signal as signal
+import numpy as np
+
+b = [1, 1/3]
+a = np.convolve([1, -0.5], [1, -0.25, 0.5])
+sos = signal.tf2sos(b, a)
+print("Computed SOS:")
+print(sos)
+\end{verbatim}
 
 \end{document}
