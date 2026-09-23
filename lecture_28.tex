@@ -24,7 +24,7 @@
 }
 
 \begin{document}
-\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Lecture 28: Bilinear Transformation (BLT) Method \\ \large (III B.Tech EEE)}\maketitle
+\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Lecture 28: IIR filter design - bilinear transformation \\ \large (III B.Tech EEE)}\maketitle
 
 \noindent\rule{\textwidth}{0.5pt}
 \section*{1. LEARNING OBJECTIVES}
@@ -33,13 +33,12 @@ By the end of this lecture, students will be able to:
 \item \textbf{Derive} the Bilinear Transformation algebraic mapping and frequency warping relation.
 \item \textbf{Prewarp} digital filter specifications into continuous analog frequencies.
 \item \textbf{Design} Butterworth and Chebyshev IIR digital filters using the Bilinear Transformation.
-\item \textbf{Compare} the Bilinear Transformation with the Impulse Invariance method.
+\end{enumerate}
 
 \noindent\rule{\textwidth}{0.5pt}
 \section*{2. MATHEMATICAL FOUNDATIONS}
 
 \subsection*{2.1 Derivation via Trapezoidal Integration}
-\end{enumerate}
 Consider the first-order differential equation $\frac{dy(t)}{dt} = x(t)$. Integrating over $[(n-1)T_d, n T_d]$ using the trapezoidal rule:
 $$ y(n T_d) - y((n-1)T_d) = \int_{(n-1)T_d}^{n T_d} x(t) dt \approx \frac{T_d}{2} [x(n T_d) + x((n-1)T_d)] $$
 In discrete notation:
@@ -96,42 +95,5 @@ $$ \mathbf{\Omega = \frac{2}{T_d} \tan\left( \frac{\omega}{2} \right)} $$
 \end{enumerate}
    * At DC ($\omega = 0, z = 1$): $H(1) = \frac{0.2452(2)}{1 - 0.5095} = \frac{0.4904}{0.4905} \approx 1.0$ (0 dB).
    * At half-sampling ($\omega = \pi, z = -1$): $H(-1) = \frac{0.2452(0)}{1 + 0.5095} = 0$ ($-\infty$ dB).
-
-\noindent\rule{\textwidth}{0.5pt}
-\section*{4. UNIVERSITY EXAMINATION QUESTIONS \& MARKING RUBRIC}
-
-\subsection*{Question 1 (15 Marks)}
-\textbf{(a)} Derive the Bilinear Transformation and the frequency warping equation. Explain the necessity of prewarping. *(8 Marks)*
-\textbf{(b)} Design a digital Butterworth lowpass filter satisfying:
-\begin{itemize}
-\item $0.8 \le |H(e^{j\omega})| \le 1.0$ for $0 \le \omega \le 0.2\pi$
-\item $|H(e^{j\omega})| \le 0.2$ for $0.6\pi \le \omega \le \pi$
-\end{itemize}
-Use Bilinear Transformation with $T_d = 1\text{ s}$. *(7 Marks)*
-
-\textbf{Model Answer \& Step-by-Step Marking Rubric:}
-\begin{itemize}
-\item \textbf{Part (a):}
-\end{itemize}
-  * Trapezoidal derivation of $s = \frac{2}{T_d}\frac{1-z^{-1}}{1+z^{-1}}$ *(4 Marks)*
-  * Warping derivation $\Omega = \frac{2}{T_d}\tan(\omega/2)$ and prewarping explanation *(4 Marks)*
-\begin{itemize}
-\item \textbf{Part (b):}
-\end{itemize}
-  * Prewarp: $\Omega_p = 2\tan(0.1\pi) = 0.6498, \; \Omega_s = 2\tan(0.3\pi) = 2.7528$ *(2 Marks)*
-  * Specs: $A_p = -20\log_{10}(0.8) = 1.9382\text{ dB}, \; A_s = -20\log_{10}(0.2) = 13.9794\text{ dB}$ *(1 Mark)*
-  * Order calculation: $N \ge \frac{\log_{10}[(10^{1.398}-1)/(10^{0.1938}-1)]}{2\log_{10}(2.7528/0.6498)} = \frac{\log_{10}(24/0.5623)}{2\log_{10}(4.236) } = \frac{1.6303}{1.254} = 1.30 \implies \mathbf{N = 2}$ *(2 Marks)*
-  * Synthesize 2nd-order Butterworth $H_a(s)$ and substitute $s \to 2\frac{1-z^{-1}}{1+z^{-1}}$ *(2 Marks)*
-
-\noindent\rule{\textwidth}{0.5pt}
-\section*{5. PYTHON VERIFICATION SCRIPT}
-\begin{verbatim}
-import scipy.signal as signal
-
-\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Butterworth BLT design \\ \large (III B.Tech EEE)}\maketitle
-b, a = signal.butter(2, 0.2, btype='low', analog=False)
-print("Digital Filter b:", np.round(b, 4))
-print("Digital Filter a:", np.round(a, 4))
-\end{verbatim}
 
 \end{document}

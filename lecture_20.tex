@@ -24,7 +24,7 @@
 }
 
 \begin{document}
-\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Lecture 20: Lattice \& Lattice-Ladder Structures \& Finite Word-Length Effects \\ \large (III B.Tech EEE)}\maketitle
+\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Lecture 20: IIR Filter - Lattice Form Realization \\ \large (III B.Tech EEE)}\maketitle
 
 \noindent\rule{\textwidth}{0.5pt}
 \section*{1. LEARNING OBJECTIVES}
@@ -32,8 +32,8 @@ By the end of this lecture, students will be able to:
 \begin{enumerate}
 \item \textbf{Convert} FIR direct form coefficients to lattice reflection coefficients $k_m$ using the step-down algorithm.
 \item \textbf{Evaluate} IIR filter stability directly from reflection coefficients.
-\item \textbf{Construct} signal flow graphs for FIR lattice and IIR lattice-ladder filters.
-\item \textbf{Quantify} round-off noise power and identify limit cycle conditions.
+\item \textbf{Construct} signal flow graphs for Lattice form realization.
+\end{enumerate}
 
 \noindent\rule{\textwidth}{0.5pt}
 \section*{2. MATHEMATICAL FOUNDATIONS}
@@ -42,7 +42,6 @@ By the end of this lecture, students will be able to:
 \begin{itemize}
 \item \textbf{Lattice Recursion:}
 \end{itemize}
-\end{enumerate}
   $$ A_m(z) = A_{m-1}(z) + k_m z^{-1} B_{m-1}(z) $$
   $$ B_m(z) = z^{-m} A_m(z^{-1}) \quad (\text{Reverse Polynomial}) $$
 \begin{itemize}
@@ -54,27 +53,11 @@ By the end of this lecture, students will be able to:
      $$ \alpha_{m-1}(i) = \frac{\alpha_m(i) - k_m \alpha_m(m - i)}{1 - k_m^2}, \quad i = 1, 2, \dots, m-1 $$
      $$ k_{m-1} = \alpha_{m-1}(m-1) $$
 
-\subsection*{2.2 Finite Word-Length Effects Summary}
-\begin{enumerate}
-\item \textbf{Coefficient Quantization:} Shifts poles in the $z$-plane; high-order direct forms are severely sensitive; lattice and cascade forms are highly robust.
-\item \textbf{Round-off Noise:} Fixed-point truncation error modeled as white noise with variance $\sigma_e^2 = \frac{2^{-2B}}{12}$ for $B$-bit quantization. Output noise power:
-\end{enumerate}
-   $$ \sigma_{y}^2 = \sigma_e^2 \sum_{n=0}^{\infty} |h[n]|^2 = \sigma_e^2 \frac{1}{2\pi j} \oint H(z) H(z^{-1}) z^{-1} dz $$
-\begin{enumerate}
-\item \textbf{Limit Cycle Oscillations:} Nonlinear oscillations in recursive filters caused by arithmetic quantization (deadbands) and two's complement overflow. Mitigated by using saturation arithmetic.
-
-
 \subsection*{Pictorial Representations}
-\end{enumerate}
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.85\textwidth]{images/fir_lattice_stage.png}
 \caption{Fir Lattice Stage}
-\end{figure}
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.85\textwidth]{images/lattice_ladder.png}
-\caption{Lattice Ladder}
 \end{figure}
 
 \noindent\rule{\textwidth}{0.5pt}
@@ -110,44 +93,5 @@ $$ A_3(z) = 1 - 0.9 z^{-1} + 0.64 z^{-2} - 0.5 z^{-3} $$
 \end{itemize}
   $|k_1| = 0.6170 < 1, \; |k_2| = 0.2533 < 1, \; |k_3| = 0.5000 < 1$.
   All $|k_m| < 1 \implies$ The corresponding all-pole filter is \textbf{Stable}.
-
-\noindent\rule{\textwidth}{0.5pt}
-\section*{4. UNIVERSITY EXAMINATION QUESTIONS \& MARKING RUBRIC}
-
-\subsection*{Question 1 (15 Marks)}
-\textbf{(a)} State the Schur-Cohn stability criterion for digital filters. Using the step-down algorithm, determine if the system is stable:
-$$ H(z) = \frac{1}{1 - 1.2 z^{-1} + 0.8 z^{-2} - 0.2 z^{-3}} $$
-*(9 Marks)*
-\textbf{(b)} Discuss limit cycle oscillations in recursive digital filters. Explain the difference between zero-input granular limit cycles and overflow oscillations. *(6 Marks)*
-
-\textbf{Model Answer \& Step-by-Step Marking Rubric:}
-\begin{itemize}
-\item \textbf{Part (a):}
-\end{itemize}
-  * Statement of Schur-Cohn criterion: All $|k_m| < 1$ *(2 Marks)*
-  * Step-down execution:
-    $k_3 = -0.2 \implies 1 - k_3^2 = 0.96$
-    $\alpha_2(1) = \frac{-1.2 - (-0.2)(0.8)}{0.96} = \frac{-1.04}{0.96} = -1.0833$
-    $\alpha_2(2) = \frac{0.8 - (-0.2)(-1.2)}{0.96} = \frac{0.56}{0.96} = 0.5833 \implies k_2 = 0.5833$
-    $1 - k_2^2 = 1 - 0.3403 = 0.6597$
-    $\alpha_1(1) = \frac{-1.0833 - (0.5833)(-1.0833)}{0.6597} = \frac{-1.0833(0.4167)}{0.6597} = -0.6843 \implies k_1 = -0.6843$ *(5 Marks)*
-  * Since $|k_1| = 0.6843 < 1, |k_2| = 0.5833 < 1, |k_3| = 0.2 < 1 \implies$ \textbf{Stable} *(2 Marks)*
-\begin{itemize}
-\item \textbf{Part (b):}
-\end{itemize}
-  * Explanation of granular limit cycles due to quantization rounding *(3 Marks)*
-  * Explanation of overflow oscillations and mitigation via saturation arithmetic *(3 Marks)*
-
-\noindent\rule{\textwidth}{0.5pt}
-\section*{5. PYTHON VERIFICATION SCRIPT}
-\begin{verbatim}
-import numpy as np
-
-\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Verify step-down conversion \\ \large (III B.Tech EEE)}\maketitle
-a = np.array([1.0, -1.2, 0.8, -0.2])
-roots = np.roots(a)
-print("Pole Magnitudes:", np.abs(roots))
-print("All inside unit circle:", np.all(np.abs(roots) < 1.0))
-\end{verbatim}
 
 \end{document}

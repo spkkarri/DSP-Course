@@ -26,22 +26,22 @@
 
 ### Unit III — Digital Filter Synthesis / Structures (L15–L20) &rarr; CO4
 * **L15**: Filter realization basics; FIR direct form and cascade form
-* **L16**: Linear-phase FIR realization; frequency-sampling structure
-* **L17**: IIR — direct form I and direct form II (and transposed forms)
-* **L18**: IIR cascade realization; pole-zero pairing and ordering
-* **L19**: IIR parallel realization
-* **L20**: Lattice and lattice-ladder structures; finite word-length effects (brief)
+* **L16**: FIR filter - linear phase realization
+* **L17**: IIR filter - direct form I and direct form II realization
+* **L18**: IIR filter - cascade form realization
+* **L19**: IIR filter - parallel form realization
+* **L20**: IIR filter - Lattice form realization
 
 ---
 
 ### Unit IV — Digital Filter Design (L21–L30) &rarr; CO5
-* **L21**: FIR specifications; linear phase conditions, four types, location of zeros
-* **L22**: Windowing method — rectangular, Bartlett, Hann; Gibbs phenomenon
-* **L23**: Hamming, Blackman, Kaiser windows; design examples (LPF/HPF)
-* **L24**: Frequency-sampling method for FIR design
-* **L25**: Moving-average filters and other simple FIR filters; comparison FIR vs IIR
-* **L26**: Analog filter review (Butterworth/Chebyshev prototypes) for IIR design
-* **L27**: Impulse-invariance method — derivation, aliasing limitation, example
-* **L28**: Bilinear transformation — frequency warping, prewarping, design example
-* **L29**: Matched z-transform; complete IIR design example (LPF &rarr; BPF via transformation)
-* **L30**: Applications: channel equalization, adaptive noise cancellation, adaptive FIR (LMS); revision and CO mapping
+* **L21**: Linear phase FIR filter, characteristic response, location of zeros
+* **L22**: Design of FIR filter - windowing method
+* **L23**: Design of FIR filter - windowing method (continued)
+* **L24**: Design of FIR filter - frequency sampling
+* **L25**: FIR Filters - moving average filters
+* **L26**: Design of IIR filters from analog filters
+* **L27**: IIR filter design - Impulse invariance
+* **L28**: IIR filter design - bilinear transformation
+* **L29**: IIR filter design - matched z-transform; simple design example
+* **L30**: Equalization and noise cancellation and adaptive FIR filter

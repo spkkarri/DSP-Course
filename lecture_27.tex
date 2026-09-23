@@ -24,7 +24,7 @@
 }
 
 \begin{document}
-\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Lecture 27: Impulse Invariance Method for IIR Filter Design \\ \large (III B.Tech EEE)}\maketitle
+\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Lecture 27: IIR filter design - Impulse invariance \\ \large (III B.Tech EEE)}\maketitle
 
 \noindent\rule{\textwidth}{0.5pt}
 \section*{1. LEARNING OBJECTIVES}
@@ -92,39 +92,5 @@ with sampling interval $T_d = 0.1\text{ s}$.
    $$ z_1 = e^{p_1 T_d} = e^{(-1 + 3j)(0.1)} = e^{-0.1} e^{j 0.3} = 0.9048 e^{j 0.3} = 0.9048(\cos 0.3 + j \sin 0.3) = 0.8644 + 0.2674j $$
    $$ H(z) = T_d \left[ \frac{0.5}{1 - e^{p_1 T_d} z^{-1}} + \frac{0.5}{1 - e^{p_2 T_d} z^{-1}} \right] = 0.1 \left[ \frac{1 - e^{-0.1} \cos(0.3) z^{-1}}{1 - 2 e^{-0.1} \cos(0.3) z^{-1} + e^{-0.2} z^{-2}} \right] $$
    $$ H(z) = \frac{0.1 - 0.08644 z^{-1}}{1 - 1.7288 z^{-1} + 0.8187 z^{-2}} $$
-
-\noindent\rule{\textwidth}{0.5pt}
-\section*{4. UNIVERSITY EXAMINATION QUESTIONS \& MARKING RUBRIC}
-
-\subsection*{Question 1 (15 Marks)}
-\textbf{(a)} Derive the Impulse Invariance mapping equation. Explain why highpass filters cannot be designed using this method. *(8 Marks)*
-\textbf{(b)} Convert $H_a(s) = \frac{2}{(s+1)(s+2)}$ into a digital filter $H(z)$ using Impulse Invariance with $T_d = 1\text{ s}$. *(7 Marks)*
-
-\textbf{Model Answer \& Step-by-Step Marking Rubric:}
-\begin{itemize}
-\item \textbf{Part (a):}
-\end{itemize}
-  * Mathematical derivation from $h_a(t) \to h[n] \to H(z)$ *(5 Marks)*
-  * Explanation of periodic aliasing $\sum H_a(j(\omega + 2\pi k)/T_d)$ corrupting high frequencies *(3 Marks)*
-\begin{itemize}
-\item \textbf{Part (b):}
-\end{itemize}
-  * PFE: $H_a(s) = \frac{2}{s+1} - \frac{2}{s+2}$ *(2 Marks)*
-  * Apply mapping with $T_d = 1$:
-    $H(z) = 1 \cdot \left[ \frac{2}{1 - e^{-1} z^{-1}} - \frac{2}{1 - e^{-2} z^{-1}} \right] = \frac{2}{1 - 0.3679 z^{-1}} - \frac{2}{1 - 0.1353 z^{-1}}$ *(3 Marks)*
-  * Combine:
-    $H(z) = \frac{2(1 - 0.1353 z^{-1}) - 2(1 - 0.3679 z^{-1})}{(1 - 0.3679 z^{-1})(1 - 0.1353 z^{-1})} = \frac{0.4652 z^{-1}}{1 - 0.5032 z^{-1} + 0.0498 z^{-2}}$ *(2 Marks)*
-
-\noindent\rule{\textwidth}{0.5pt}
-\section*{5. PYTHON VERIFICATION SCRIPT}
-\begin{verbatim}
-import scipy.signal as signal
-
-b = [2]
-a = [1, 3, 2]
-bz, az = signal.impinvar(b, a, fs=1.0)
-print("Impulse Invariance Numerator:", np.round(bz, 4))
-print("Impulse Invariance Denominator:", np.round(az, 4))
-\end{verbatim}
 
 \end{document}

@@ -24,7 +24,7 @@
 }
 
 \begin{document}
-\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Lecture 26: Analog Filter Approximations (Butterworth \& Chebyshev) for IIR Design \\ \large (III B.Tech EEE)}\maketitle
+\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Lecture 26: Design of IIR filters from analog filters \\ \large (III B.Tech EEE)}\maketitle
 
 \noindent\rule{\textwidth}{0.5pt}
 \section*{1. LEARNING OBJECTIVES}
@@ -33,7 +33,7 @@ By the end of this lecture, students will be able to:
 \item \textbf{Calculate} required filter order $N$ and cutoff $\Omega_c$ for Butterworth and Chebyshev analog lowpass prototypes.
 \item \textbf{Determine} stable left-half $s$-plane pole locations for Butterworth and Chebyshev filters.
 \item \textbf{Synthesize} continuous-time transfer functions $H_a(s)$ from given attenuation specifications.
-\item \textbf{Compare} Butterworth, Chebyshev Type I, and Chebyshev Type II responses.
+\end{enumerate}
 
 \noindent\rule{\textwidth}{0.5pt}
 \section*{2. MATHEMATICAL FOUNDATIONS}
@@ -41,37 +41,26 @@ By the end of this lecture, students will be able to:
 \subsection*{2.1 Butterworth Filter Approximation}
 \begin{itemize}
 \item \textbf{Magnitude Squared Function:}
-\end{itemize}
-\end{enumerate}
   $$ |H_a(j\Omega)|^2 = \frac{1}{1 + \epsilon^2 (\Omega / \Omega_p)^{2N}} = \frac{1}{1 + (\Omega / \Omega_c)^{2N}} $$
-\begin{itemize}
 \item \textbf{Order Formula:}
-\end{itemize}
   $$ N \ge \frac{\log_{10} \sqrt{\frac{10^{0.1 A_s} - 1}{10^{0.1 A_p} - 1}}}{\log_{10}(\Omega_s / \Omega_p)} = \frac{\log_{10}(\lambda / \epsilon)}{\log_{10}(\Omega_s / \Omega_p)} $$
-\begin{itemize}
 \item \textbf{3-dB Cutoff Frequency $\Omega_c$:}
-\end{itemize}
   $$ \Omega_c = \frac{\Omega_p}{(10^{0.1 A_p} - 1)^{1/(2N)}} $$
-\begin{itemize}
 \item \textbf{Pole Locations in $s$-Plane:}
-\end{itemize}
   $2N$ poles uniformly spaced on circle of radius $\Omega_c$. The $N$ stable left-half plane poles are:
   $$ s_k = \Omega_c e^{j \frac{\pi}{2} [1 + (2k-1)/N]}, \quad k = 1, 2, \dots, N $$
+\end{itemize}
 
 \subsection*{2.2 Chebyshev Type I Filter Approximation}
 \begin{itemize}
 \item \textbf{Magnitude Squared Function:}
-\end{itemize}
   $$ |H_a(j\Omega)|^2 = \frac{1}{1 + \epsilon^2 C_N^2(\Omega / \Omega_p)}, \quad \epsilon = \sqrt{10^{0.1 A_p} - 1} $$
-\begin{itemize}
 \item \textbf{Chebyshev Polynomials:}
-\end{itemize}
-  $$ C_N(x) = \begin{cases} \cos(N \arccos x), \& |x| \le 1 \\ \cosh(N \text{arcosh } x), \& |x| > 1 \end{cases} $$
+  $$ C_N(x) = \begin{cases} \cos(N \arccos x), & |x| \le 1 \\ \cosh(N \text{arcosh } x), & |x| > 1 \end{cases} $$
   Recursion: $C_{N+1}(x) = 2x C_N(x) - C_{N-1}(x)$ with $C_0(x) = 1, C_1(x) = x$.
-\begin{itemize}
 \item \textbf{Order Formula:}
-\end{itemize}
   $$ N \ge \frac{\text{arcosh}(\lambda / \epsilon)}{\text{arcosh}(\Omega_s / \Omega_p)} = \frac{\ln\left[ \frac{\lambda}{\epsilon} + \sqrt{\left(\frac{\lambda}{\epsilon}\right)^2 - 1} \right]}{\ln\left[ \frac{\Omega_s}{\Omega_p} + \sqrt{\left(\frac{\Omega_s}{\Omega_p}\right)^2 - 1} \right]} $$
+\end{itemize}
 
 
 \subsection*{Pictorial Representations}
@@ -99,51 +88,23 @@ By the end of this lecture, students will be able to:
 \textbf{Solution:}
 \begin{enumerate}
 \item \textbf{Calculate Order $N$:}
-\end{enumerate}
-   * $\epsilon = \sqrt{10^{0.1(1)} - 1} = \sqrt{1.2589 - 1} = \sqrt{0.2589} = 0.5088$
-   * $\lambda = \sqrt{10^{0.1(20)} - 1} = \sqrt{100 - 1} = \sqrt{99} = 9.9499$
-   * Ratio $\frac{\lambda}{\epsilon} = \frac{9.9499}{0.5088} = 19.555$
-   * Frequency ratio $\frac{\Omega_s}{\Omega_p} = \frac{200}{100} = 2.0$
+   \begin{itemize}
+   \item $\epsilon = \sqrt{10^{0.1(1)} - 1} = \sqrt{1.2589 - 1} = \sqrt{0.2589} = 0.5088$
+   \item $\lambda = \sqrt{10^{0.1(20)} - 1} = \sqrt{100 - 1} = \sqrt{99} = 9.9499$
+   \item Ratio $\frac{\lambda}{\epsilon} = \frac{9.9499}{0.5088} = 19.555$
+   \item Frequency ratio $\frac{\Omega_s}{\Omega_p} = \frac{200}{100} = 2.0$
+   \end{itemize}
    $$ N \ge \frac{\log_{10}(19.555)}{\log_{10}(2.0)} = \frac{1.2913}{0.3010} = 4.29 \implies \mathbf{N = 5} $$
-\begin{enumerate}
 \item \textbf{Calculate Cutoff Frequency $\Omega_c$:}
-\end{enumerate}
    $$ \Omega_c = \frac{\Omega_p}{\epsilon^{1/N}} = \frac{100}{(0.5088)^{1/5}} = \frac{100}{0.8735} = \mathbf{114.48 \text{ rad/s}} $$
-\begin{enumerate}
 \item \textbf{Poles ($N=5$):}
-\end{enumerate}
-   * $s_1, s_5 = 114.48 e^{j (180^\circ \pm 72^\circ)} = 114.48 (-0.3090 \pm j 0.9511) = -35.37 \pm j 108.88$
-   * $s_2, s_4 = 114.48 e^{j (180^\circ \pm 36^\circ)} = 114.48 (-0.8090 \pm j 0.5878) = -92.62 \pm j 67.29$
-   * $s_3 = 114.48 e^{j 180^\circ} = -114.48$
-\begin{enumerate}
+   \begin{itemize}
+   \item $s_1, s_5 = 114.48 e^{j (180^\circ \pm 72^\circ)} = 114.48 (-0.3090 \pm j 0.9511) = -35.37 \pm j 108.88$
+   \item $s_2, s_4 = 114.48 e^{j (180^\circ \pm 36^\circ)} = 114.48 (-0.8090 \pm j 0.5878) = -92.62 \pm j 67.29$
+   \item $s_3 = 114.48 e^{j 180^\circ} = -114.48$
+   \end{itemize}
 \item \textbf{Transfer Function $H_a(s)$:}
-\end{enumerate}
    $$ H_a(s) = \frac{\Omega_c^5}{(s + 114.48)(s^2 + 185.24s + 13106)(s^2 + 70.74s + 13106)} $$
-
-\noindent\rule{\textwidth}{0.5pt}
-\section*{4. UNIVERSITY EXAMINATION QUESTIONS \& MARKING RUBRIC}
-
-\subsection*{Question 1 (15 Marks)}
-\textbf{(a)} Derive the expressions for the order $N$ and cutoff frequency $\Omega_c$ of an analog Butterworth lowpass filter. *(8 Marks)*
-\textbf{(b)} Design an analog Chebyshev Type I lowpass filter with $1\text{ dB}$ passband ripple up to $\Omega_p = 10\text{ rad/s}$ and stopband attenuation $\ge 30\text{ dB}$ at $\Omega_s = 25\text{ rad/s}$. Find order $N$. *(7 Marks)*
-
-\textbf{Model Answer \& Step-by-Step Marking Rubric:}
-\begin{itemize}
-\item \textbf{Part (a):} Complete derivation from magnitude equations at $\Omega_p$ and $\Omega_s$ *(8 Marks)*
-\item \textbf{Part (b):}
-\end{itemize}
-  * $\epsilon = \sqrt{10^{0.1} - 1} = 0.5088, \; \lambda = \sqrt{10^3 - 1} = 31.607$
-  * $\frac{\lambda}{\epsilon} = \frac{31.607}{0.5088} = 62.12$
-  * $\frac{\Omega_s}{\Omega_p} = \frac{25}{10} = 2.5$
-  * $N \ge \frac{\text{arcosh}(62.12)}{\text{arcosh}(2.5)} = \frac{\ln(62.12 + \sqrt{62.12^2 - 1})}{\ln(2.5 + \sqrt{2.5^2 - 1})} = \frac{4.822}{1.5668} = 3.078 \implies \mathbf{N = 4}$ *(7 Marks)*
-
-\noindent\rule{\textwidth}{0.5pt}
-\section*{5. PYTHON VERIFICATION SCRIPT}
-\begin{verbatim}
-import scipy.signal as signal
-
-N, Wn = signal.buttord(100, 200, 1, 20, analog=True)
-print(f"Butterworth Order: {N}, Cutoff: {Wn:.2f} rad/s")
-\end{verbatim}
+\end{enumerate}
 
 \end{document}

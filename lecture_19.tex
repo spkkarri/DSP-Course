@@ -24,7 +24,7 @@
 }
 
 \begin{document}
-\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Lecture 19: IIR Parallel Realization \\ \large (III B.Tech EEE)}\maketitle
+\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Lecture 19: IIR Filter - Parallel Form Realization \\ \large (III B.Tech EEE)}\maketitle
 
 \noindent\rule{\textwidth}{0.5pt}
 \section*{1. LEARNING OBJECTIVES}
@@ -74,41 +74,5 @@ Let $z^{-1} = 2 \implies A_1 = \left. \frac{1 + 2(2) + 4}{1 - 0.25(2)} \right. =
 Let $z^{-1} = 4 \implies A_2 = \left. \frac{1 + 2(4) + 16}{1 - 0.5(4)} \right. = \frac{25}{-1} = -25$.
 Evaluating at $z^{-1} = 0$: $H(1) = 1 = C + A_1 + A_2 \implies 1 = C + 18 - 25 \implies C = 8$.
 $$ H(z) = 8 + \frac{18}{1 - 0.5 z^{-1}} - \frac{25}{1 - 0.25 z^{-1}} $$
-
-\noindent\rule{\textwidth}{0.5pt}
-\section*{4. UNIVERSITY EXAMINATION QUESTIONS \& MARKING RUBRIC}
-
-\subsection*{Question 1 (15 Marks)}
-\textbf{(a)} Compare Cascade and Parallel realizations of IIR filters in terms of round-off noise accumulation, hardware pipelining, and pole-zero cancellation. *(6 Marks)*
-\textbf{(b)} Realize the system function in Parallel Form:
-$$ H(z) = \frac{1 - z^{-1}}{(1 - 0.5 z^{-1})(1 - 0.8 z^{-1} + 0.64 z^{-2})} $$
-Draw the complete SFG. *(9 Marks)*
-
-\textbf{Model Answer \& Step-by-Step Marking Rubric:}
-\begin{itemize}
-\item \textbf{Part (a):}
-\end{itemize}
-  * Comparison table covering noise gain, independent branches, and section latency *(6 Marks)*
-\begin{itemize}
-\item \textbf{Part (b):}
-\end{itemize}
-  * Partial fraction setup:
-    $H(z) = \frac{A}{1 - 0.5 z^{-1}} + \frac{B_0 + B_1 z^{-1}}{1 - 0.8 z^{-1} + 0.64 z^{-2}}$ *(3 Marks)*
-  * Residue calculations:
-    $A = \left. \frac{1 - 2}{1 - 0.8(2) + 0.64(4)} \right. = \frac{-1}{1 - 1.6 + 2.56} = \frac{-1}{1.96} \approx -0.5102$ *(3 Marks)*
-  * Complete Parallel SFG drawn with labeled coefficients and shared input *(3 Marks)*
-
-\noindent\rule{\textwidth}{0.5pt}
-\section*{5. PYTHON VERIFICATION SCRIPT}
-\begin{verbatim}
-import scipy.signal as signal
-
-b = [1, 2, 1]
-a = [1, -0.75, 0.125]
-r, p, k = signal.residuez(b, a)
-print("Residues r:", r)
-print("Poles p:", p)
-print("Direct term k:", k)
-\end{verbatim}
 
 \end{document}

@@ -24,16 +24,15 @@
 }
 
 \begin{document}
-\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Lecture 18: IIR Cascade Realization \& Second-Order Sections (SOS) \\ \large (III B.Tech EEE)}\maketitle
+\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Lecture 18: IIR Filter - Cascade Form Realization \\ \large (III B.Tech EEE)}\maketitle
 
 \noindent\rule{\textwidth}{0.5pt}
 \section*{1. LEARNING OBJECTIVES}
 By the end of this lecture, students will be able to:
 \begin{enumerate}
 \item \textbf{Factor} high-order IIR transfer functions into second-order biquad sections (SOS).
-\item \textbf{Apply} pole-zero pairing rules to minimize frequency response peaking.
-\item \textbf{Order} biquad sections to optimize signal-to-noise ratio (SNR) and prevent overflow.
 \item \textbf{Draw} complete Cascade realization signal flow graphs.
+\item \textbf{Analyze} computational complexity of cascade structures.
 
 \noindent\rule{\textwidth}{0.5pt}
 \section*{2. MATHEMATICAL FOUNDATIONS}
@@ -44,30 +43,11 @@ $$ H(z) = g \prod_{k=1}^{K} H_k(z) = g \prod_{k=1}^{K} \frac{b_{k0} + b_{k1} z^{
 Each biquad $H_k(z)$ realizes one real pole pair and one real zero pair:
 $$ 1 + a_{k1} z^{-1} + a_{k2} z^{-2} = (1 - p_k z^{-1})(1 - p_k^* z^{-1}) = 1 - 2r_k \cos(\theta_k) z^{-1} + r_k^2 z^{-2} $$
 
-\subsection*{2.2 Pairing and Ordering Rules}
-\begin{enumerate}
-\item \textbf{Pole-Zero Pairing:}
-\end{enumerate}
-   * Pair the complex pole pair $p_k$ having highest $Q$ (closest to unit circle) with the zero pair $z_k$ closest to it in angle $\theta$.
-   * This cancels large resonance peaks, keeping the section gain $|H_k(e^{j\omega})|$ relatively flat.
-\begin{enumerate}
-\item \textbf{Section Ordering:}
-\end{enumerate}
-   * Arrange sections in order of \textbf{increasing pole radius $r_k$} (increasing $Q$ / peaking).
-   * Low-$Q$ sections first $\to$ High-$Q$ sections last.
-   * Prevents premature signal saturation in early stages.
-
-
 \subsection*{Pictorial Representations}
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.85\textwidth]{images/iir_cascade.png}
 \caption{Iir Cascade}
-\end{figure}
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.85\textwidth]{images/iir_parallel.png}
-\caption{Iir Parallel}
 \end{figure}
 
 \noindent\rule{\textwidth}{0.5pt}
@@ -88,47 +68,11 @@ $$ 1 + a_{k1} z^{-1} + a_{k2} z^{-2} = (1 - p_k z^{-1})(1 - p_k^* z^{-1}) = 1 - 
    * Complex pair: $z_{1,2} = 1 \cdot e^{\pm j\pi/4} \implies 1 - \sqrt{2} z^{-1} + z^{-2} = 1 - 1.4142 z^{-1} + z^{-2}$ (at angle $\pi/4$).
    * Real zeros: $z_3 = -1 \implies (1 + z^{-1})$.
 \begin{enumerate}
-\item \textbf{Optimal Pairing:}
+\item \textbf{Cascade Sections:}
 \end{enumerate}
-   * Pair poles at angle $\pi/4$ ($p_{1,2}$) with zeros at angle $\pi/4$ ($z_{1,2}$).
-   * Section 1 (Low $Q$): $H_1(z) = \frac{1 + z^{-1}}{1 - 0.1 z^{-1} - 0.3 z^{-2}}$.
-   * Section 2 (High $Q$): $H_2(z) = \frac{1 - 1.4142 z^{-1} + z^{-2}}{1 - 1.2728 z^{-1} + 0.81 z^{-2}}$.
+   * Section 1: $H_1(z) = \frac{1 + z^{-1}}{1 - 0.1 z^{-1} - 0.3 z^{-2}}$.
+   * Section 2: $H_2(z) = \frac{1 - 1.4142 z^{-1} + z^{-2}}{1 - 1.2728 z^{-1} + 0.81 z^{-2}}$.
 \begin{enumerate}
-\item \textbf{Ordering:} Section 1 followed by Section 2.
-
-\noindent\rule{\textwidth}{0.5pt}
-\section*{4. UNIVERSITY EXAMINATION QUESTIONS \& MARKING RUBRIC}
-
-\subsection*{Question 1 (15 Marks)}
-\end{enumerate}
-\textbf{(a)} Why are direct form structures not suitable for implementing high-order IIR filters? Explain coefficient quantization sensitivity. *(6 Marks)*
-\textbf{(b)} Realize the transfer function in Cascade Form:
-$$ H(z) = \frac{1 + \frac{1}{3} z^{-1}}{\left(1 - \frac{1}{2} z^{-1}\right)\left(1 - \frac{1}{4} z^{-1} + \frac{1}{2} z^{-2}\right)} $$
-Draw the complete signal flow graph using Direct Form II biquads. *(9 Marks)*
-
-\textbf{Model Answer \& Step-by-Step Marking Rubric:}
-\begin{itemize}
-\item \textbf{Part (a):}
-\end{itemize}
-  * Root sensitivity explanation: Roots of $A(z)$ depend non-linearly on polynomial coefficients. In high-order polynomials, $1\%$ coefficient perturbation can displace poles by $50\%$ or move them outside $|z|=1$ *(6 Marks)*
-\begin{itemize}
-\item \textbf{Part (b):}
-\end{itemize}
-  * Split into 1st-order and 2nd-order sections:
-    $H_1(z) = \frac{1 + \frac{1}{3} z^{-1}}{1 - \frac{1}{2} z^{-1}}, \quad H_2(z) = \frac{1}{1 - \frac{1}{4} z^{-1} + \frac{1}{2} z^{-2}}$ *(4 Marks)*
-  * Neatly drawn Cascade SFG of $H_1(z)$ cascaded into $H_2(z)$ using canonical DF-II sections *(5 Marks)*
-
-\noindent\rule{\textwidth}{0.5pt}
-\section*{5. PYTHON VERIFICATION SCRIPT}
-\begin{verbatim}
-import scipy.signal as signal
-import numpy as np
-
-b = [1, 1/3]
-a = np.convolve([1, -0.5], [1, -0.25, 0.5])
-sos = signal.tf2sos(b, a)
-print("Computed SOS:")
-print(sos)
-\end{verbatim}
+\item \textbf{Realization:} $H(z) = H_1(z)H_2(z)$.
 
 \end{document}

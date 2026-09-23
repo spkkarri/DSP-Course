@@ -24,40 +24,26 @@
 }
 
 \begin{document}
-\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Lecture 25: Moving-Average Filters \& Comparison of FIR vs. IIR Filters \\ \large (III B.Tech EEE)}\maketitle
+\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Lecture 25: FIR Filters - moving average filters \\ \large (III B.Tech EEE)}\maketitle
 
 \noindent\rule{\textwidth}{0.5pt}
 \section*{1. LEARNING OBJECTIVES}
 By the end of this lecture, students will be able to:
 \begin{enumerate}
-\item \textbf{Analyze} the frequency selectivity and pole-zero placement of Moving Average and Comb filters.
-\item \textbf{Compare} FIR and IIR digital filters across all architectural and algorithmic metrics.
-\item \textbf{Select} the optimal filter topology for specific application constraints (latency, phase linearity, computational budget).
+\item \textbf{Analyze} the frequency selectivity and pole-zero placement of Moving Average filters.
+\end{enumerate}
 
 \noindent\rule{\textwidth}{0.5pt}
 \section*{2. MATHEMATICAL FOUNDATIONS}
 
 \subsection*{2.1 Moving Average Filter}
-\end{enumerate}
+
 $$ y[n] = \frac{1}{M} \sum_{k=0}^{M-1} x[n-k] \implies H(z) = \frac{1 - z^{-M}}{M(1 - z^{-1})} $$
 $$ H(e^{j\omega}) = \frac{1}{M} \frac{\sin(\omega M / 2)}{\sin(\omega / 2)} e^{-j\omega(M-1)/2} $$
 \begin{itemize}
 \item $M-1$ zeros are located on the unit circle at $z = e^{j 2\pi k / M}$ for $k = 1, 2, \dots, M-1$.
 \item The pole at $z=1$ exactly cancels the zero at $z=1$.
-
-\subsection*{2.2 Comprehensive FIR vs. IIR Comparison Matrix}
-
 \end{itemize}
-| Engineering Metric | FIR Filter | IIR Filter |
-| :--- | :--- | :--- |
-| \textbf{Phase Response} | Can guarantee \textbf{strictly linear phase} ($\tau_g = \text{const}$) | Inherently \textbf{non-linear phase} (phase distortion) |
-| \textbf{Stability} | \textbf{Always BIBO stable} (All poles at origin $z=0$) | Must be tested; poles can migrate outside $|z|=1$ |
-| \textbf{Filter Order} | \textbf{High order} required for sharp transition bands | \textbf{Low order} (5$\times$ to 10$\times$ lower than FIR) |
-| \textbf{Computational Cost} | High MAC count per sample | Low MAC count (extremely efficient) |
-| \textbf{Hardware Realization} | Non-recursive (no feedback loops); pipelineable | Recursive (feedback loops); accumulator bottlenecks |
-| \textbf{Quantization Effects} | Low sensitivity; free from feedback limit cycles | High sensitivity; susceptible to limit cycles \& overflow |
-| \textbf{Analog Emulation} | Cannot easily emulate analog prototypes | Directly designed from analog Butterworth/Chebyshev |
-
 
 \subsection*{Pictorial Representations}
 \begin{figure}[H]
@@ -70,52 +56,5 @@ $$ H(e^{j\omega}) = \frac{1}{M} \frac{\sin(\omega M / 2)}{\sin(\omega / 2)} e^{-
 \includegraphics[width=0.85\textwidth]{images/moving_average_frequency.png}
 \caption{Moving Average Frequency}
 \end{figure}
-
-\noindent\rule{\textwidth}{0.5pt}
-\section*{3. WORKED NUMERICAL EXAMPLES}
-
-\subsection*{Example 25.1: Order Estimation Comparison (FIR vs. IIR)}
-\textbf{Problem:} Estimate the required filter order for an FIR filter (Kaiser) vs. an IIR filter (Butterworth) to meet:
-$\omega_p = 0.4\pi, \; \omega_s = 0.5\pi, \; A_p = 0.5\text{ dB}, \; A_s = 50\text{ dB}$.
-
-\textbf{Solution:}
-\begin{itemize}
-\item \textbf{FIR (Kaiser Formula):}
-\end{itemize}
-  $\Delta f = \frac{0.5\pi - 0.4\pi}{2\pi} = 0.05$.
-  $N_{\text{FIR}} \approx \frac{50 - 7.95}{14.36 \times 0.05} + 1 = \frac{42.05}{0.718} + 1 = 58.56 + 1 \approx \mathbf{60 \text{ taps}}$.
-\begin{itemize}
-\item \textbf{IIR (Butterworth Order Formula):}
-\end{itemize}
-  Prewarping / prototype ratio: $\frac{\Omega_s}{\Omega_p} = \frac{\tan(0.25\pi)}{\tan(0.2\pi)} = \frac{1.0}{0.7265} = 1.3764$.
-  $N_{\text{IIR}} = \left\lceil \frac{\log_{10}[(10^{5} - 1)/(10^{0.05} - 1)]}{2\log_{10}(1.3764)} \right\rceil = \left\lceil \frac{\log_{10}(100000 / 0.122)}{2 \times 0.1387} \right\rceil = \left\lceil \frac{5.9136}{0.2774} \right\rceil = \mathbf{22 \to 12 \text{ (BLT)}}$.
-\begin{itemize}
-\item \textbf{Takeaway:} The IIR filter requires $\approx 6$ biquad sections (12 poles), needing significantly fewer MAC operations per sample than the 60-tap FIR filter.
-
-\noindent\rule{\textwidth}{0.5pt}
-\section*{4. UNIVERSITY EXAMINATION QUESTIONS \& MARKING RUBRIC}
-
-\subsection*{Question 1 (15 Marks)}
-\end{itemize}
-\textbf{(a)} Provide a detailed comparative analysis between FIR and IIR digital filters covering Phase Linearity, Stability, Computational Complexity, and Hardware Implementation. *(10 Marks)*
-\textbf{(b)} Under what practical engineering scenarios is an FIR filter mandatory over an IIR filter? *(5 Marks)*
-
-\textbf{Model Answer \& Step-by-Step Marking Rubric:}
-\begin{itemize}
-\item \textbf{Part (a):} Comprehensive comparison matrix covering all 7 parameters listed in Section 2.2 *(10 Marks)*
-\item \textbf{Part (b):} 1. Digital Communications (preventing Intersymbol Interference), 2. High-Fidelity Audio processing (preserving transient phase coherence), 3. Biomedical ECG/EEG diagnostic monitoring (preventing distortion of QRS peak morphology) *(5 Marks)*
-
-\noindent\rule{\textwidth}{0.5pt}
-\section*{5. PYTHON VERIFICATION SCRIPT}
-\end{itemize}
-\begin{verbatim}
-import scipy.signal as signal
-
-\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Order comparison \\ \large (III B.Tech EEE)}\maketitle
-N_fir, beta = signal.kaiserord(50, 0.1)
-N_iir, Wn = signal.buttord(0.4, 0.5, 0.5, 50)
-print(f"Required FIR Order: {N_fir}")
-print(f"Required IIR Order: {N_iir}")
-\end{verbatim}
 
 \end{document}

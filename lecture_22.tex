@@ -24,14 +24,13 @@
 }
 
 \begin{document}
-\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Lecture 22: FIR Filter Design via Windowing (Rectangular, Bartlett, Hann) \\ \large (III B.Tech EEE)}\maketitle
+\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Lecture 22: Design of FIR filter - windowing method \\ \large (III B.Tech EEE)}\maketitle
 
 \noindent\rule{\textwidth}{0.5pt}
 \section*{1. LEARNING OBJECTIVES}
 By the end of this lecture, students will be able to:
 \begin{enumerate}
 \item \textbf{Derive} ideal impulse responses $h_d[n]$ for Lowpass, Highpass, Bandpass, and Bandstop filters.
-\item \textbf{Explain} the origins and mathematical properties of the Gibbs phenomenon.
 \item \textbf{Design} linear-phase FIR filters using Rectangular, Bartlett, and Hann windows to meet transition bandwidth and attenuation specs.
 \item \textbf{Evaluate} the frequency spectrum of window functions.
 
@@ -74,11 +73,6 @@ By the end of this lecture, students will be able to:
 \includegraphics[width=0.85\textwidth]{images/window_shapes.png}
 \caption{Window Shapes}
 \end{figure}
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.85\textwidth]{images/gibbs_phenomenon.png}
-\caption{Gibbs Phenomenon}
-\end{figure}
 
 \noindent\rule{\textwidth}{0.5pt}
 \section*{3. WORKED NUMERICAL EXAMPLES}
@@ -111,49 +105,5 @@ By the end of this lecture, students will be able to:
   * $h[2] = h[4] = 0.2251 \times 0.7500 = 0.1688$
   * $h[3] = 0.2500 \times 1.0000 = 0.2500$
 $$ h[n] = \{ \underset{\uparrow}{0.0000}, 0.0398, 0.1688, 0.2500, 0.1688, 0.0398, 0.0000 \} $$
-
-\noindent\rule{\textwidth}{0.5pt}
-\section*{4. UNIVERSITY EXAMINATION QUESTIONS \& MARKING RUBRIC}
-
-\subsection*{Question 1 (15 Marks)}
-\textbf{(a)} What is the Gibbs phenomenon? Explain how window functions reduce Gibbs ringing at the expense of transition bandwidth. *(6 Marks)*
-\textbf{(b)} Design a 9-tap FIR Highpass filter with cutoff $\omega_c = \frac{\pi}{3}$ using a Bartlett window. *(9 Marks)*
-
-\textbf{Model Answer \& Step-by-Step Marking Rubric:}
-\begin{itemize}
-\item \textbf{Part (a):}
-\end{itemize}
-  * Explanation of 8.95% overshoot at step discontinuities and Fourier truncation *(3 Marks)*
-  * Tapering effect of windows: Smooth boundary transitions suppress high-frequency sidelobes but widen mainlobe transition band *(3 Marks)*
-\begin{itemize}
-\item \textbf{Part (b):}
-\end{itemize}
-  * $N=9, \tau=4$.
-  * $h_d[n] = \delta[n-4] - \frac{\sin(\pi(n-4)/3)}{\pi(n-4)}$ *(3 Marks)*
-  * Bartlett window: $w[n] = 1 - \frac{|n-4|}{4}$ for $n=0,\dots,8$ *(2 Marks)*
-  * Evaluation of all 9 coefficients $h[n] = h_d[n] w[n]$ with symmetry *(4 Marks)*
-
-\noindent\rule{\textwidth}{0.5pt}
-\section*{5. PYTHON VERIFICATION SCRIPT}
-\begin{verbatim}
-import numpy as np
-
-N = 7
-tau = 3
-wc = np.pi / 4
-n = np.arange(N)
-
-\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Ideal LPF \\ \large (III B.Tech EEE)}\maketitle
-hd = np.zeros(N)
-hd[n != tau] = np.sin(wc * (n[n != tau] - tau)) / (np.pi * (n[n != tau] - tau))
-hd[tau] = wc / np.pi
-
-\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Hann window \\ \large (III B.Tech EEE)}\maketitle
-w = 0.5 - 0.5 * np.cos(2 * np.pi * n / (N - 1))
-h = hd * w
-
-print("Designed FIR Filter Coefficients h[n]:")
-print(np.round(h, 4))
-\end{verbatim}
 
 \end{document}

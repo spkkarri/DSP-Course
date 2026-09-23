@@ -9,10 +9,15 @@
 \usepackage{float}
 \usepackage{xcolor}
 
+\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Lecture 16: FIR Filter — Linear-Phase Realization \\ \large (III B.Tech EEE)}
+\author{Comprehensive Lecture Notes \& Faculty Textbook Reference}
+\date{}
+
 \definecolor{darkbg}{HTML}{0d121f}
 \definecolor{lighttext}{HTML}{e2e8f0}
 \definecolor{primary}{HTML}{8b5cf6}
 \definecolor{secondary}{HTML}{0dd5c5}
+\definecolor{accent}{HTML}{10b981}
 
 \pagecolor{darkbg}
 \color{lighttext}
@@ -20,113 +25,599 @@
 \hypersetup{
     colorlinks=true,
     linkcolor=secondary,
-    urlcolor=secondary
+    urlcolor=secondary,
+    citecolor=accent
 }
 
 \begin{document}
-\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Lecture 16: Linear-Phase FIR Realization \& Frequency-Sampling Structure \\ \large (III B.Tech EEE)}\maketitle
+
+\maketitle
 
 \noindent\rule{\textwidth}{0.5pt}
-\section*{1. LEARNING OBJECTIVES}
+
+\section{Lecture Plan \& Objectives (40 Minutes Breakdown)}
+\begin{itemize}
+    \item \textbf{00:00 -- 05:00 (5 mins):} Motivation: The physical significance of Linear Phase (Phase distortion, dispersion, and waveform preservation).
+    \item \textbf{05:00 -- 14:00 (9 mins):} Mathematical foundations: Exact conditions for strict and generalized linear phase (Symmetry and Antisymmetry).
+    \item \textbf{14:00 -- 22:00 (8 mins):} The 4 Types of Linear-Phase FIR Filters (Classification, frequency response formulations, and boundary zero properties).
+    \item \textbf{22:00 -- 30:00 (8 mins):} Linear-Phase Realization Architecture: Exploiting coefficient symmetry via pre-addition to achieve 50\% multiplier reduction.
+    \item \textbf{30:00 -- 37:00 (7 mins):} Step-by-step worked numerical examples (Odd vs. Even lengths, Symmetric vs. Antisymmetric).
+    \item \textbf{37:00 -- 40:00 (3 mins):} Hardware implementation insights (FPGA DSP slices), pedagogical checkpoints, and university exam review.
+\end{itemize}
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{1. LEARNING OBJECTIVES}
 By the end of this lecture, students will be able to:
 \begin{enumerate}
-\item \textbf{Design} Linear-Phase FIR structures with 50% reduced multiplier count.
-\item \textbf{Derive} the Frequency-Sampling filter realization equations from the IDFT formulation.
-\item \textbf{Construct} signal flow graphs for frequency-sampling FIR filters.
-\item \textbf{Evaluate} computational efficiency for narrowband filters with few non-zero DFT bins.
-
-\noindent\rule{\textwidth}{0.5pt}
-\section*{2. MATHEMATICAL FOUNDATIONS}
-
-\subsection*{2.1 Linear-Phase Multiplier Reduction}
+    \item \textbf{Explain} the physical and engineering necessity of linear phase in signal processing systems (biomedical, telecommunications, audio, and radar).
+    \item \textbf{Derive} the mathematical conditions on impulse response $h[n]$ that guarantee pure and generalized linear phase from first principles.
+    \item \textbf{Classify} linear-phase FIR filters into Types I, II, III, and IV, determining their frequency response, group delay, and mandatory boundary zeros.
+    \item \textbf{Formulate} the difference equations and folded signal flow graphs that exploit coefficient symmetry to reduce multiplier count by 50\%.
+    \item \textbf{Calculate} exact hardware resource counts (multipliers, adders, delay registers) for arbitrary filter lengths $M$, both odd and even.
+    \item \textbf{Construct} complete linear-phase direct form structures for symmetric and antisymmetric FIR filters.
+    \item \textbf{Evaluate} the VLSI, ASIC, and FPGA implementation benefits of dedicated pre-adder architectures in modern DSP hardware.
 \end{enumerate}
-For a symmetric FIR filter of length $M$ ($h[n] = h[M-1-n]$):
-\begin{itemize}
-\item \textbf{Odd Length $M$ (Order $N = M-1$ Even):}
-\end{itemize}
-  $$ y[n] = \sum_{k=0}^{(M-3)/2} h[k] (x[n-k] + x[n - M + 1 + k]) + h\left[\frac{M-1}{2}\right] x\left[n - \frac{M-1}{2}\right] $$
-  Total multipliers: $\frac{M+1}{2}$.
-\begin{itemize}
-\item \textbf{Even Length $M$ (Order $N = M-1$ Odd):}
-\end{itemize}
-  $$ y[n] = \sum_{k=0}^{M/2 - 1} h[k] (x[n-k] + x[n - M + 1 + k]) $$
-  Total multipliers: $\frac{M}{2}$.
 
-\subsection*{2.2 Frequency-Sampling Structure Derivation}
-Express the FIR transfer function in terms of its $M$-point DFT samples $H[k]$:
-$$ h[n] = \frac{1}{M} \sum_{k=0}^{M-1} H[k] W_M^{-nk} $$
-$$ H(z) = \sum_{n=0}^{M-1} h[n] z^{-n} = \sum_{n=0}^{M-1} \left( \frac{1}{M} \sum_{k=0}^{M-1} H[k] W_M^{-nk} \right) z^{-n} = \frac{1}{M} \sum_{k=0}^{M-1} H[k] \sum_{n=0}^{M-1} (W_M^{-k} z^{-1})^n $$
-Using the finite geometric sum $\sum_{n=0}^{M-1} u^n = \frac{1 - u^M}{1 - u}$, and since $(W_M^{-k} z^{-1})^M = W_M^{-kM} z^{-M} = 1 \cdot z^{-M} = z^{-M}$:
-$$ H(z) = \frac{1 - z^{-M}}{M} \sum_{k=0}^{M-1} \frac{H[k]}{1 - W_M^{-k} z^{-1}} $$
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{2. MOTIVATION \& PHYSICAL SIGNIFICANCE OF LINEAR PHASE}
+
+\subsection{2.1 What is Phase Distortion?}
+When an electrical signal passes through an LTI system with frequency response $H(e^{j\omega}) = |H(e^{j\omega})| e^{j\theta(\omega)}$, two fundamental modifications occur:
+\begin{enumerate}
+    \item \textbf{Magnitude Modification:} The amplitude of each spectral component at frequency $\omega$ is multiplied by $|H(e^{j\omega})|$.
+    \item \textbf{Phase Shift:} The phase of each spectral component is shifted by $\theta(\omega) = \angle H(e^{j\omega})$.
+\end{enumerate}
+
+Recall that a phase shift $\theta(\omega)$ corresponds to a time delay. We define two delay metrics:
 \begin{itemize}
-\item \textbf{Comb Filter:} $H_{\text{comb}}(z) = \frac{1 - z^{-M}}{M}$ (FIR, zeros at $z = e^{j 2\pi k / M}$).
-\item \textbf{Resonator Bank:} $H_k(z) = \frac{H[k]}{1 - W_M^{-k} z^{-1}}$ (All-pole, pole at $z = e^{j 2\pi k / M}$).
-
-
-\subsection*{Pictorial Representations}
+    \item \textbf{Phase Delay ($\tau_p(\omega)$):} The time delay experienced by a single, pure sinusoidal carrier:
+    \begin{equation}
+    \tau_p(\omega) = -\frac{\theta(\omega)}{\omega}
+    \end{equation}
+    \item \textbf{Group Delay ($\tau_g(\omega)$):} The time delay experienced by the modulation envelope or wave packet formed by a narrow band of frequencies:
+    \begin{equation}
+    \tau_g(\omega) = -\frac{d\theta(\omega)}{d\omega}
+    \end{equation}
 \end{itemize}
+
+If $\tau_g(\omega)$ is \textbf{not constant} across all frequencies, different frequency components of the input signal will travel through the filter at different speeds! This causes \textbf{dispersion} (phase distortion):
+\begin{itemize}
+    \item Narrow pulses spread out and smear in time.
+    \item High-frequency details arrive at different moments than low-frequency baselines.
+    \item The time-domain shape of the waveform is severely corrupted, even if $|H(e^{j\omega})| = 1$ (all-pass condition).
+\end{itemize}
+
+\subsection{2.2 Why Linear Phase is Essential in Engineering}
+A filter possesses \textbf{Linear Phase} if its phase response is a straight line passing through the origin (or with a $\pm \pi/2$ intercept):
+\begin{equation}
+\theta(\omega) = -\alpha \omega \implies \tau_p(\omega) = \alpha = \text{constant}, \quad \tau_g(\omega) = \alpha = \text{constant}
+\end{equation}
+When a filter has linear phase, \textbf{all frequency components undergo the exact same time delay $\alpha$}. The output is an undistorted replica of the input, shifted purely in time by $\alpha$ samples: $y[n] = x[n - \alpha]$.
+
+Linear phase is strictly mandatory in the following practical domains:
+\begin{enumerate}
+    \item \textbf{Biomedical Instrumentation (ECG and EEG):} An electrocardiogram (ECG) diagnoses life-threatening arrhythmias and myocardial infarction based on the precise morphological shapes and timing intervals of the P-wave, QRS-complex, and T-wave. A non-linear phase filter alters the peak heights and shifts the ST segment, causing fatal false-positive or false-negative clinical diagnoses.
+    \item \textbf{Digital Telecommunications (QAM, PSK, OFDM):} High-speed digital modems transmit rectangular or raised-cosine pulses. If the channel equalization or pulse-shaping filter has non-linear phase, pulse tails spill into adjacent symbol slots, causing \textbf{Inter-Symbol Interference (ISI)} and collapsing the eye diagram.
+    \item \textbf{High-Fidelity Audio Processing:} Human hearing is sensitive to the transient phase alignment of musical instruments (drum transients, piano attacks). Non-linear phase smears transients, dulling the acoustic clarity.
+    \item \textbf{Image Processing \& Computer Vision:} 2D edge detection filters must have linear phase (zero phase or symmetric phase); otherwise, edges in images ring asymmetrically, creating artificial ghost outlines.
+\end{enumerate}
+
+\subsection{2.3 Why FIR Filters are Chosen for Linear Phase}
+A causal, stable Infinite Impulse Response (IIR) filter \textbf{cannot} have exact linear phase. For an IIR filter to have linear phase, its poles would have to occur in mirror-image pairs ($p_k$ and $1/p_k^*$). If a pole is inside the unit circle ($|p_k| < 1$), its partner must lie strictly outside ($|1/p_k^*| > 1$), violating causal BIBO stability.
+
+Therefore, whenever strict linear phase is a non-negotiable system requirement, engineers \textbf{must utilize Finite Impulse Response (FIR) filters}.
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{3. MATHEMATICAL CONDITIONS FOR LINEAR PHASE}
+
+\subsection{3.1 Condition for Pure Linear Phase}
+Consider a causal FIR filter of length $M$ (order $N = M-1$) with real impulse response $h[n]$ ($0 \le n \le M-1$):
+\begin{equation}
+H(e^{j\omega}) = \sum_{n=0}^{M-1} h[n] e^{-j\omega n} = |H(e^{j\omega})| e^{j\theta(\omega)}
+\end{equation}
+We require pure linear phase:
+\begin{equation}
+\theta(\omega) = -\alpha \omega, \quad -\pi \le \omega \le \pi
+\end{equation}
+where $\alpha$ is a constant delay. Substituting into the frequency response:
+\begin{equation}
+\sum_{n=0}^{M-1} h[n] e^{-j\omega n} = \pm |H(e^{j\omega})| e^{-j\alpha\omega}
+\end{equation}
+Multiplying both sides by $e^{j\alpha\omega}$:
+\begin{equation}
+\sum_{n=0}^{M-1} h[n] e^{-j\omega(n - \alpha)} = \sum_{n=0}^{M-1} h[n] \left[ \cos(\omega(\alpha - n)) + j \sin(\omega(\alpha - n)) \right] = \pm |H(e^{j\omega})|
+\end{equation}
+Since the right-hand side is purely real, the imaginary part must identically equal zero for all $\omega$:
+\begin{equation}
+\sum_{n=0}^{M-1} h[n] \sin(\omega(\alpha - n)) = 0, \quad \forall \omega
+\end{equation}
+This condition can hold for all frequencies $\omega$ if and only if:
+\begin{enumerate}
+    \item The delay parameter $\alpha$ is exactly the center of symmetry:
+    \begin{equation}
+    \alpha = \frac{M-1}{2}
+    \end{equation}
+    \item The impulse response exhibits \textbf{even symmetry} about $\alpha$:
+    \begin{equation}
+    h[n] = h[M - 1 - n], \quad 0 \le n \le M - 1
+    \end{equation}
+\end{enumerate}
+
+\subsection{3.2 Condition for Generalized Linear Phase}
+If we relax the constraint on phase delay and require only constant group delay $\tau_g(\omega) = \alpha$, the phase response is permitted to have a constant offset $\beta$:
+\begin{equation}
+\theta(\omega) = \beta - \alpha \omega
+\end{equation}
+Following an identical derivation, the imaginary part condition yields:
+\begin{equation}
+\beta = \pm \frac{\pi}{2}, \quad \alpha = \frac{M-1}{2}
+\end{equation}
+and the impulse response must exhibit \textbf{odd symmetry (antisymmetry)} about $\alpha$:
+\begin{equation}
+h[n] = -h[M - 1 - n], \quad 0 \le n \le M - 1
+\end{equation}
+
+\noindent\textbf{Critical Consequence for Odd Length $M$:}
+If $M$ is odd, the center tap index is $n = (M-1)/2$. Substituting this into the antisymmetry condition:
+\begin{equation}
+h\left[\frac{M-1}{2}\right] = -h\left[M - 1 - \frac{M-1}{2}\right] = -h\left[\frac{M-1}{2}\right] \implies h\left[\frac{M-1}{2}\right] = 0
+\end{equation}
+\textbf{The middle sample of any odd-length antisymmetric FIR filter must always be exactly zero!}
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{4. THE FOUR TYPES OF LINEAR-PHASE FIR FILTERS}
+
+Based on the symmetry of $h[n]$ and whether the length $M$ is odd or even, linear-phase FIR filters are classified into four distinct types:
+
+\begin{table}[H]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}cclcccc@{}}
+\toprule
+\textbf{Type} & \textbf{Length $M$} & \textbf{Symmetry of $h[n]$} & \textbf{Group Delay $\tau_g$} & \textbf{Zero at $\omega = 0$?} & \textbf{Zero at $\omega = \pi$?} & \textbf{Allowed Filters} \\ \midrule
+\textbf{I}   & Odd  & Symmetric ($h[n] = h[M-1-n]$)  & $(M-1)/2$ (integer) & No  & No  & LPF, HPF, BPF, BSF \\
+\textbf{II}  & Even & Symmetric ($h[n] = h[M-1-n]$)  & $(M-1)/2$ (half-int)& No  & \textbf{Yes (Mandatory)} & LPF, BPF only \\
+\textbf{III} & Odd  & Antisymmetric ($h[n] = -h[M-1-n]$) & $(M-1)/2$ (integer) & \textbf{Yes (Mandatory)} & \textbf{Yes (Mandatory)} & BPF, Differentiator \\
+\textbf{IV}  & Even & Antisymmetric ($h[n] = -h[M-1-n]$) & $(M-1)/2$ (half-int)& \textbf{Yes (Mandatory)} & No  & HPF, Differentiator \\ \bottomrule
+\end{tabular}%
+}
+\caption{Comprehensive Classification of the Four Types of Linear-Phase FIR Filters.}
+\label{tab:fir_types}
+\end{table}
+
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.85\textwidth]{images/linear_phase_fir.png}
-\caption{Linear Phase Fir}
+\includegraphics[width=\textwidth]{images/fir_types_zplane.png}
+\caption{Illustrative $z$-plane zero constellations reflecting the boundary constraints for the four linear-phase FIR filter types: 
+(a) \textbf{Type I:} Free at both boundary points $z = \pm 1$ ($\omega = 0, \pi$), allowing arbitrary low-pass, high-pass, band-pass, and band-stop implementations;
+(b) \textbf{Type II:} Possesses an inherent, unremovable zero at $z = -1$ ($\omega = \pi$), completely ruling out high-pass and band-stop designs;
+(c) \textbf{Type III:} Possesses mandatory zeros at \textit{both} $z = +1$ ($\omega = 0$) and $z = -1$ ($\omega = \pi$), restricting its use to band-pass filters and differentiators;
+(d) \textbf{Type IV:} Possesses a mandatory zero at $z = +1$ ($\omega = 0$), ruling out low-pass designs while making it ideal for high-pass filters and wideband differentiators.
+Notice that off-axis complex zeros always appear in reciprocal conjugate quadruplets $\{z_0, z_0^*, 1/z_0, 1/z_0^*\}$ to maintain real coefficients and linear phase.}
+\label{fig:fir_types_zplane}
 \end{figure}
+
+\subsection{4.1 Geometric Interpretation of Z-Plane Zero Constellations}
+The location of zeros in Figure~\ref{fig:fir_types_zplane} provides profound geometric insight into FIR filter capabilities:
+\begin{itemize}
+    \item \textbf{Reciprocal Symmetry of Zeros:} For any real-coefficient filter with linear phase, if $z_0 = r e^{j\phi}$ is a transmission zero, then:
+    \begin{equation}
+    H(z_0) = 0 \implies H(z_0^*) = 0, \quad H(1/z_0) = 0, \quad H(1/z_0^*) = 0
+    \end{equation}
+    Thus, zeros off the unit circle ($r \neq 1$) and off the real axis must occur in \textbf{quadruplets of four zeros}. Zeros on the unit circle ($r = 1$) need only occur in complex conjugate pairs $\{e^{j\phi}, e^{-j\phi}\}$. Real zeros off the unit circle occur in reciprocal pairs $\{r, 1/r\}$.
+    \item \textbf{The Boundary Points $z = \pm 1$:} Because $z = 1 = e^{j 0}$ corresponds to DC ($\omega = 0$) and $z = -1 = e^{j \pi}$ corresponds to the folding/Nyquist frequency ($\omega = \pi$), a forced zero at either boundary permanently forces the frequency response to zero at that frequency ($H(e^{j 0}) = 0$ or $H(e^{j \pi}) = 0$).
+\end{itemize}
+
+\subsection{4.2 Frequency Response Expressions}
+By grouping symmetric pairs, the frequency response can be expressed as a real amplitude function $A(\omega)$ multiplied by a pure phase factor:
+\begin{equation}
+H(e^{j\omega}) = A(\omega) e^{j(\beta - \alpha\omega)}
+\end{equation}
+
+\subsubsection{Type I: Symmetric, Odd Length}
+Let $M$ be odd. Order $N = M-1$ is even. Center is at $\alpha = (M-1)/2$.
+\begin{equation}
+A(\omega) = h\left[\frac{M-1}{2}\right] + \sum_{k=1}^{(M-1)/2} 2 h\left[\frac{M-1}{2} - k\right] \cos(\omega k)
+\end{equation}
+Because $\cos(0) = 1$ and $\cos(\pi k) = (-1)^k$, $A(0)$ and $A(\pi)$ are generally non-zero. Hence, Type I can realize any filter type (LPF, HPF, BPF, BSF).
+
+\subsubsection{Type II: Symmetric, Even Length}
+Let $M$ be even. Order $N = M-1$ is odd. Center is at $\alpha = (M-1)/2$ (half-integer).
+\begin{equation}
+A(\omega) = \sum_{k=1}^{M/2} 2 h\left[\frac{M}{2} - k\right] \cos\left(\omega\left(k - \frac{1}{2}\right)\right)
+\end{equation}
+Evaluating at $\omega = \pi$:
+\begin{equation}
+A(\pi) = \sum_{k=1}^{M/2} 2 h\left[\frac{M}{2} - k\right] \cos\left(\pi k - \frac{\pi}{2}\right) = \sum_{k=1}^{M/2} 2 h\left[\frac{M}{2} - k\right] \cdot 0 = 0
+\end{equation}
+\textbf{Theorem:} A Type II filter \textit{always} has an inherent zero at $\omega = \pi$ ($z = -1$). Therefore, \textbf{Type II FIR filters can NEVER be used to design High-Pass Filters or Band-Stop Filters!}
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{5. LINEAR-PHASE REALIZATION ARCHITECTURE (FOLDED DIRECT FORM)}
+
+\subsection{5.1 Standard Direct Form FIR Architecture}
+A standard transversal FIR filter computes the convolution sum directly:
+\begin{equation}
+y[n] = \sum_{k=0}^{M-1} h[k] x[n-k] = h[0]x[n] + h[1]x[n-1] + \dots + h[M-1]x[n - M + 1]
+\end{equation}
+Hardware requirements for an arbitrary length-$M$ filter:
+\begin{itemize}
+    \item \textbf{Multipliers:} $M$
+    \item \textbf{Adders:} $M - 1$
+    \item \textbf{Delay Elements ($z^{-1}$):} $M - 1$
+\end{itemize}
+
+\subsection{5.2 Exploiting Coefficient Symmetry (Pre-Addition Principle)}
+Because $h[k] = h[M - 1 - k]$, the multiplier coefficients are pairwise identical! Using the distributive law of arithmetic:
+\begin{equation}
+h[k] x[n-k] + h[M-1-k] x[n - M + 1 + k] = h[k] \cdot \Big( x[n-k] + x[n - M + 1 + k] \Big)
+\end{equation}
+
+\textbf{The Architectural Insight:}
+Instead of performing two separate multiplications and then adding their products, we \textbf{pre-add} the two symmetric delay taps first, and then perform \textbf{a single multiplication}!
+This cuts the number of required multipliers approximately in half (a \textbf{50\% reduction in multiplier hardware})!
+
+\subsection{5.3 Exact Realization Equations}
+
+\subsubsection{\texorpdfstring{Case A: Symmetric, Odd Length ($M$ Odd, Order $N$ Even)}{Case A: Symmetric, Odd Length}}
+\begin{equation}
+y[n] = \sum_{k=0}^{(M-3)/2} h[k] \Big( x[n-k] + x[n - M + 1 + k] \Big) + h\left[\frac{M-1}{2}\right] x\left[n - \frac{M-1}{2}\right]
+\end{equation}
+\begin{itemize}
+    \item \textbf{Multipliers Required:} $\frac{M-1}{2} + 1 = \mathbf{\frac{M+1}{2}}$
+    \item \textbf{Adders Required:} $\frac{M-1}{2} \text{ (pre-adders)} + \frac{M-1}{2} \text{ (accumulation adders)} = \mathbf{M - 1}$
+    \item \textbf{Delays Required:} $\mathbf{M - 1}$
+\end{itemize}
+
+\subsubsection{\texorpdfstring{Case B: Symmetric, Even Length ($M$ Even, Order $N$ Odd)}{Case B: Symmetric, Even Length}}
+\begin{equation}
+y[n] = \sum_{k=0}^{M/2 - 1} h[k] \Big( x[n-k] + x[n - M + 1 + k] \Big)
+\end{equation}
+\begin{itemize}
+    \item \textbf{Multipliers Required:} $\mathbf{\frac{M}{2}}$
+    \item \textbf{Adders Required:} $\frac{M}{2} \text{ (pre-adders)} + \left(\frac{M}{2} - 1\right) \text{ (accumulation adders)} = \mathbf{M - 1}$
+    \item \textbf{Delays Required:} $\mathbf{M - 1}$
+\end{itemize}
+
+\subsubsection{\texorpdfstring{Case C: Antisymmetric, Odd Length ($M$ Odd, Center Tap Zero)}{Case C: Antisymmetric, Odd Length}}
+\begin{equation}
+y[n] = \sum_{k=0}^{(M-3)/2} h[k] \Big( x[n-k] - x[n - M + 1 + k] \Big)
+\end{equation}
+Because the center coefficient is strictly zero, it requires \textbf{no multiplier} at all!
+\begin{itemize}
+    \item \textbf{Multipliers Required:} $\mathbf{\frac{M-1}{2}}$
+    \item \textbf{Adders/Subtractors Required:} $\frac{M-1}{2} + \frac{M-3}{2} = \mathbf{M - 2}$
+    \item \textbf{Delays Required:} $\mathbf{M - 1}$
+\end{itemize}
+
+\subsubsection{\texorpdfstring{Case D: Antisymmetric, Even Length ($M$ Even)}{Case D: Antisymmetric, Even Length}}
+\begin{equation}
+y[n] = \sum_{k=0}^{M/2 - 1} h[k] \Big( x[n-k] - x[n - M + 1 + k] \Big)
+\end{equation}
+\begin{itemize}
+    \item \textbf{Multipliers Required:} $\mathbf{\frac{M}{2}}$
+    \item \textbf{Adders/Subtractors Required:} $\frac{M}{2} + \left(\frac{M}{2} - 1\right) = \mathbf{M - 1}$
+    \item \textbf{Delays Required:} $\mathbf{M - 1}$
+\end{itemize}
+
+\subsection{5.4 Hardware Resource Comparison Table}
+
+\begin{table}[H]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+\textbf{Filter Length $M$} & \textbf{Direct Multipliers} & \textbf{Linear-Phase Mults} & \textbf{Multiplier Savings (\%)} & \textbf{Total Adders} & \textbf{Total Delays} \\ \midrule
+$M = 4$ (Even, Symm)   & 4   & \textbf{2}   & 50.0\% & 3   & 3   \\
+$M = 5$ (Odd, Symm)    & 5   & \textbf{3}   & 40.0\% & 4   & 4   \\
+$M = 8$ (Even, Symm)   & 8   & \textbf{4}   & 50.0\% & 7   & 7   \\
+$M = 9$ (Odd, Symm)    & 9   & \textbf{5}   & 44.4\% & 8   & 8   \\
+$M = 31$ (Odd, Symm)   & 31  & \textbf{16}  & 48.4\% & 30  & 30  \\
+$M = 64$ (Even, Symm)  & 64  & \textbf{32}  & 50.0\% & 63  & 63  \\
+$M = 128$ (Even, Symm) & 128 & \textbf{64}  & 50.0\% & 127 & 127 \\ \bottomrule
+\end{tabular}%
+}
+\caption{Hardware Complexity: Standard Direct Form vs. Linear-Phase Realization.}
+\label{tab:hardware_savings}
+\end{table}
+
+\noindent\textbf{Key Takeaway for Faculty and Students:}
+Notice that the total number of adders remains \textbf{exactly $M-1$}. Pre-addition does not introduce extra additions into the filter; it merely reorders the additions to occur \textit{before} the multiplications rather than \textit{after} them!
+
+\subsection{5.5 Architectural Comparison: Standard Unfolded Cascade of Delays vs. Folded Linear-Phase Structure}
+To clearly appreciate the hardware transformation, Figure~\ref{fig:linear_phase_fir} contrasts the standard transversal direct-form structure with the folded linear-phase realization for an $M = 4$ symmetric FIR filter:
+\begin{enumerate}
+    \item \textbf{(a) Standard Direct-Form (Cascade of Unit Delays):}
+    The input sequence $x[n]$ flows through a straight cascade of $M-1 = 3$ unit delay elements ($z^{-1}$). Each tap ($x[n], x[n-1], x[n-2], x[n-3]$) feeds its own dedicated multiplier branch ($h[0], h[1], h[2], h[3]$). An adder chain sums all four products. This requires $M = 4$ full multipliers and $M-1 = 3$ adders.
+    \item \textbf{(b) Linear-Phase Folded Direct-Form:}
+    Recognizing that $h[3] = h[0]$ and $h[2] = h[1]$, the delay line is folded back on itself. Symmetric taps are aligned vertically:
+    \begin{itemize}
+        \item Tap $x[n]$ and tap $x[n-3]$ are summed by Pre-Adder 1 before multiplying by $h[0]$.
+        \item Tap $x[n-1]$ and tap $x[n-2]$ are summed by Pre-Adder 2 before multiplying by $h[1]$.
+    \end{itemize}
+    Only two products are formed and summed by a single accumulator adder. This preserves exact numerical equivalence while slashing multiplier hardware by 50\%!
+\end{enumerate}
+
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.85\textwidth]{images/frequency_sampling_structure.png}
-\caption{Frequency Sampling Structure}
+\includegraphics[width=0.92\textwidth]{images/linear_phase_fir.png}
+\caption{Architectural comparison for $M = 4$ symmetric FIR filter: (a) Standard direct-form structure with a straight cascade of unit delays and 4 separate multipliers; (b) Folded linear-phase structure with pre-adders reducing multiplier count to 2.}
+\label{fig:linear_phase_fir}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{images/fir_linear_phase_efficient_structure.png}
+\caption{Conceptual summary of hardware optimization in linear-phase FIR realizations showing 50\% multiplier reduction.}
+\label{fig:fir_linear_phase_efficient}
+\end{figure}
+
+\subsection{5.6 Linear-Phase FIR Cascade Realization (Factored Second-Order Sections)}
+In addition to the folded direct form, linear-phase FIR filters can also be realized in \textbf{Cascade Form} by factoring the overall transfer function $H(z)$ into a series connection of lower-order linear-phase sub-filters:
+\begin{equation}
+H(z) = b_0 \prod_{k=1}^{K} H_k(z)
+\end{equation}
+Because the zeros of any linear-phase filter must exhibit reciprocal symmetry (if $z_0$ is a zero, then $1/z_0$, $z_0^*$, and $1/z_0^*$ must also be zeros), each section $H_k(z)$ inherently preserves linear phase:
+\begin{itemize}
+    \item \textbf{Zeros on the Unit Circle ($z_k = e^{\pm j\theta_k}$):} Form symmetric second-order polynomials:
+    \begin{equation}
+    H_k(z) = 1 - 2\cos(\theta_k) z^{-1} + z^{-2} = 1 + \beta_{1k} z^{-1} + z^{-2}
+    \end{equation}
+    Notice that the leading and trailing coefficients are both $1$, so each second-order section requires only \textbf{one non-trivial multiplier} ($\beta_{1k}$) and two adders!
+    \item \textbf{Real Zeros ($z_k = r_k, 1/r_k$):} Form symmetric second-order polynomials:
+    \begin{equation}
+    H_k(z) = (1 - r_k z^{-1})(1 - r_k^{-1} z^{-1}) = 1 - (r_k + r_k^{-1}) z^{-1} + z^{-2}
+    \end{equation}
+    Again, this requires only one non-trivial multiplier.
+    \item \textbf{Complex Zeros off the Unit Circle (Quadruplet Zeros):} Combine into a 4th-order symmetric section with mirrored coefficients: $1 + c_1 z^{-1} + c_2 z^{-2} + c_1 z^{-3} + z^{-4}$.
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{images/fir_cascade_form.png}
+\caption{Cascade-form realization of an FIR filter ($H(z) = H_1(z) \cdot H_2(z)$), where each second-order section retains symmetric coefficients to ensure linear phase throughout the cascade.}
+\label{fig:fir_cascade_form}
 \end{figure}
 
 \noindent\rule{\textwidth}{0.5pt}
-\section*{3. WORKED NUMERICAL EXAMPLES}
 
-\subsection*{Example 16.1: Linear-Phase FIR Structure}
-\textbf{Problem:} Draw the linear-phase direct form structure for an FIR filter with impulse response $h[n] = \{ \underset{\uparrow}{1}, 2, 3, 2, 1 \}$ ($M=5$).
+\section{6. VLSI \& FPGA IMPLEMENTATION INSIGHTS}
 
-\textbf{Solution:}
+\subsection{6.1 The Cost of Multipliers in Silicon}
+In modern digital design (ASIC standard cell libraries and FPGAs):
 \begin{itemize}
-\item Length $M = 5$ (Odd).
-\item Symmetry: $h[0] = h[4] = 1, \; h[1] = h[3] = 2, \; h[2] = 3$.
-\item Output equation:
+    \item An adder is a simple ripple-carry or carry-lookahead circuit requiring very few logic gates ($O(B)$ area for word-length $B$).
+    \item A multiplier is a 2-dimensional array of full adders or a Wallace-tree structure requiring $O(B^2)$ silicon area and drawing massive dynamic switching power:
+    \begin{equation}
+    P_{\text{dynamic}} = \alpha \cdot C_{\text{load}} \cdot V_{DD}^2 \cdot f_{\text{clk}}
+    \end{equation}
 \end{itemize}
-  $$ y[n] = 1 \cdot (x[n] + x[n-4]) + 2 \cdot (x[n-1] + x[n-3]) + 3 \cdot x[n-2] $$
-\begin{itemize}
-\item \textbf{Hardware Count:}
-\end{itemize}
-  * Multipliers: $\frac{5+1}{2} = 3$ (compared to 5 in standard direct form).
-  * Adders: $2 \text{ (pre-additions)} + 2 \text{ (accumulation)} = 4$.
-  * Delays: 4 registers $z^{-1}$.
+By eliminating 50\% of the multipliers, a linear-phase FIR filter halves the silicon area required for multiplication and drastically cuts the battery consumption of portable DSP devices.
+
+\subsection{6.2 Dedicated Pre-Adders in FPGA DSP Slices}
+Modern FPGAs (such as AMD/Xilinx 7-Series, UltraScale+, and Intel Stratix) contain hardwired DSP blocks (e.g., DSP48E1 / DSP48E2). 
+Each DSP48E slice contains:
+\begin{enumerate}
+    \item A 25-bit \textbf{Pre-Adder}.
+    \item A $25 \times 18$-bit \textbf{Two's Complement Multiplier}.
+    \item A 48-bit \textbf{Accumulator / Post-Adder}.
+\end{enumerate}
+This dedicated architecture evaluates the exact mathematical expression:
+\begin{equation}
+P = (A + D) \times B + C
+\end{equation}
+Because the pre-adder $(A + D)$ is physically built right into the DSP slice silicon, \textbf{a linear-phase symmetric FIR tap executes in a single clock cycle with zero extra FPGA fabric look-up tables (LUTs)!}
 
 \noindent\rule{\textwidth}{0.5pt}
-\section*{4. UNIVERSITY EXAMINATION QUESTIONS \& MARKING RUBRIC}
 
-\subsection*{Question 1 (15 Marks)}
-\textbf{(a)} Derive the Frequency-Sampling structure for an FIR filter. Explain how pole-zero cancellation is achieved. *(8 Marks)*
-\textbf{(b)} Draw the linear-phase realization for an FIR filter of length $M=6$ with $h[n] = \{ \underset{\uparrow}{-1}, 2, 4, 4, 2, -1 \}$. *(7 Marks)*
+\section{7. STEP-BY-STEP WORKED NUMERICAL EXAMPLES}
 
-\textbf{Model Answer \& Step-by-Step Marking Rubric:}
+\subsection{\texorpdfstring{Example 16.1: Symmetric FIR Filter with Odd Length ($M=5$)}{Example 16.1: Symmetric FIR Filter with Odd Length (M=5)}}
+\textbf{Problem:} An FIR filter has the impulse response:
+\begin{equation}
+h[n] = \{ \underset{\uparrow}{1}, \; 2, \; 3, \; 2, \; 1 \}
+\end{equation}
+(a) Verify that this filter possesses linear phase. \\
+(b) Write the standard direct form difference equation and state its hardware count. \\
+(c) Derive the linear-phase direct form difference equation. \\
+(d) Construct the complete signal flow graph and compare the hardware count.
+
+\vspace{0.3cm}
+\noindent\textbf{Solution:}
+
+\noindent\textbf{(a) Verification of Linear Phase:}
+Here length $M = 5$ (samples indexed $n = 0, 1, 2, 3, 4$).
 \begin{itemize}
-\item \textbf{Part (a):}
+    \item $h[0] = 1, \; h[4] = 1 \implies h[0] = h[4]$
+    \item $h[1] = 2, \; h[3] = 2 \implies h[1] = h[3]$
+    \item $h[2] = 3$ (center tap, $\alpha = (5-1)/2 = 2$)
 \end{itemize}
-  * Complete IDFT substitution and geometric series derivation *(5 Marks)*
-  * Explanation of comb zeros cancelling resonator poles on $|z|=1$, and damping factor $r \lesssim 1$ for numerical stability *(3 Marks)*
+Since $h[n] = h[4-n]$ for all $n \in [0, 4]$, the filter is \textbf{Type I Symmetric}, exhibiting pure linear phase with constant group delay $\tau_g = 2$ samples.
+
+\vspace{0.2cm}
+\noindent\textbf{(b) Standard Direct Form Difference Equation:}
+\begin{equation}
+y[n] = 1 \cdot x[n] + 2 \cdot x[n-1] + 3 \cdot x[n-2] + 2 \cdot x[n-3] + 1 \cdot x[n-4]
+\end{equation}
+Hardware resources required:
 \begin{itemize}
-\item \textbf{Part (b):}
+    \item Multipliers: 5 (or 3 non-unity, but 5 general multiplier taps).
+    \item Adders: 4.
+    \item Delays: 4 ($z^{-1}, z^{-2}, z^{-3}, z^{-4}$).
 \end{itemize}
-  * $M=6$ (Even length, symmetric):
-    $y[n] = -1(x[n] + x[n-5]) + 2(x[n-1] + x[n-4]) + 4(x[n-2] + x[n-3])$ *(3 Marks)*
-  * Multipliers required: $6/2 = 3$.
-  * Neatly drawn SFG with 5 delay elements, 3 pre-adders, 3 multipliers, and accumulator bus *(4 Marks)*
+
+\vspace{0.2cm}
+\noindent\textbf{(c) Linear-Phase Form Derivation:}
+Group terms with identical coefficients:
+\begin{equation}
+y[n] = 1 \cdot \Big( x[n] + x[n-4] \Big) + 2 \cdot \Big( x[n-1] + x[n-3] \Big) + 3 \cdot x[n-2]
+\end{equation}
+
+\vspace{0.2cm}
+\noindent\textbf{(d) Hardware Count \& Realization Comparison:}
+\begin{itemize}
+    \item \textbf{Pre-additions:} 
+    \begin{align*}
+    s_0[n] &= x[n] + x[n-4] \quad (\text{Pre-adder 1}) \\
+    s_1[n] &= x[n-1] + x[n-3] \quad (\text{Pre-adder 2})
+    \end{align*}
+    \item \textbf{Multiplications:}
+    Only 3 multiplications are performed:
+    \begin{equation}
+    m_0[n] = 1 \cdot s_0[n], \quad m_1[n] = 2 \cdot s_1[n], \quad m_2[n] = 3 \cdot x[n-2]
+    \end{equation}
+    \item \textbf{Accumulation Adders:}
+    \begin{equation}
+    y[n] = m_0[n] + m_1[n] + m_2[n] \quad (\text{2 adders})
+    \end{equation}
+    \item \textbf{Total Hardware Audit:}
+    \begin{itemize}
+        \item Multipliers: $\frac{5+1}{2} = \mathbf{3}$ (Savings: $\frac{5-3}{5} \times 100\% = \mathbf{40\%}$).
+        \item Total Adders: 2 pre-adders + 2 accumulation adders = $\mathbf{4}$ adders (Unchanged!).
+        \item Delay Registers: $\mathbf{4}$ delay registers ($z^{-1}$) (Unchanged!).
+    \end{itemize}
+\end{itemize}
+
+\vspace{0.4cm}
+\subsection{\texorpdfstring{Example 16.2: Symmetric FIR Filter with Even Length ($M=6$)}{Example 16.2: Symmetric FIR Filter with Even Length (M=6)}}
+\textbf{Problem:} Realize the Type II linear-phase FIR filter having impulse response:
+\begin{equation}
+h[n] = \{ \underset{\uparrow}{0.5}, \; -1.2, \; 2.5, \; 2.5, \; -1.2, \; 0.5 \}
+\end{equation}
+in an efficient linear-phase direct form structure.
+
+\vspace{0.3cm}
+\noindent\textbf{Solution:}
+Here $M = 6$. Coefficients satisfy:
+\begin{equation}
+h[0] = h[5] = 0.5, \quad h[1] = h[4] = -1.2, \quad h[2] = h[3] = 2.5
+\end{equation}
+The delay symmetry center is $\alpha = (6-1)/2 = 2.5$ samples.
+Group symmetric input samples:
+\begin{equation}
+y[n] = 0.5 \Big( x[n] + x[n-5] \Big) - 1.2 \Big( x[n-1] + x[n-4] \Big) + 2.5 \Big( x[n-2] + x[n-3] \Big)
+\end{equation}
+
+\noindent\textbf{Hardware Audit:}
+\begin{itemize}
+    \item \textbf{Multipliers:} $\frac{M}{2} = \frac{6}{2} = \mathbf{3}$ multipliers (compared to 6 in direct form $\to$ \textbf{50\% hardware reduction!}).
+    \item \textbf{Pre-Adders:} 3 adders to compute $(x[n]+x[n-5])$, $(x[n-1]+x[n-4])$, and $(x[n-2]+x[n-3])$.
+    \item \textbf{Accumulation Adders:} 2 adders to sum the 3 multiplier products.
+    \item \textbf{Total Adders:} $3 + 2 = \mathbf{5}$ adders ($M-1 = 5$).
+    \item \textbf{Delays:} $\mathbf{5}$ delay registers ($z^{-1}$).
+\end{itemize}
+
+\vspace{0.4cm}
+\subsection{\texorpdfstring{Example 16.3: Antisymmetric FIR Filter with Odd Length ($M=5$)}{Example 16.3: Antisymmetric FIR Filter with Odd Length (M=5)}}
+\textbf{Problem:} An odd-length antisymmetric FIR filter is defined by:
+\begin{equation}
+h[n] = \{ \underset{\uparrow}{1}, \; 2, \; 0, \; -2, \; -1 \}
+\end{equation}
+(a) Confirm that this is a Type III filter. \\
+(b) Formulate the efficient realization difference equation. \\
+(c) Determine the exact number of multipliers and adders.
+
+\vspace{0.3cm}
+\noindent\textbf{Solution:}
+
+\noindent\textbf{(a) Classification:}
+Length $M = 5$ (Odd).
+Symmetry:
+\begin{itemize}
+    \item $h[0] = 1, \; h[4] = -1 \implies h[0] = -h[4]$
+    \item $h[1] = 2, \; h[3] = -2 \implies h[1] = -h[3]$
+    \item $h[2] = 0 = -h[2]$ (middle sample is zero!)
+\end{itemize}
+This is a \textbf{Type III Antisymmetric FIR Filter} with group delay $\tau_g = 2$ samples.
+
+\vspace{0.2cm}
+\noindent\textbf{(b) Difference Equation:}
+\begin{equation}
+y[n] = 1 \cdot \Big( x[n] - x[n-4] \Big) + 2 \cdot \Big( x[n-1] - x[n-3] \Big)
+\end{equation}
+Notice that the term $h[2] x[n-2] = 0 \cdot x[n-2] = 0$ is completely absent!
+
+\vspace{0.2cm}
+\noindent\textbf{(c) Hardware Count:}
+\begin{itemize}
+    \item \textbf{Multipliers:} Exactly $\frac{M-1}{2} = \frac{5-1}{2} = \mathbf{2}$ multipliers! (Compared to 5 in direct form $\to$ \textbf{60\% multiplier savings!}).
+    \item \textbf{Pre-Subtractors:} 2 subtractors to compute $(x[n]-x[n-4])$ and $(x[n-1]-x[n-3])$.
+    \item \textbf{Accumulation Adders:} 1 adder to sum the two products.
+    \item \textbf{Total Adders/Subtractors:} $2 + 1 = \mathbf{3}$ adders ($M-2$).
+    \item \textbf{Delays:} $\mathbf{4}$ registers ($z^{-1}$).
+\end{itemize}
 
 \noindent\rule{\textwidth}{0.5pt}
-\section*{5. PYTHON VERIFICATION SCRIPT}
-\begin{verbatim}
-import numpy as np
 
-\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Verify linear-phase convolution equivalence \\ \large (III B.Tech EEE)}\maketitle
-h = np.array([1, 2, 3, 2, 1])
-x = np.array([1, 1, 1, 1, 1])
-y = np.convolve(x, h)
-print("Convolution Output:", y)
-\end{verbatim}
+\section{8. PEDAGOGICAL CHECKPOINTS \& COMMON MISCONCEPTIONS}
+
+\begin{enumerate}
+    \item \textbf{Misconception 1: "Does pre-addition increase the total number of adders in the filter?"}
+    \begin{itemize}
+        \item \textit{Reality:} \textbf{No.} The total number of adders is always exactly $M-1$ for symmetric filters. In standard direct form, all $M-1$ additions occur in the accumulation bus after multiplication. In linear-phase form, $\lfloor M/2 \rfloor$ additions are shifted before the multipliers, leaving $\lceil M/2 \rceil - 1$ additions for accumulation. The total adder count is mathematically invariant.
+    \end{itemize}
+
+    \item \textbf{Misconception 2: "Does the folded linear-phase realization change the transfer function $H(z)$?"}
+    \begin{itemize}
+        \item \textit{Reality:} \textbf{No.} The transfer function $H(z)$ and the frequency response $H(e^{j\omega})$ are completely identical. The folded structure is purely an algebraic rearrangement exploiting the distributive law: $a \cdot x_1 + a \cdot x_2 = a(x_1 + x_2)$.
+    \end{itemize}
+
+    \item \textbf{Misconception 3: "Can a Type II filter be used to design an audio tweeter high-pass filter?"}
+    \begin{itemize}
+        \item \textit{Reality:} \textbf{Absolutely NOT.} A Type II filter (even length, symmetric) has a forced transmission zero at $\omega = \pi$ ($z = -1$), meaning it has zero gain at the highest possible discrete frequency. A high-pass filter must pass $\omega = \pi$. Therefore, attempting to design an HPF using Type II is an immediate fatal design error.
+    \end{itemize}
+
+    \item \textbf{Misconception 4: "Can an IIR filter achieve linear phase using this pre-addition technique?"}
+    \begin{itemize}
+        \item \textit{Reality:} \textbf{No.} IIR filters have infinite impulse responses that cannot have causal symmetry. Furthermore, IIR realization structures rely on recursive feedback loops ($y[n-k]$ feeding back to $y[n]$), which prevent symmetric pair grouping.
+    \end{itemize}
+\end{enumerate}
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{9. UNIVERSITY EXAMINATION QUESTIONS \& PRACTICE PROBLEMS}
+
+\subsection{Problem 1 (10 Marks — Analytical \& Realization)}
+\textbf{Question:} 
+A linear-phase low-pass FIR filter is specified with impulse response:
+\begin{equation}
+h[n] = \{ -0.1, \; 0.2, \; 0.6, \; 0.6, \; 0.2, \; -0.1 \}
+\end{equation}
+1. State the Type and Order of the filter. (2 Marks) \\
+2. Determine the group delay $\tau_g$ and phase delay $\tau_p(\omega)$. (2 Marks) \\
+3. Write the standard direct form and linear-phase direct form difference equations. (3 Marks) \\
+4. Sketch the linear-phase realization structure and evaluate the multiplier savings. (3 Marks)
+
+\vspace{0.2cm}
+\noindent\textbf{Marking Scheme \& Solution Outline:}
+\begin{enumerate}
+    \item \textbf{Type \& Order:} Length $M = 6$, Order $N = M-1 = 5$. Since $h[n] = h[5-n]$, it is a \textbf{Type II Symmetric FIR Filter}. (2 Marks)
+    \item \textbf{Delays:} $\tau_g = \frac{M-1}{2} = \frac{5}{2} = \mathbf{2.5 \text{ samples}}$. Phase delay $\tau_p(\omega) = 2.5$ samples (constant). (2 Marks)
+    \item \textbf{Difference Equations:}
+    \begin{itemize}
+        \item Direct: $y[n] = -0.1x[n] + 0.2x[n-1] + 0.6x[n-2] + 0.6x[n-3] + 0.2x[n-4] - 0.1x[n-5]$.
+        \item Linear-Phase: $y[n] = -0.1(x[n]+x[n-5]) + 0.2(x[n-1]+x[n-4]) + 0.6(x[n-2]+x[n-3])$. (3 Marks)
+    \end{itemize}
+    \item \textbf{Structure \& Savings:} Multipliers reduced from 6 to 3. Savings = $50\%$. Adders = 5. Delays = 5. (3 Marks)
+\end{enumerate}
+
+\subsection{Problem 2 (5 Marks — Conceptual Proof)}
+\textbf{Question:}
+Prove mathematically that any causal antisymmetric FIR filter of odd length $M$ must satisfy $h\left[\frac{M-1}{2}\right] = 0$. Explain how this property benefits hardware implementation.
+
+\vspace{0.2cm}
+\noindent\textbf{Solution Outline:}
+By definition of antisymmetry: $h[n] = -h[M-1-n]$ for $0 \le n \le M-1$. 
+Evaluating at the center tap $n = \frac{M-1}{2}$:
+\begin{align*}
+h\left[\frac{M-1}{2}\right] &= -h\left[M - 1 - \frac{M-1}{2}\right] = -h\left[\frac{M-1}{2}\right] \\
+&\implies 2h\left[\frac{M-1}{2}\right] = 0 \implies h\left[\frac{M-1}{2}\right] = 0
+\end{align*}
+\textbf{Hardware Benefit:} Because the center tap is identically zero, the middle sample $x[n - (M-1)/2]$ requires neither a multiplier nor an adder in the accumulation chain. For an odd-length antisymmetric filter, the required multiplier count drops from $M$ to $\frac{M-1}{2}$ (saving greater than 50\%).
 
 \end{document}

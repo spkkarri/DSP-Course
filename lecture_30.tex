@@ -24,7 +24,7 @@
 }
 
 \begin{document}
-\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Lecture 30: DSP Applications — Channel Equalization, ANC, LMS \& Course Review \\ \large (III B.Tech EEE)}\maketitle
+\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Lecture 30: Equalization and noise cancellation and adaptive FIR filter \\ \large (III B.Tech EEE)}\maketitle
 
 \noindent\rule{\textwidth}{0.5pt}
 \section*{1. LEARNING OBJECTIVES}
@@ -33,13 +33,12 @@ By the end of this lecture, students will be able to:
 \item \textbf{Formulate} channel equalization systems for dispersive digital communication links.
 \item \textbf{Derive} the LMS adaptive filter algorithm from the Mean Square Error (MSE) cost function.
 \item \textbf{Analyze} convergence speed vs. steady-state misadjustment trade-offs governed by step-size $\mu$.
-\item \textbf{Map} complete end-to-end DSP problem statements to the appropriate mathematical tools and algorithms developed across the course.
+\end{enumerate}
 
 \noindent\rule{\textwidth}{0.5pt}
 \section*{2. MATHEMATICAL FOUNDATIONS}
 
 \subsection*{2.1 Channel Equalization}
-\end{enumerate}
 When a digital symbol sequence $s[n]$ passes through a dispersive channel $C(z)$ with additive noise $v[n]$:
 $$ r[n] = s[n] * c[n] + v[n] $$
 \begin{itemize}
@@ -73,16 +72,6 @@ $$ r[n] = s[n] * c[n] + v[n] $$
 \item \textbf{Stability Condition:}
 \end{itemize}
   $$ 0 < \mu < \frac{1}{\text{Tr}(\mathbf{R})} = \frac{1}{M \cdot E[x^2[n]]} = \frac{1}{M P_x} $$
-
-\subsection*{2.3 Comprehensive Course Outcome (CO) Mapping}
-
-| Unit | Topic Coverage | Course Outcome |
-| :--- | :--- | :--- |
-| \textbf{Unit I (L1–L7)} | DT Signals, LTI Systems, Convolution, DTFT, Z-Transform, Inverse ZT, DFT Matrix | \textbf{CO1, CO2:} Analyze discrete-time signals and transform-domain representations. |
-| \textbf{Unit II (L8–L14)} | DFT Properties, Circular Conv, Radix-2 DIT/DIF FFT, Radix-4, Overlap-Add \& Save | \textbf{CO2, CO3:} Implement efficient fast Fourier transforms and block linear filtering. |
-| \textbf{Unit III (L15–L20)} | FIR Direct/Cascade, Linear Phase, IIR DF-I/DF-II, Cascade SOS, Parallel, Lattice | \textbf{CO4:} Synthesize robust digital filter structures and analyze quantization effects. |
-| \textbf{Unit IV (L21–L30)} | FIR Windows, Frequency Sampling, Analog Prototypes, BLT, MZT, Equalization, LMS | \textbf{CO5:} Design FIR and IIR digital filters and apply them to engineering systems. |
-
 
 \subsection*{Pictorial Representations}
 \begin{figure}[H]
@@ -124,54 +113,5 @@ Since $\mu = 0.01 < 0.25$, the adaptive algorithm is \textbf{guaranteed to be st
 \end{enumerate}
    $$ \mathbf{w}[n+1] = \mathbf{w}[n] + 2\mu e[n] \mathbf{x}[n] = \begin{bmatrix} 0.5 \\ -0.2 \end{bmatrix} + 2(0.01)(0.8) \begin{bmatrix} 1.0 \\ 0.5 \end{bmatrix} = \begin{bmatrix} 0.5 \\ -0.2 \end{bmatrix} + 0.016 \begin{bmatrix} 1.0 \\ 0.5 \end{bmatrix} $$
    $$ \mathbf{w}[n+1] = \begin{bmatrix} 0.5 + 0.0160 \\ -0.2 + 0.0080 \end{bmatrix} = \begin{bmatrix} \mathbf{0.5160} \\ \mathbf{-0.1920} \end{bmatrix} $$
-
-\noindent\rule{\textwidth}{0.5pt}
-\section*{4. UNIVERSITY EXAMINATION QUESTIONS \& MARKING RUBRIC}
-
-\subsection*{Question 1 (15 Marks)}
-\textbf{(a)} Explain the principle of Adaptive Noise Cancellation (ANC). Derive the LMS weight adaptation algorithm and state the condition for convergence. *(9 Marks)*
-\textbf{(b)} What is channel equalization? Compare Zero-Forcing and MMSE equalizers. *(6 Marks)*
-
-\textbf{Model Answer \& Step-by-Step Marking Rubric:}
-\begin{itemize}
-\item \textbf{Part (a):}
-\end{itemize}
-  * ANC block diagram and proof that minimizing $E[e^2[n]]$ maximizes signal SNR *(4 Marks)*
-  * Derivation of LMS gradient update $\mathbf{w}_{n+1} = \mathbf{w}_n + 2\mu e_n \mathbf{x}_n$ *(3 Marks)*
-  * Stability bounds: $0 < \mu < 1/\text{Tr}(\mathbf{R})$ *(2 Marks)*
-\begin{itemize}
-\item \textbf{Part (b):}
-\end{itemize}
-  * Channel distortion and ISI formulation *(2 Marks)*
-  * Comparison of ZF ($1/C(z)$, noise boost) vs MMSE (noise regularization) *(4 Marks)*
-
-\noindent\rule{\textwidth}{0.5pt}
-\section*{5. PYTHON VERIFICATION SCRIPT}
-\begin{verbatim}
-import numpy as np
-
-\title{\textbf{EE3621: Digital Signal Processing} \\ \Large LMS simulation \\ \large (III B.Tech EEE)}\maketitle
-np.random.seed(42)
-N_samples = 500
-s = np.sin(2 * np.pi * 0.05 * np.arange(N_samples))  # Desired signal
-n0 = 0.5 * np.random.randn(N_samples)               # Noise
-d = s + n0                                          # Primary input
-x = n0 + 0.1 * np.random.randn(N_samples)           # Reference noise
-
-\title{\textbf{EE3621: Digital Signal Processing} \\ \Large LMS Adaptive Filter \\ \large (III B.Tech EEE)}\maketitle
-M = 4
-mu = 0.01
-w = np.zeros(M)
-e = np.zeros(N_samples)
-
-for n in range(M, N_samples):
-    x_vec = x[n:n-M:-1]
-    y = np.dot(w, x_vec)
-    e[n] = d[n] - y
-    w = w + 2 * mu * e[n] * x_vec
-
-print("Final LMS Weights:", np.round(w, 4))
-print(f"Output Error variance reduction: {np.var(d):.4f} -> {np.var(e[100:]):.4f}")
-\end{verbatim}
 
 \end{document}

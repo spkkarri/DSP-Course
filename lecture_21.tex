@@ -24,7 +24,7 @@
 }
 
 \begin{document}
-\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Lecture 21: FIR Filter Specifications \& 4 Linear-Phase Types \\ \large (III B.Tech EEE)}\maketitle
+\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Lecture 21: Linear phase FIR filter, characteristic response, location of zeros \\ \large (III B.Tech EEE)}\maketitle
 
 \noindent\rule{\textwidth}{0.5pt}
 \section*{1. LEARNING OBJECTIVES}
@@ -33,21 +33,20 @@ By the end of this lecture, students will be able to:
 \item \textbf{Derive} linear phase conditions for symmetric and antisymmetric FIR impulse responses.
 \item \textbf{Classify} FIR filters into Types I, II, III, and IV based on length $N$ and symmetry.
 \item \textbf{Determine} boundary zero constraints at $\omega = 0$ and $\omega = \pi$ for each FIR type.
-\item \textbf{Select} the appropriate FIR type for specific filter applications (LPF, HPF, BPF, BSF, Differentiators, Hilbert Transformers).
 \item \textbf{Analyze} zero locations in the complex $z$-plane.
+\end{enumerate}
 
 \noindent\rule{\textwidth}{0.5pt}
 \section*{2. MATHEMATICAL FOUNDATIONS}
 
 \subsection*{2.1 The 4 Types of Linear-Phase FIR Filters}
 
-\end{enumerate}
-| Type | Symmetry | Length $N$ (Order $M=N-1$) | Amplitude Function $A(\omega)$ | Mandatory Boundary Zeros | Suitable Applications |
-| :---: | :---: | :---: | :---: | :---: | :---: |
-| \textbf{Type I} | Symmetric ($h[n] = h[N-1-n]$) | $N$ Odd ($M$ Even) | $\sum a[k] \cos(\omega k)$ | None | LPF, HPF, BPF, BSF (Universal) |
-| \textbf{Type II} | Symmetric ($h[n] = h[N-1-n]$) | $N$ Even ($M$ Odd) | $\sum b[k] \cos(\omega(k-1/2))$ | Zero at $\omega = \pi$ ($z = -1$) | LPF, BPF only |
-| \textbf{Type III} | Antisymmetric ($h[n] = -h[N-1-n]$) | $N$ Odd ($M$ Even) | $\sum c[k] \sin(\omega k)$ | Zeros at $\omega = 0$ ($z=1$) \& $\omega = \pi$ ($z=-1$) | BPF, Differentiator, Hilbert |
-| \textbf{Type IV} | Antisymmetric ($h[n] = -h[N-1-n]$) | $N$ Even ($M$ Odd) | $\sum d[k] \sin(\omega(k-1/2))$ | Zero at $\omega = 0$ ($z = 1$) | HPF, BPF, Differentiator, Hilbert |
+| Type | Symmetry | Length $N$ (Order $M=N-1$) | Amplitude Function $A(\omega)$ | Mandatory Boundary Zeros |
+| :---: | :---: | :---: | :---: | :---: |
+| \textbf{Type I} | Symmetric ($h[n] = h[N-1-n]$) | $N$ Odd ($M$ Even) | $\sum a[k] \cos(\omega k)$ | None |
+| \textbf{Type II} | Symmetric ($h[n] = h[N-1-n]$) | $N$ Even ($M$ Odd) | $\sum b[k] \cos(\omega(k-1/2))$ | Zero at $\omega = \pi$ ($z = -1$) |
+| \textbf{Type III} | Antisymmetric ($h[n] = -h[N-1-n]$) | $N$ Odd ($M$ Even) | $\sum c[k] \sin(\omega k)$ | Zeros at $\omega = 0$ ($z=1$) \& $\omega = \pi$ ($z=-1$) |
+| \textbf{Type IV} | Antisymmetric ($h[n] = -h[N-1-n]$) | $N$ Even ($M$ Odd) | $\sum d[k] \sin(\omega(k-1/2))$ | Zero at $\omega = 0$ ($z = 1$) |
 
 \subsection*{2.2 Proof of Mandatory Zeros}
 \begin{itemize}
@@ -101,38 +100,5 @@ Zeros off the unit circle always occur in groups of 4 (quadruplets).
 \textbf{(b)} Highpass Feasibility:
 Check $H(e^{j\pi}) = H(-1) = 1 - 2 + 3 - 2 + 1 = 1 \ne 0$.
 Since Type I has no mandatory zeros at $\omega = \pi$, it can theoretically operate as a Highpass filter (though this specific impulse response has $H(e^{j0}) = 9$ and $H(e^{j\pi}) = 1$, making it a Lowpass filter).
-
-\noindent\rule{\textwidth}{0.5pt}
-\section*{4. UNIVERSITY EXAMINATION QUESTIONS \& MARKING RUBRIC}
-
-\subsection*{Question 1 (15 Marks)}
-\textbf{(a)} State the four types of linear-phase FIR filters and derive the mandatory boundary zeros for Type II, Type III, and Type IV filters. *(9 Marks)*
-\textbf{(b)} Prove that the roots of a linear-phase FIR filter occur in conjugate reciprocal quadruplets. *(6 Marks)*
-
-\textbf{Model Answer \& Step-by-Step Marking Rubric:}
-\begin{itemize}
-\item \textbf{Part (a):}
-\end{itemize}
-  * Table of 4 Types with symmetry and length definitions *(3 Marks)*
-  * Mathematical proofs showing $H(e^{j\pi})=0$ for Type II, $H(1)=H(-1)=0$ for Type III, and $H(1)=0$ for Type IV *(6 Marks)*
-\begin{itemize}
-\item \textbf{Part (b):}
-\end{itemize}
-  * Step-by-step proof using $H(z) = \pm z^{-(N-1)} H(z^{-1})$ and complex conjugation $H^*(z) = H(z^*)$ *(6 Marks)*
-
-\noindent\rule{\textwidth}{0.5pt}
-\section*{5. PYTHON VERIFICATION SCRIPT}
-\begin{verbatim}
-import numpy as np
-
-h = np.array([1, 2, 3, 2, 1])
-w = np.linspace(0, np.pi, 500)
-H = np.polyval(h[::-1], np.exp(-1j * w))
-
-\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Phase should be exactly -2*w \\ \large (III B.Tech EEE)}\maketitle
-phase = np.unwrap(np.angle(H))
-group_delay = -np.diff(phase) / np.diff(w)
-print(f"Mean Group Delay: {np.mean(group_delay):.4f} samples (Theoretical = 2.0)")
-\end{verbatim}
 
 \end{document}

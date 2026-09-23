@@ -9,10 +9,15 @@
 \usepackage{float}
 \usepackage{xcolor}
 
+\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Lecture 17: IIR Filter — Direct Form I and Direct Form II Realization \\ \large (III B.Tech EEE)}
+\author{Comprehensive Lecture Notes \& Faculty Textbook Reference}
+\date{}
+
 \definecolor{darkbg}{HTML}{0d121f}
 \definecolor{lighttext}{HTML}{e2e8f0}
 \definecolor{primary}{HTML}{8b5cf6}
 \definecolor{secondary}{HTML}{0dd5c5}
+\definecolor{accent}{HTML}{10b981}
 
 \pagecolor{darkbg}
 \color{lighttext}
@@ -20,122 +25,484 @@
 \hypersetup{
     colorlinks=true,
     linkcolor=secondary,
-    urlcolor=secondary
+    urlcolor=secondary,
+    citecolor=accent
 }
 
 \begin{document}
-\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Lecture 17: IIR Filter Realization — Direct Forms I, II \& Transposed Forms \\ \large (III B.Tech EEE)}\maketitle
+
+\maketitle
 
 \noindent\rule{\textwidth}{0.5pt}
-\section*{1. LEARNING OBJECTIVES}
+
+\section{Lecture Plan \& Objectives (40 Minutes Breakdown)}
+\begin{itemize}
+    \item \textbf{00:00 -- 06:00 (6 mins):} Introduction to IIR Realization: Difference equations, rational transfer functions $H(z) = B(z)/A(z)$, and recursive feedback loops.
+    \item \textbf{06:00 -- 16:00 (10 mins):} Direct Form I Realization: Derivation, block diagram, feedforward zeros followed by feedback poles, and non-canonical delay count ($M+N$).
+    \item \textbf{16:00 -- 26:00 (10 mins):} Direct Form II (Canonical Realization): The LTI Commutativity Principle (swapping zeros and poles), intermediate state variable $w[n]$, and merging redundant delay registers.
+    \item \textbf{26:00 -- 33:00 (7 mins):} Side-by-side comparison: Direct Form I vs. Direct Form II (Hardware complexity, memory footprint, and internal node overflow risks).
+    \item \textbf{33:00 -- 38:00 (5 mins):} Step-by-step worked numerical examples (2nd-order biquad and asymmetric order systems).
+    \item \textbf{38:00 -- 40:00 (2 mins):} Pedagogical checkpoints, common sign misconceptions, and university exam review.
+\end{itemize}
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{1. LEARNING OBJECTIVES}
 By the end of this lecture, students will be able to:
 \begin{enumerate}
-\item \textbf{Formulate} difference equations and signal flow graphs for Direct Form I, Direct Form II, and Transposed Direct Form II.
-\item \textbf{Calculate} minimum delay register counts for canonical vs. non-canonical structures.
-\item \textbf{Analyze} intermediate node scaling to prevent internal register overflow.
-\item \textbf{Compare} Direct Form structures across critical path latency and hardware complexity.
-
-\noindent\rule{\textwidth}{0.5pt}
-\section*{2. MATHEMATICAL FOUNDATIONS}
-
-\subsection*{2.1 General IIR Transfer Function}
+    \item \textbf{Formulate} the general linear constant-coefficient difference equation (LCCDE) and its corresponding rational transfer function $H(z)$ for an arbitrary IIR filter.
+    \item \textbf{Derive} the mathematical state equations and signal flow graphs (SFG) for the Direct Form I realization.
+    \item \textbf{Apply} the LTI Commutativity Principle to reverse the order of the all-pole and all-zero sub-systems without altering the overall system response.
+    \item \textbf{Formulate} the intermediate state variable $w[n]$ to construct the canonical Direct Form II realization.
+    \item \textbf{Calculate} exact hardware resource counts (multipliers, adders, and delay registers) for both canonical ($\max(M, N)$) and non-canonical ($M+N$) structures.
+    \item \textbf{Compare} Direct Form I and Direct Form II in terms of memory requirements, critical path latency, and intermediate register overflow sensitivity.
+    \item \textbf{Extract} difference equations and transfer functions directly from block diagrams and signal flow graphs.
 \end{enumerate}
-$$ H(z) = \frac{\sum_{k=0}^{M} b_k z^{-k}}{1 + \sum_{k=1}^{N} a_k z^{-k}} = \frac{Y(z)}{X(z)} $$
-Difference Equation:
-$$ y[n] = \sum_{k=0}^{M} b_k x[n-k] - \sum_{k=1}^{N} a_k y[n-k] $$
 
-\subsection*{2.2 Direct Form I Realization}
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{2. MATHEMATICAL FOUNDATIONS OF IIR SYSTEMS}
+
+\subsection{2.1 Difference Equations and Rational Transfer Functions}
+An Infinite Impulse Response (IIR) digital filter is described by a linear constant-coefficient difference equation (LCCDE) relating the input sequence $x[n]$ to the output sequence $y[n]$:
+\begin{equation}
+\sum_{k=0}^{N} a_k y[n-k] = \sum_{k=0}^{M} b_k x[n-k]
+\end{equation}
+Without loss of generality, we normalize the current output coefficient by setting $a_0 = 1$. Rearranging into computational form:
+\begin{equation}
+y[n] = \sum_{k=0}^{M} b_k x[n-k] - \sum_{k=1}^{N} a_k y[n-k]
+\label{eq:iir_diff_eq}
+\end{equation}
+Expanding this expression explicitly:
+\begin{equation}
+y[n] = \underbrace{b_0 x[n] + b_1 x[n-1] + \dots + b_M x[n-M]}_{\text{Feedforward Terms (Zeros)}} - \underbrace{\Big( a_1 y[n-1] + a_2 y[n-2] + \dots + a_N y[n-N] \Big)}_{\text{Feedback Terms (Poles)}}
+\end{equation}
+
+Applying the unilateral or bilateral $Z$-transform to both sides (assuming zero initial conditions):
+\begin{equation}
+Y(z) = \sum_{k=0}^{M} b_k z^{-k} X(z) - \sum_{k=1}^{N} a_k z^{-k} Y(z)
+\end{equation}
+Gathering $Y(z)$ terms on the left:
+\begin{equation}
+Y(z) \left( 1 + \sum_{k=1}^{N} a_k z^{-k} \right) = X(z) \left( \sum_{k=0}^{M} b_k z^{-k} \right)
+\end{equation}
+The system transfer function $H(z)$ is the ratio of output $Y(z)$ to input $X(z)$:
+\begin{equation}
+H(z) = \frac{Y(z)}{X(z)} = \frac{\sum_{k=0}^{M} b_k z^{-k}}{1 + \sum_{k=1}^{N} a_k z^{-k}} = \frac{B(z)}{A(z)}
+\label{eq:iir_transfer_function}
+\end{equation}
+where:
 \begin{itemize}
-\item Implements feedforward path ($M$ delays) and feedback path ($N$ delays) separately.
-\item \textbf{Total Delays:} $M + N$.
-\item \textbf{Total Multipliers:} $M + N + 1$.
-\item \textbf{Total Adders:} $M + N$.
-
-\subsection*{2.3 Direct Form II (Canonical Realization)}
+    \item $B(z) = \sum_{k=0}^{M} b_k z^{-k}$ is the numerator polynomial of degree $M$, determining the \textbf{system zeros}.
+    \item $A(z) = 1 + \sum_{k=1}^{N} a_k z^{-k}$ is the denominator polynomial of degree $N$, determining the \textbf{system poles}.
+    \item The order of the filter is defined as $\max(M, N)$, typically with $M \le N$.
 \end{itemize}
-Let $W(z) = \frac{X(z)}{1 + \sum_{k=1}^N a_k z^{-k}}$, then $Y(z) = \left( \sum_{k=0}^M b_k z^{-k} \right) W(z)$.
-In the time domain:
-$$ w[n] = x[n] - \sum_{k=1}^{N} a_k w[n-k] $$
-$$ y[n] = \sum_{k=0}^{M} b_k w[n-k] $$
+
+\subsection{2.2 Critical Pedagogical Note on Feedback Sign Conventions}
+\begin{quote}
+\textbf{Faculty Insight \& Exam Caution:} 
+Pay meticulous attention to the minus sign in front of the feedback coefficients $a_k$!
 \begin{itemize}
-\item \textbf{Total Delays:} $\max(M, N)$ (Canonical).
-\item \textbf{Total Multipliers:} $M + N + 1$.
-\item \textbf{Total Adders:} $M + N$.
-
-\subsection*{2.4 Transposed Direct Form II}
+    \item In the difference equation (\ref{eq:iir_diff_eq}), the feedback terms are \textbf{subtracted}: $-\sum_{k=1}^N a_k y[n-k]$.
+    \item In the denominator polynomial $A(z) = 1 + \sum_{k=1}^N a_k z^{-k}$, the coefficients $a_k$ have \textbf{positive signs}.
+    \item When drawing block diagrams and signal flow graphs:
+    \begin{itemize}
+        \item If the summing junction performs \textbf{addition} ($+$), the multiplier branch must be labeled $\mathbf{-a_k}$.
+        \item If the multiplier branch is labeled $\mathbf{+a_k}$, the summing junction must have a \textbf{subtraction} ($-$) sign at that input.
+    \end{itemize}
 \end{itemize}
-Applying flow graph reversal to Direct Form II:
-$$ y[n] = b_0 x[n] + v_1[n-1] $$
-$$ v_k[n] = b_k x[n] - a_k y[n] + v_{k+1}[n-1], \quad k = 1, 2, \dots, N-1 $$
-$$ v_N[n] = b_N x[n] - a_N y[n] $$
+Confusing this sign is the single most common student error in university semester examinations.
+\end{quote}
 
+\noindent\rule{\textwidth}{0.5pt}
 
-\subsection*{Pictorial Representations}
+\section{3. DIRECT FORM I REALIZATION (NON-CANONICAL)}
+
+\subsection{3.1 Derivation from Sub-System Factoring}
+The transfer function $H(z)$ in (\ref{eq:iir_transfer_function}) can be factored into a cascade of two independent LTI sub-systems:
+\begin{equation}
+H(z) = H_1(z) \cdot H_2(z) = B(z) \cdot \frac{1}{A(z)}
+\end{equation}
+Let $v[n]$ (with $Z$-transform $V(z)$) represent the intermediate signal between the two stages:
+\begin{equation}
+X(z) \longrightarrow \boxed{H_1(z) = B(z)} \xrightarrow{V(z)} \boxed{H_2(z) = \frac{1}{A(z)}} \longrightarrow Y(z)
+\end{equation}
+
+\subsubsection{Stage 1: All-Zero (Feedforward / FIR) Sub-System}
+\begin{equation}
+V(z) = B(z) X(z) = \left( \sum_{k=0}^{M} b_k z^{-k} \right) X(z)
+\end{equation}
+Taking the inverse $Z$-transform yields the feedforward difference equation:
+\begin{equation}
+v[n] = \sum_{k=0}^{M} b_k x[n-k] = b_0 x[n] + b_1 x[n-1] + \dots + b_M x[n-M]
+\end{equation}
+This stage is a pure FIR tapped-delay-line structure requiring $M$ delay elements ($z^{-1}$) to store past inputs $x[n-1], \dots, x[n-M]$.
+
+\subsubsection{Stage 2: All-Pole (Feedback / Autoregressive) Sub-System}
+\begin{equation}
+Y(z) = \frac{1}{A(z)} V(z) \implies A(z) Y(z) = V(z)
+\end{equation}
+\begin{equation}
+\left( 1 + \sum_{k=1}^{N} a_k z^{-k} \right) Y(z) = V(z) \implies Y(z) = V(z) - \sum_{k=1}^{N} a_k z^{-k} Y(z)
+\end{equation}
+Taking the inverse $Z$-transform:
+\begin{equation}
+y[n] = v[n] - \sum_{k=1}^{N} a_k y[n-k] = v[n] - a_1 y[n-1] - a_2 y[n-2] - \dots - a_N y[n-N]
+\end{equation}
+This stage is a pure recursive all-pole structure requiring $N$ delay elements ($z^{-1}$) to store past outputs $y[n-1], \dots, y[n-N]$.
+
+\subsection{3.2 Direct Form I Hardware Complexity Audit}
+By cascading Stage 1 followed by Stage 2, we obtain the **Direct Form I Realization**:
+\begin{itemize}
+    \item \textbf{Delay Elements ($z^{-1}$):} $M$ delays for input $x[n]$ plus $N$ delays for output $y[n]$:
+    \begin{equation}
+    \text{Total Delays} = M + N
+    \end{equation}
+    \item \textbf{Multipliers:} $M + 1$ feedforward multipliers ($b_0, b_1, \dots, b_M$) plus $N$ feedback multipliers ($a_1, a_2, \dots, a_N$):
+    \begin{equation}
+    \text{Total Multipliers} = M + N + 1
+    \end{equation}
+    \item \textbf{Adders:} $M$ additions for feedforward accumulation plus $N$ additions for feedback accumulation:
+    \begin{equation}
+    \text{Total Adders} = M + N
+    \end{equation}
+\end{itemize}
+
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.85\textwidth]{images/iir_direct_form_i.png}
-\caption{Iir Direct Form I}
+\includegraphics[width=0.88\textwidth]{images/iir_direct_form_i.png}
+\caption{IIR Direct Form I Realization Schematic. The input delay line (left, $M$ delays) computes the all-zero feedforward response, while the output delay line (right, $N$ delays) computes the all-pole feedback response.}
+\label{fig:iir_direct_form_i}
 \end{figure}
+
+\subsection{3.3 Why Direct Form I is Non-Canonical}
+A digital filter realization is formally defined as **canonical** if the number of delay registers ($z^{-1}$) used in the hardware realization is strictly equal to the order of the filter:
+\begin{equation}
+\text{Canonical Delay Requirement} = \max(M, N)
+\end{equation}
+In Direct Form I, the total number of delay elements is $M + N$. 
+Because $M + N > \max(M, N)$ for any non-trivial filter ($M, N \ge 1$), **Direct Form I is strictly non-canonical**. For a typical system where $M = N$, Direct Form I consumes **twice as many memory registers** as mathematically required!
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{4. DIRECT FORM II REALIZATION (CANONICAL)}
+
+\subsection{4.1 The LTI Commutativity Principle}
+Linear Time-Invariant (LTI) systems possess the fundamental mathematical property of **commutativity under convolution**:
+\begin{equation}
+h_1[n] * h_2[n] = h_2[n] * h_1[n] \iff H(z) = H_1(z) \cdot H_2(z) = H_2(z) \cdot H_1(z)
+\end{equation}
+In Direct Form I, we implemented $H(z) = B(z) \cdot \frac{1}{A(z)}$ (zeros first, then poles).
+Because the sub-systems commute, we can completely \textbf{reverse the order of cascade} without altering the overall input-output behavior:
+\begin{equation}
+H(z) = \frac{1}{A(z)} \cdot B(z)
+\end{equation}
+\begin{equation}
+X(z) \longrightarrow \boxed{H_2(z) = \frac{1}{A(z)}} \xrightarrow{W(z)} \boxed{H_1(z) = B(z)} \longrightarrow Y(z)
+\end{equation}
+We now define an intermediate state variable $w[n]$ (with transform $W(z)$) at the junction between the all-pole sub-system and the all-zero sub-system.
+
+\subsection{4.2 Mathematical Derivation of State Equations}
+
+\subsubsection{Stage 1: The All-Pole Sub-System}
+The input $X(z)$ is processed by the all-pole transfer function $1/A(z)$ to generate the intermediate state sequence $W(z)$:
+\begin{equation}
+W(z) = \frac{1}{A(z)} X(z) \implies A(z) W(z) = X(z)
+\end{equation}
+Substituting $A(z) = 1 + \sum_{k=1}^N a_k z^{-k}$:
+\begin{equation}
+\left( 1 + \sum_{k=1}^{N} a_k z^{-k} \right) W(z) = X(z) \implies W(z) = X(z) - \sum_{k=1}^{N} a_k z^{-k} W(z)
+\end{equation}
+Taking the inverse $Z$-transform yields the **State Update Equation**:
+\begin{equation}
+w[n] = x[n] - \sum_{k=1}^{N} a_k w[n-k] = x[n] - a_1 w[n-1] - a_2 w[n-2] - \dots - a_N w[n-N]
+\label{eq:df2_state_eq}
+\end{equation}
+
+\subsubsection{Stage 2: The All-Zero Sub-System}
+The intermediate sequence $W(z)$ is then processed by the all-zero transfer function $B(z)$ to produce the final output $Y(z)$:
+\begin{equation}
+Y(z) = B(z) W(z) = \left( \sum_{k=0}^{M} b_k z^{-k} \right) W(z)
+\end{equation}
+Taking the inverse $Z$-transform yields the **Output Equation**:
+\begin{equation}
+y[n] = \sum_{k=0}^{M} b_k w[n-k] = b_0 w[n] + b_1 w[n-1] + b_2 w[n-2] + \dots + b_M w[n-M]
+\label{eq:df2_output_eq}
+\end{equation}
+
+\subsection{4.3 The Delay Merging Breakthrough (Canonical Architecture)}
+Examine equations (\ref{eq:df2_state_eq}) and (\ref{eq:df2_output_eq}) simultaneously:
+\begin{itemize}
+    \item Equation (\ref{eq:df2_state_eq}) requires the delayed samples: $w[n-1], w[n-2], \dots, w[n-N]$.
+    \item Equation (\ref{eq:df2_output_eq}) requires the delayed samples: $w[n-1], w[n-2], \dots, w[n-M]$.
+\end{itemize}
+\textbf{The Crucial Architectural Discovery:}
+Both the feedback branch (poles) and the feedforward branch (zeros) operate on the \textbf{identical sequence of delayed values of $w[n]$}!
+
+Therefore, we do not need two separate delay lines. We can implement a \textbf{single, shared central delay line} containing:
+\begin{equation}
+\text{Total Delays Required} = \max(M, N)
+\end{equation}
+The delayed states $w[n-k]$ are tapped:
+\begin{enumerate}
+    \item Toward the \textbf{left} with scaling factors $-a_k$ to feed the feedback summation generating $w[n]$.
+    \item Toward the \textbf{right} with scaling factors $b_k$ to feed the feedforward summation generating $y[n]$.
+\end{enumerate}
+
+Because the number of delay registers equals the system order $\max(M, N)$, **Direct Form II is strictly canonical**.
+
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.85\textwidth]{images/iir_direct_form_ii.png}
-\caption{Iir Direct Form Ii}
+\includegraphics[width=0.88\textwidth]{images/iir_direct_form_ii.png}
+\caption{IIR Direct Form II (Canonical) Realization Schematic. A single central delay line of length $\max(M, N)$ is shared between the feedback all-pole loop (left) and the feedforward all-zero chain (right).}
+\label{fig:iir_direct_form_ii}
 \end{figure}
 
 \noindent\rule{\textwidth}{0.5pt}
-\section*{3. WORKED NUMERICAL EXAMPLES}
 
-\subsection*{Example 17.1: Direct Form I and II Realization}
-\textbf{Problem:} Realize the second-order IIR filter:
-$$ H(z) = \frac{2 + 3 z^{-1} + 4 z^{-2}}{1 - 0.6 z^{-1} + 0.25 z^{-2}} $$
-in (a) Direct Form I, (b) Direct Form II.
+\section{5. DIRECT FORM I VS. DIRECT FORM II COMPARISON}
 
-\textbf{Solution:}
-Here $b_0 = 2, b_1 = 3, b_2 = 4$ and $a_1 = -0.6, a_2 = 0.25$.
-\textbf{(a) Direct Form I:}
+\subsection{5.1 Comprehensive Hardware Resource Comparison Table}
+
+\begin{table}[H]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}lcc@{}}
+\toprule
+\textbf{Architectural Metric} & \textbf{Direct Form I (DF-I)} & \textbf{Direct Form II (DF-II)} \\ \midrule
+\textbf{Canonical Status}     & Non-Canonical                 & \textbf{Canonical} \\
+\textbf{Total Delay Elements ($z^{-1}$)} & $M + N$           & $\mathbf{\max(M, N)}$ \textbf{(50\% Savings when $M=N$)} \\
+\textbf{Total Multipliers}    & $M + N + 1$                   & $M + N + 1$ (Identical) \\
+\textbf{Total Adders}         & $M + N$                       & $M + N$ (Identical) \\
+\textbf{Delay Allocation}     & Separated ($M$ for $x$, $N$ for $y$) & \textbf{Shared} central delay line ($w$) \\
+\textbf{Signal Access}        & Direct access to input/output & Requires internal state $w[n]$ \\
+\textbf{Dynamic Range Overflow} & Low internal node gain      & \textbf{High internal node gain at $w[n]$} \\
+\textbf{Critical Path Latency}& 1 Multiply + $\max(M,N)$ Adds& 1 Multiply + $(M+N)$ Adds \\ \bottomrule
+\end{tabular}%
+}
+\caption{Comprehensive Comparison between Direct Form I and Direct Form II Realizations.}
+\label{tab:df1_vs_df2}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{images/iir_direct_form_i_ii_comparison.png}
+\caption{Architectural Summary: Direct Form I (separate delay lines, high memory footprint) vs. Direct Form II (shared central delay line, minimal memory footprint).}
+\label{fig:df1_df2_comparison}
+\end{figure}
+
+\subsection{5.2 The Critical Engineering Trade-off: Overflow Sensitivity}
+While Direct Form II is universally preferred in textbooks for its memory efficiency, practical DSP hardware engineers must understand its primary limitation: **internal node dynamic range overflow**.
 \begin{itemize}
-\item Requires $M + N = 2 + 2 = 4$ delay elements.
-\item Difference Equation: $y[n] = 2x[n] + 3x[n-1] + 4x[n-2] + 0.6y[n-1] - 0.25y[n-2]$.
-
+    \item In Direct Form II, the transfer function from input $x[n]$ to intermediate state $w[n]$ is:
+    \begin{equation}
+    H_{xw}(z) = \frac{W(z)}{X(z)} = \frac{1}{A(z)} = \frac{1}{1 + \sum_{k=1}^N a_k z^{-k}}
+    \end{equation}
+    \item If the filter has high-$Q$ poles (poles close to the unit circle, $|p_k| \approx 1$, as in narrowband low-pass or high-selectivity band-pass filters), the gain $|H_{xw}(e^{j\omega})|$ can be \textbf{extremely large} (e.g., $40\text{ dB}$ to $60\text{ dB}$, or a voltage amplification of 100 to 1000).
+    \item Even if the overall filter gain $|H(e^{j\omega})| \le 1$, the internal node $w[n]$ will violently overflow standard fixed-point 16-bit or 24-bit registers, causing catastrophic limit-cycle oscillations and gross audio distortion.
+    \item In contrast, Direct Form I realizes the zeros $B(z)$ first, which naturally attenuates input signals before they reach the high-gain feedback loop.
 \end{itemize}
-\textbf{(b) Direct Form II (Canonical):}
-\begin{itemize}
-\item Requires $\max(2, 2) = 2$ delay elements $w[n-1]$ and $w[n-2]$.
-\item State Equation: $w[n] = x[n] + 0.6 w[n-1] - 0.25 w[n-2]$.
-\item Output Equation: $y[n] = 2 w[n] + 3 w[n-1] + 4 w[n-2]$.
 
 \noindent\rule{\textwidth}{0.5pt}
-\section*{4. UNIVERSITY EXAMINATION QUESTIONS \& MARKING RUBRIC}
 
-\subsection*{Question 1 (15 Marks)}
-\end{itemize}
-\textbf{(a)} Realize the system function in Direct Form I and Direct Form II:
-$$ H(z) = \frac{1 + 2 z^{-1} + z^{-2}}{1 - 0.75 z^{-1} + 0.125 z^{-2}} $$
-*(8 Marks)*
-\textbf{(b)} Derive the Transposed Direct Form II structure for the same transfer function. Why is the transposed structure preferred for high-speed VLSI implementation? *(7 Marks)*
+\section{6. STEP-BY-STEP WORKED NUMERICAL EXAMPLES}
 
-\textbf{Model Answer \& Step-by-Step Marking Rubric:}
+\subsection{Example 17.1: Second-Order Biquad Realization (Complete Derivation)}
+\textbf{Problem:} A second-order IIR digital filter is described by the transfer function:
+\begin{equation}
+H(z) = \frac{2 + 3 z^{-1} + 4 z^{-2}}{1 - 0.6 z^{-1} + 0.25 z^{-2}}
+\end{equation}
+(a) Identify all filter coefficients and state the filter order. \\
+(b) Formulate the Direct Form I difference equations and calculate hardware resource counts. \\
+(c) Derive the Direct Form II state update and output difference equations. \\
+(d) Construct the complete signal flow graph for both forms. \\
+(e) Compute the impulse response $y[n]$ for $n = 0, 1, 2$ using Direct Form II equations.
+
+\vspace{0.3cm}
+\noindent\textbf{Solution:}
+
+\noindent\textbf{(a) Coefficient Identification \& Order:}
+Comparing with the general rational form:
+\begin{equation}
+H(z) = \frac{b_0 + b_1 z^{-1} + b_2 z^{-2}}{1 + a_1 z^{-1} + a_2 z^{-2}}
+\end{equation}
+We extract:
 \begin{itemize}
-\item \textbf{Part (a):}
+    \item Numerator coefficients: $b_0 = 2, \; b_1 = 3, \; b_2 = 4$ ($M = 2$)
+    \item Denominator coefficients: $a_1 = -0.6, \; a_2 = +0.25$ ($N = 2$)
+    \item Filter Order: $\max(M, N) = \max(2, 2) = \mathbf{2}$ (Second-Order Biquad).
 \end{itemize}
-  * Direct Form I SFG (4 delays, 5 multipliers, 4 adders) *(4 Marks)*
-  * Direct Form II Canonical SFG (2 shared delays, state equations) *(4 Marks)*
+
+\vspace{0.2cm}
+\noindent\textbf{(b) Direct Form I Realization:}
+The overall difference equation is:
+\begin{equation}
+y[n] = 2 x[n] + 3 x[n-1] + 4 x[n-2] - \Big( -0.6 y[n-1] + 0.25 y[n-2] \Big)
+\end{equation}
+\begin{equation}
+y[n] = 2 x[n] + 3 x[n-1] + 4 x[n-2] + 0.6 y[n-1] - 0.25 y[n-2]
+\end{equation}
+\textbf{Hardware Resource Audit for DF-I:}
 \begin{itemize}
-\item \textbf{Part (b):}
+    \item Delay elements ($z^{-1}$): $M + N = 2 + 2 = \mathbf{4}$ delays ($x[n-1], x[n-2], y[n-1], y[n-2]$).
+    \item Multipliers: $M + N + 1 = 2 + 2 + 1 = \mathbf{5}$ multipliers ($2, 3, 4, 0.6, -0.25$).
+    \item Adders: $M + N = 2 + 2 = \mathbf{4}$ two-input adders.
 \end{itemize}
-  * Transposed state equations and neatly drawn Transposed DF-II SFG *(4 Marks)*
-  * Explanation: Multipliers share common input $x[n]$ and $y[n]$, adder tree is distributed between delays, eliminating long critical-path propagation delays *(3 Marks)*
+
+\vspace{0.2cm}
+\noindent\textbf{(c) Direct Form II Realization (Canonical):}
+We define the intermediate sequence $w[n]$:
+\begin{align}
+w[n] &= x[n] - a_1 w[n-1] - a_2 w[n-2] \nonumber \\
+w[n] &= x[n] + 0.6 w[n-1] - 0.25 w[n-2] \quad \textbf{(State Equation)}
+\end{align}
+The output equation evaluates the feedforward chain on $w[n]$:
+\begin{equation}
+y[n] = 2 w[n] + 3 w[n-1] + 4 w[n-2] \quad \textbf{(Output Equation)}
+\end{equation}
+\textbf{Hardware Resource Audit for DF-II:}
+\begin{itemize}
+    \item Delay elements ($z^{-1}$): $\max(M, N) = \max(2, 2) = \mathbf{2}$ delays ($w[n-1], w[n-2]$).
+    \item Multipliers: $M + N + 1 = \mathbf{5}$ multipliers.
+    \item Adders: $M + N = \mathbf{4}$ adders (2 in the feedback sum, 2 in the output sum).
+    \item \textbf{Savings:} Delay memory cut by $\mathbf{50\%}$ (from 4 down to 2)!
+\end{itemize}
+
+\vspace{0.2cm}
+\noindent\textbf{(e) Step-by-Step Impulse Response Evaluation ($x[n] = \delta[n]$):}
+Assume filter is initially relaxed ($w[-1] = 0, w[-2] = 0$):
+\begin{itemize}
+    \item \textbf{At $n = 0$ ($x[0] = 1$):}
+    \begin{align*}
+    w[0] &= x[0] + 0.6 w[-1] - 0.25 w[-2] = 1 + 0 - 0 = \mathbf{1.0} \\
+    y[0] &= 2 w[0] + 3 w[-1] + 4 w[-2] = 2(1.0) + 0 + 0 = \mathbf{2.0}
+    \end{align*}
+    \item \textbf{At $n = 1$ ($x[1] = 0$):}
+    \begin{align*}
+    w[1] &= x[1] + 0.6 w[0] - 0.25 w[-1] = 0 + 0.6(1.0) - 0 = \mathbf{0.6} \\
+    y[1] &= 2 w[1] + 3 w[0] + 4 w[-1] = 2(0.6) + 3(1.0) + 0 = 1.2 + 3.0 = \mathbf{4.2}
+    \end{align*}
+    \item \textbf{At $n = 2$ ($x[2] = 0$):}
+    \begin{align*}
+    w[2] &= x[2] + 0.6 w[1] - 0.25 w[0] = 0 + 0.6(0.6) - 0.25(1.0) = 0.36 - 0.25 = \mathbf{0.11} \\
+    y[2] &= 2 w[2] + 3 w[1] + 4 w[0] = 2(0.11) + 3(0.6) + 4(1.0) = 0.22 + 1.8 + 4.0 = \mathbf{6.02}
+    \end{align*}
+\end{itemize}
+The first three impulse response samples are $h[n] = \{ \underline{2.0}, \; 4.2, \; 6.02, \dots \}$.
+
+\vspace{0.4cm}
+\subsection{\texorpdfstring{Example 17.2: Third-Order Asymmetric System ($M \neq N$)}{Example 17.2: Third-Order Asymmetric System (M != N)}}
+\textbf{Problem:} Realize the third-order IIR system:
+\begin{equation}
+H(z) = \frac{1 + 0.5 z^{-1}}{1 - 1.2 z^{-1} + 0.7 z^{-2} - 0.1 z^{-3}}
+\end{equation}
+in (a) Direct Form I and (b) Direct Form II.
+
+\vspace{0.3cm}
+\noindent\textbf{Solution:}
+Here the degrees are $M = 1$ (numerator) and $N = 3$ (denominator).
+Coefficients:
+\begin{equation}
+b_0 = 1, \quad b_1 = 0.5, \quad b_2 = 0, \quad b_3 = 0
+\end{equation}
+\begin{equation}
+a_1 = -1.2, \quad a_2 = 0.7, \quad a_3 = -0.1
+\end{equation}
+
+\noindent\textbf{(a) Direct Form I:}
+\begin{equation}
+y[n] = x[n] + 0.5 x[n-1] + 1.2 y[n-1] - 0.7 y[n-2] + 0.1 y[n-3]
+\end{equation}
+\begin{itemize}
+    \item Requires $M + N = 1 + 3 = \mathbf{4}$ delay registers ($z^{-1}$).
+    \item Multipliers: $2 \text{ (zeros)} + 3 \text{ (poles)} = \mathbf{5}$ multipliers.
+    \item Adders: $1 \text{ (zeros)} + 3 \text{ (poles)} = \mathbf{4}$ adders.
+\end{itemize}
+
+\noindent\textbf{(b) Direct Form II (Canonical):}
+\begin{align}
+w[n] &= x[n] + 1.2 w[n-1] - 0.7 w[n-2] + 0.1 w[n-3] \\
+y[n] &= w[n] + 0.5 w[n-1]
+\end{align}
+\begin{itemize}
+    \item Shared delay line length: $\max(M, N) = \max(1, 3) = \mathbf{3}$ delays ($w[n-1], w[n-2], w[n-3]$).
+    \item Multipliers: $\mathbf{5}$ multipliers.
+    \item Adders: $\mathbf{4}$ adders.
+    \item Delay savings: Reduced from 4 to 3 registers (25\% savings).
+\end{itemize}
 
 \noindent\rule{\textwidth}{0.5pt}
-\section*{5. PYTHON VERIFICATION SCRIPT}
-\begin{verbatim}
-import scipy.signal as signal
 
-b = [1, 2, 1]
-a = [1, -0.75, 0.125]
-impulse = [1, 0, 0, 0, 0, 0]
-y = signal.lfilter(b, a, impulse)
-print("Impulse Response y[n]:", y)
-\end{verbatim}
+\section{7. PEDAGOGICAL CHECKPOINTS \& COMMON MISCONCEPTIONS}
+
+\begin{enumerate}
+    \item \textbf{Misconception 1: "Does Direct Form II change the zeros, poles, or frequency response of the filter?"}
+    \begin{itemize}
+        \item \textit{Reality:} \textbf{No.} Under exact mathematical precision (infinite word-length), Direct Form I and Direct Form II have mathematically identical transfer functions $H(z)$ and generate identical output sequences $y[n]$. The transformation relies solely on the commutativity of linear time-invariant systems ($H_1 H_2 = H_2 H_1$).
+    \end{itemize}
+
+    \item \textbf{Misconception 2: "Why are the feedback multiplier coefficients negative ($-a_k$)?"}
+    \begin{itemize}
+        \item \textit{Reality:} When an LTI difference equation is written in output-explicit form:
+        $$y[n] = \sum b_k x[n-k] - \sum a_k y[n-k]$$
+        the feedback terms appear with a negative sign. If the hardware summing junction is purely additive ($+$), each feedback coefficient must carry a sign inversion ($-a_k$).
+    \end{itemize}
+
+    \item \textbf{Misconception 3: "Is Direct Form II always better than Direct Form I because it uses fewer delays?"}
+    \begin{itemize}
+        \item \textit{Reality:} \textbf{Not necessarily.} While Direct Form II saves silicon area by halving the register count, its internal state node $w[n] = x[n] / A(z)$ can exhibit severe amplitude peaking. In fixed-point hardware, Direct Form II frequently suffers from catastrophic arithmetic overflow, whereas Direct Form I attenuates input signals first.
+    \end{itemize}
+
+    \item \textbf{Misconception 4: "Can high-order IIR filters ($N \ge 8$) be safely implemented in Direct Form II?"}
+    \begin{itemize}
+        \item \textit{Reality:} \textbf{Never in practice.} For orders $N > 4$, the roots of high-degree polynomials are hypersensitive to tiny coefficient quantization errors. A 1\% error in an $a_k$ coefficient can push poles outside the unit circle ($|z| > 1$), causing instability. In commercial DSP systems, high-order IIR filters are always factored into a cascade or parallel arrangement of second-order biquads (SOS).
+    \end{itemize}
+\end{enumerate}
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{8. UNIVERSITY EXAMINATION QUESTIONS \& PRACTICE PROBLEMS}
+
+\subsection{Problem 1 (10 Marks — Analytical \& Realization)}
+\textbf{Question:} 
+An IIR digital filter is governed by the difference equation:
+\begin{equation}
+y[n] - \frac{3}{4} y[n-1] + \frac{1}{8} y[n-2] = x[n] + \frac{1}{3} x[n-1]
+\end{equation}
+1. Determine the system transfer function $H(z)$, its poles, and its zeros. (3 Marks) \\
+2. Construct the Direct Form I signal flow graph and state the exact hardware count. (3 Marks) \\
+3. Construct the Direct Form II canonical signal flow graph and evaluate the percentage reduction in delay registers. (4 Marks)
+
+\vspace{0.2cm}
+\noindent\textbf{Marking Scheme \& Solution Outline:}
+\begin{enumerate}
+    \item \textbf{Transfer Function \& Roots:}
+    \begin{equation}
+    H(z) = \frac{1 + \frac{1}{3} z^{-1}}{1 - \frac{3}{4} z^{-1} + \frac{1}{8} z^{-2}} = \frac{1 + \frac{1}{3} z^{-1}}{\left(1 - \frac{1}{2} z^{-1}\right)\left(1 - \frac{1}{4} z^{-1}\right)}
+    \end{equation}
+    Zero at $z = -1/3$. Poles at $p_1 = 1/2 = 0.5$ and $p_2 = 1/4 = 0.25$. Both poles lie inside the unit circle $\implies$ System is Stable. (3 Marks)
+    \item \textbf{Direct Form I:}
+    $y[n] = x[n] + \frac{1}{3} x[n-1] + \frac{3}{4} y[n-1] - \frac{1}{8} y[n-2]$. \\
+    Delays: $M + N = 1 + 2 = \mathbf{3}$ delays. Multipliers: $2 + 2 = \mathbf{4}$ (or 3 non-unity). Adders: $\mathbf{3}$ adders. (3 Marks)
+    \item \textbf{Direct Form II (Canonical):}
+    \begin{align*}
+    w[n] &= x[n] + \frac{3}{4} w[n-1] - \frac{1}{8} w[n-2] \\
+    y[n] &= w[n] + \frac{1}{3} w[n-1]
+    \end{align*}
+    Delays: $\max(1, 2) = \mathbf{2}$ delays. Multipliers: 4. Adders: 3. \\
+    Delay savings: $\frac{3 - 2}{3} \times 100\% = \mathbf{33.33\%}$ reduction. (4 Marks)
+\end{enumerate}
+
+\subsection{Problem 2 (5 Marks — Conceptual Comparison)}
+\textbf{Question:}
+Explain what is meant by a "canonical structure" in digital signal processing. Prove why Direct Form II is canonical while Direct Form I is non-canonical. Under what conditions might an engineer deliberately choose Direct Form I over Direct Form II?
+
+\vspace{0.2cm}
+\noindent\textbf{Solution Outline:}
+\begin{itemize}
+    \item \textbf{Definition:} A filter realization is canonical if the number of delay registers ($z^{-1}$) equals the order of the transfer function, defined as $\max(M, N)$. (1 Mark)
+    \item \textbf{Proof:} Direct Form I allocates $M$ delays for $x[n]$ and $N$ delays for $y[n]$, totaling $M+N > \max(M,N)$ delays $\implies$ Non-canonical. Direct Form II merges the delay lines via an intermediate state variable $w[n]$, requiring exactly $\max(M, N)$ delays $\implies$ Strictly canonical. (2 Marks)
+    \item \textbf{Engineering Selection:} In fixed-point hardware, Direct Form II intermediate node $w[n] = x[n]/A(z)$ suffers from severe resonance peaking and arithmetic overflow when poles are close to the unit circle. Direct Form I attenuates input signals first ($B(z)X(z)$), providing superior dynamic range and lower overflow susceptibility. (2 Marks)
+\end{itemize}
 
 \end{document}

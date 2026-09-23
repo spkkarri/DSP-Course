@@ -46,21 +46,6 @@ $$ H(z) = \sum_{k=0}^{M-1} b_k z^{-k} = b_0 + b_1 z^{-1} + b_2 z^{-2} + \dots + 
 \begin{itemize}
 \item \textbf{Direct Form Structure:} Consists of a tapped delay line of $M-1$ registers, $M$ parallel multiplier branches feeding a multi-input summation bus.
 
-\subsection*{2.2 Transposed Direct Form (Flow Graph Reversal)}
-\end{itemize}
-By the Flow Graph Reversal Theorem (Tellegen's Theorem for linear networks):
-\begin{enumerate}
-\item Reverse the direction of all signal branches.
-\item Summing nodes become branching nodes; Branching nodes become summing nodes.
-\item Interchange the input $x[n]$ and output $y[n]$.
-\end{enumerate}
-The state equations for the Transposed Direct Form are:
-$$ y[n] = b_0 x[n] + v_1[n-1] $$
-$$ v_k[n] = b_k x[n] + v_{k+1}[n-1], \quad k = 1, 2, \dots, M-2 $$
-$$ v_{M-1}[n] = b_{M-1} x[n] $$
-\begin{itemize}
-\item \textbf{Engineering Advantage:} The input $x[n]$ is broadcast simultaneously to all multipliers. Adders are distributed between delay registers, eliminating the long critical-path adder tree of the standard direct form and facilitating high-speed pipelining.
-
 \subsection*{2.3 Cascade Realization}
 \end{itemize}
 Factoring $H(z)$ into a product of second-order real polynomials:
@@ -88,21 +73,14 @@ Where $\beta_{1k} = -2\text{Re}(z_k)$ and $\beta_{2k} = |z_k|^2$.
 \subsection*{Example 15.1: Direct and Cascade Realization of a 4th-Order FIR Filter}
 \textbf{Problem:} Realize the FIR filter given by transfer function:
 $$ H(z) = 1 + 2.5 z^{-1} + 2.5 z^{-2} + 1.25 z^{-3} + 0.25 z^{-4} $$
-in (a) Direct Form, (b) Transposed Direct Form, and (c) Cascade Form.
+in (a) Direct Form and (b) Cascade Form.
 
 \textbf{Solution:}
 \textbf{(a) Direct Form:}
 $y[n] = x[n] + 2.5 x[n-1] + 2.5 x[n-2] + 1.25 x[n-3] + 0.25 x[n-4]$.
 Requires 4 delay elements $z^{-1}$, 5 multipliers (or 4 non-trivial), and 4 two-input adders.
 
-\textbf{(b) Transposed Direct Form:}
-$y[n] = x[n] + v_1[n-1]$
-$v_1[n] = 2.5 x[n] + v_2[n-1]$
-$v_2[n] = 2.5 x[n] + v_3[n-1]$
-$v_3[n] = 1.25 x[n] + v_4[n-1]$
-$v_4[n] = 0.25 x[n]$.
-
-\textbf{(c) Cascade Form:}
+\textbf{(b) Cascade Form:}
 Factor $H(z)$ into two 2nd-order sections:
 $$ H(z) = (1 + 1.5 z^{-1} + 0.5 z^{-2})(1 + 1.0 z^{-1} + 0.5 z^{-2}) $$
 \begin{itemize}
@@ -110,39 +88,5 @@ $$ H(z) = (1 + 1.5 z^{-1} + 0.5 z^{-2})(1 + 1.0 z^{-1} + 0.5 z^{-2}) $$
 \item Section 2: $H_2(z) = 1 + 1.0 z^{-1} + 0.5 z^{-2}$ (zeros at $z = -0.5 \pm j0.5$)
 \end{itemize}
 The system is realized as the direct cascade of $H_1(z)$ followed by $H_2(z)$.
-
-\noindent\rule{\textwidth}{0.5pt}
-\section*{4. UNIVERSITY EXAMINATION QUESTIONS \& MARKING RUBRIC}
-
-\subsection*{Question 1 (15 Marks)}
-\textbf{(a)} State the Flow Graph Reversal Theorem and explain how it is used to derive the Transposed Direct Form FIR structure. *(6 Marks)*
-\textbf{(b)} Realize the linear-phase FIR filter $H(z) = 1 - \frac{1}{2} z^{-1} + \frac{3}{2} z^{-2} - \frac{1}{2} z^{-3} + z^{-4}$ in Cascade Form using real second-order sections. Draw the complete SFG. *(9 Marks)*
-
-\textbf{Model Answer \& Step-by-Step Marking Rubric:}
-\begin{itemize}
-\item \textbf{Part (a):}
-\end{itemize}
-  * Flow Graph Reversal Theorem rules (reversing branches, swapping nodes, swapping I/O) *(3 Marks)*
-  * Derivation of state equations and explanation of critical path pipelining advantage *(3 Marks)*
-\begin{itemize}
-\item \textbf{Part (b):}
-\end{itemize}
-  * Factor $H(z)$ by finding roots or grouping quadratic factors:
-    $H(z) = (1 - z^{-1} + z^{-2})(1 + 0.5 z^{-1} + z^{-2}) = 1 - 0.5 z^{-1} + 1.5 z^{-2} - 0.5 z^{-3} + z^{-4}$ *(4 Marks)*
-  * Section 1: $H_1(z) = 1 - z^{-1} + z^{-2}$
-  * Section 2: $H_2(z) = 1 + 0.5 z^{-1} + z^{-2}$ *(2 Marks)*
-  * Neatly drawn SFG showing cascade interconnection with labeled branch gains and unit delays *(3 Marks)*
-
-\noindent\rule{\textwidth}{0.5pt}
-\section*{5. PYTHON VERIFICATION SCRIPT}
-\begin{verbatim}
-import numpy as np
-import scipy.signal as signal
-
-b = [1.0, 2.5, 2.5, 1.25, 0.25]
-sos = signal.tf2sos(b, [1.0])
-print("Cascade SOS Sections:")
-print(sos)
-\end{verbatim}
 
 \end{document}

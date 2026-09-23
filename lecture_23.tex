@@ -24,7 +24,7 @@
 }
 
 \begin{document}
-\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Lecture 23: Hamming, Blackman \& Kaiser Windows \\ \large (III B.Tech EEE)}\maketitle
+\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Lecture 23: Design of FIR filter - windowing method (continued) \\ \large (III B.Tech EEE)}\maketitle
 
 \noindent\rule{\textwidth}{0.5pt}
 \section*{1. LEARNING OBJECTIVES}
@@ -73,68 +73,5 @@ Where $I_0(x) = \sum_{k=0}^{\infty} \left[ \frac{(x/2)^k}{k!} \right]^2$.
 \caption{Sidelobe Suppression}
 \end{figure}
 
-\noindent\rule{\textwidth}{0.5pt}
-\section*{3. WORKED NUMERICAL EXAMPLES}
-
-\subsection*{Example 23.1: Complete FIR Filter Design via Kaiser Window}
-\textbf{Problem:} Design a linear-phase FIR Lowpass filter meeting the following specifications:
-\begin{itemize}
-\item Passband edge: $\omega_p = 0.2\pi \text{ rad}$
-\item Stopband edge: $\omega_s = 0.3\pi \text{ rad}$
-\item Passband ripple: $\delta_p = 0.01$ (Peak passband ripple $\approx 0.086\text{ dB}$)
-\item Stopband ripple: $\delta_s = 0.001$ (Stopband attenuation $A_s = -20\log_{10}(0.001) = 60\text{ dB}$)
-
-\end{itemize}
-\textbf{Solution:}
-\begin{enumerate}
-\item \textbf{Determine Design Attenuation:}
-\end{enumerate}
-   $A_s = -20\log_{10}(\min(\delta_p, \delta_s)) = -20\log_{10}(0.001) = 60\text{ dB}$.
-\begin{enumerate}
-\item \textbf{Compute Normalized Transition Bandwidth:}
-\end{enumerate}
-   $$ \Delta f = \frac{\omega_s - \omega_p}{2\pi} = \frac{0.3\pi - 0.2\pi}{2\pi} = \frac{0.1\pi}{2\pi} = 0.05 $$
-\begin{enumerate}
-\item \textbf{Calculate Filter Order \& Length $N$:}
-\end{enumerate}
-   $$ N \ge \frac{60 - 7.95}{14.36 \times 0.05} + 1 = \frac{52.05}{0.718} + 1 = 72.49 + 1 = 73.49 \implies \mathbf{N = 75} \quad (\text{Select odd length } N) $$
-\begin{enumerate}
-\item \textbf{Calculate Kaiser Parameter $\beta$ ($A_s > 50$):}
-\end{enumerate}
-   $$ \beta = 0.1102(60 - 8.7) = 0.1102(51.3) = \mathbf{5.6533} $$
-\begin{enumerate}
-\item \textbf{Cutoff Frequency:}
-\end{enumerate}
-   $$ \omega_c = \frac{\omega_p + \omega_s}{2} = \frac{0.2\pi + 0.3\pi}{2} = 0.25\pi \text{ rad/sample} $$
-
-\noindent\rule{\textwidth}{0.5pt}
-\section*{4. UNIVERSITY EXAMINATION QUESTIONS \& MARKING RUBRIC}
-
-\subsection*{Question 1 (15 Marks)}
-\textbf{(a)} Explain why the Hamming window achieves $-43\text{ dB}$ peak sidelobe level compared to $-31\text{ dB}$ for the Hann window. *(5 Marks)*
-\textbf{(b)} Design an FIR bandpass filter using a Hamming window to pass frequencies between $0.3\pi$ and $0.6\pi$ with transition widths of $0.05\pi$. Find $N$ and the expression for $h[n]$. *(10 Marks)*
-
-\textbf{Model Answer \& Step-by-Step Marking Rubric:}
-\begin{itemize}
-\item \textbf{Part (a):}
-\end{itemize}
-  * Mathematical cancellation: The pedestal $0.54 - 0.46\cos$ places a transmission zero at the first sidelobe peak of the Dirichlet sinc kernel *(5 Marks)*
-\begin{itemize}
-\item \textbf{Part (b):}
-\end{itemize}
-  * Transition width $\Delta\omega = 0.05\pi \implies \Delta f = 0.025$.
-  * For Hamming: $\Delta\omega = \frac{6.6\pi}{N} \implies N \ge \frac{6.6}{0.05} = 132 \implies N = 133$ (odd length) *(4 Marks)*
-  * Ideal Bandpass: $h_d[n] = \frac{\sin(0.6\pi(n-\tau))}{\pi(n-\tau)} - \frac{\sin(0.3\pi(n-\tau))}{\pi(n-\tau)}, \quad \tau = 66$ *(3 Marks)*
-  * Final coefficients $h[n] = h_d[n] \cdot [0.54 - 0.46\cos(2\pi n / 132)]$ *(3 Marks)*
-
-\noindent\rule{\textwidth}{0.5pt}
-\section*{5. PYTHON VERIFICATION SCRIPT}
-\begin{verbatim}
-import scipy.signal as signal
-
-\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Kaiser filter design verification \\ \large (III B.Tech EEE)}\maketitle
-N, beta = signal.kaiserord(60, 0.1)  # 60 dB, dw = 0.1*pi (df = 0.05)
-print(f"Kaiser length N = {N}, beta = {beta:.4f}")
-\end{verbatim}
 
 \end{document}

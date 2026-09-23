@@ -7,24 +7,8 @@
 \usepackage{booktabs}
 \usepackage{hyperref}
 \usepackage{float}
-\usepackage{xcolor}
-
-\definecolor{darkbg}{HTML}{0d121f}
-\definecolor{lighttext}{HTML}{e2e8f0}
-\definecolor{primary}{HTML}{8b5cf6}
-\definecolor{secondary}{HTML}{0dd5c5}
-
-\pagecolor{darkbg}
-\color{lighttext}
-
-\hypersetup{
-    colorlinks=true,
-    linkcolor=secondary,
-    urlcolor=secondary
-}
-
 \begin{document}
-\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Lecture 24: FIR Design via Frequency-Sampling Method \\ \large (III B.Tech EEE)}\maketitle
+\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Lecture 24: Design of FIR filter - frequency sampling \\ \large (III B.Tech EEE)}\maketitle
 
 \noindent\rule{\textwidth}{0.5pt}
 \section*{1. LEARNING OBJECTIVES}
@@ -33,13 +17,12 @@ By the end of this lecture, students will be able to:
 \item \textbf{Sample} desired frequency responses $H_d(e^{j\omega})$ with proper linear-phase phase assignments.
 \item \textbf{Compute} FIR filter coefficients $h[n]$ via IDFT formulation.
 \item \textbf{Optimize} transition band samples to maximize stopband attenuation.
-\item \textbf{Compare} the Frequency-Sampling method with the Windowing method.
+\end{enumerate}
 
 \noindent\rule{\textwidth}{0.5pt}
 \section*{2. MATHEMATICAL FOUNDATIONS}
 
 \subsection*{2.1 Frequency-Sampling Design Equations}
-\end{enumerate}
 Let $H[k] = H_d(e^{j \frac{2\pi k}{N}})$. For a linear-phase FIR filter of length $N$:
 $$ H[k] = |H[k]| e^{j \angle H[k]}, \quad \angle H[k] = -\left( \frac{N-1}{2} \right) \frac{2\pi k}{N} $$
 The impulse response is computed by the IDFT:
@@ -56,12 +39,19 @@ Exploiting Hermitian symmetry ($H[N-k] = H^*[k]$):
 
 \subsection*{2.2 Transition Sample Optimization Values}
 
-| Number of Transition Samples | Optimized Sample Values | Resulting Stopband Attenuation $A_s$ |
-| :---: | :---: | :---: |
-| \textbf{0 (No transition band)} | None ($H[k] \in \{0, 1\}$) | $-16$ dB |
-| \textbf{1 Transition Sample} | $T_1 \approx 0.38$ | $-45$ dB |
-| \textbf{2 Transition Samples} | $T_1 \approx 0.59; \; T_2 \approx 0.11$ | $-75$ dB |
-| \textbf{3 Transition Samples} | $T_1 \approx 0.70; \; T_2 \approx 0.25; \; T_3 \approx 0.02$ | $-95$ dB |
+\begin{table}[H]
+\centering
+\begin{tabular}{ccc}
+\toprule
+\textbf{Number of Transition Samples} & \textbf{Optimized Sample Values} & \textbf{Resulting Stopband Attenuation $A_s$} \\
+\midrule
+\textbf{0 (No transition band)} & None ($H[k] \in \{0, 1\}$) & $-16$ dB \\
+\textbf{1 Transition Sample} & $T_1 \approx 0.38$ & $-45$ dB \\
+\textbf{2 Transition Samples} & $T_1 \approx 0.59; \; T_2 \approx 0.11$ & $-75$ dB \\
+\textbf{3 Transition Samples} & $T_1 \approx 0.70; \; T_2 \approx 0.25; \; T_3 \approx 0.02$ & $-95$ dB \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 
 \subsection*{Pictorial Representations}
@@ -88,44 +78,14 @@ $$ |H[k]| = 1, 1, 0, 0, 0, 0, 1 \quad \text{for } k = 0, 1, 2, 3, 4, 5, 6 $$
 \item Length $N = 7$ (Odd), $\tau = \frac{7-1}{2} = 3$.
 \item Non-zero samples: $|H[0]| = 1; \; |H[1]| = |H[6]| = 1$.
 \item Using the real summation formula:
-\end{itemize}
   $$ h[n] = \frac{H[0]}{7} + \frac{2}{7} |H[1]| \cos\left[ \frac{2\pi (1)}{7} (n - 3) \right] = \frac{1}{7} + \frac{2}{7} \cos\left[ \frac{2\pi}{7} (n - 3) \right] $$
-  * $h[3] = \frac{1}{7} + \frac{2}{7} \cos(0) = \frac{3}{7} \approx 0.4286$
-  * $h[2] = h[4] = \frac{1}{7} + \frac{2}{7} \cos\left( \frac{2\pi}{7} \right) = \frac{1 + 2(0.6235)}{7} = \frac{2.2470}{7} \approx 0.3210$
-  * $h[1] = h[5] = \frac{1}{7} + \frac{2}{7} \cos\left( \frac{4\pi}{7} \right) = \frac{1 + 2(-0.2225)}{7} = \frac{0.5550}{7} \approx 0.0793$
-  * $h[0] = h[6] = \frac{1}{7} + \frac{2}{7} \cos\left( \frac{6\pi}{7} \right) = \frac{1 + 2(-0.9010)}{7} = \frac{-0.8019}{7} \approx -0.1146$
+  \begin{itemize}
+  \item $h[3] = \frac{1}{7} + \frac{2}{7} \cos(0) = \frac{3}{7} \approx 0.4286$
+  \item $h[2] = h[4] = \frac{1}{7} + \frac{2}{7} \cos\left( \frac{2\pi}{7} \right) = \frac{1 + 2(0.6235)}{7} = \frac{2.2470}{7} \approx 0.3210$
+  \item $h[1] = h[5] = \frac{1}{7} + \frac{2}{7} \cos\left( \frac{4\pi}{7} \right) = \frac{1 + 2(-0.2225)}{7} = \frac{0.5550}{7} \approx 0.0793$
+  \item $h[0] = h[6] = \frac{1}{7} + \frac{2}{7} \cos\left( \frac{6\pi}{7} \right) = \frac{1 + 2(-0.9010)}{7} = \frac{-0.8019}{7} \approx -0.1146$
+  \end{itemize}
+\end{itemize}
 $$ h[n] = \underset{\uparrow}{-0.1146}, 0.0793, 0.3210, 0.4286, 0.3210, 0.0793, -0.1146 $$
-
-\noindent\rule{\textwidth}{0.5pt}
-\section*{4. UNIVERSITY EXAMINATION QUESTIONS \& MARKING RUBRIC}
-
-\subsection*{Question 1 (15 Marks)}
-\textbf{(a)} Derive the Frequency-Sampling design formula for an odd-length linear-phase FIR filter. *(8 Marks)*
-\textbf{(b)} Explain why transition band samples are introduced in the Frequency-Sampling method. How do they affect the passband ripple and stopband attenuation? *(7 Marks)*
-
-\textbf{Model Answer \& Step-by-Step Marking Rubric:}
-\begin{itemize}
-\item \textbf{Part (a):}
-\end{itemize}
-  * Mathematical derivation using IDFT and Euler's formula *(8 Marks)*
-\begin{itemize}
-\item \textbf{Part (b):}
-\end{itemize}
-  * Explanation of interpolation ripple between sharp 1-to-0 transitions *(3 Marks)*
-  * Role of transition samples $T_1, T_2$ in smoothing frequency gradient and boosting $A_s$ from $16\text{ dB}$ to $>45\text{ dB}$ *(4 Marks)*
-
-\noindent\rule{\textwidth}{0.5pt}
-\section*{5. PYTHON VERIFICATION SCRIPT}
-\begin{verbatim}
-import numpy as np
-
-N = 7
-H = np.array([1, 1, 0, 0, 0, 0, 1], dtype=complex)
-\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Apply linear phase \\ \large (III B.Tech EEE)}\maketitle
-k = np.arange(N)
-H_phase = H * np.exp(-1j * ((N - 1) / 2) * 2 * np.pi * k / N)
-h = np.fft.ifft(H_phase).real
-print("Frequency Sampling Coefficients h[n]:", np.round(h, 4))
-\end{verbatim}
 
 \end{document}
