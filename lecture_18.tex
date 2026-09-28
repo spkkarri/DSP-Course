@@ -9,10 +9,15 @@
 \usepackage{float}
 \usepackage{xcolor}
 
+\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Lecture 18: IIR Filter — Cascade Form Realization \\ \large (III B.Tech EEE)}
+\author{Comprehensive Lecture Notes \& Faculty Textbook Reference}
+\date{}
+
 \definecolor{darkbg}{HTML}{0d121f}
 \definecolor{lighttext}{HTML}{e2e8f0}
 \definecolor{primary}{HTML}{8b5cf6}
 \definecolor{secondary}{HTML}{0dd5c5}
+\definecolor{accent}{HTML}{10b981}
 
 \pagecolor{darkbg}
 \color{lighttext}
@@ -20,59 +25,518 @@
 \hypersetup{
     colorlinks=true,
     linkcolor=secondary,
-    urlcolor=secondary
+    urlcolor=secondary,
+    citecolor=accent
 }
 
 \begin{document}
-\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Lecture 18: IIR Filter - Cascade Form Realization \\ \large (III B.Tech EEE)}\maketitle
+
+\maketitle
 
 \noindent\rule{\textwidth}{0.5pt}
-\section*{1. LEARNING OBJECTIVES}
+
+\section*{Lecture Plan \& Objectives (40 Minutes Breakdown)}
+\begin{itemize}
+    \item \textbf{00:00 -- 06:00 (6 mins):} Motivation for Modular Decomposition: Why Direct Forms fail in high-order systems (extreme root sensitivity of high-degree polynomials to coefficient quantization).
+    \item \textbf{06:00 -- 16:00 (10 mins):} Mathematical Foundations of Cascade Realization: Factoring $H(z)$ into 1st and 2nd-order sections (SOS / Biquads), pairing real and complex conjugate poles/zeros to ensure real arithmetic coefficients.
+    \item \textbf{16:00 -- 25:00 (9 mins):} Canonical Biquad Architecture (Direct Form II SOS): Shared central delay spine, state update and output equations, multiplier/adder budgeting, and intermediate state links.
+    \item \textbf{25:00 -- 32:00 (7 mins):} Practical Engineering Guidelines: Optimal Pole-Zero Pairing ($\theta_z \approx \theta_p$ for peak resonance suppression), Section Ordering (low-$Q$ to high-$Q$), and Dynamic Range Gain Scaling ($g_k$).
+    \item \textbf{32:00 -- 38:00 (6 mins):} Comprehensive Worked Numerical Examples: 4th-order cascade realization (algebraic derivation, difference equations, SFG verification) and odd-order (3rd-order) systems.
+    \item \textbf{38:00 -- 40:00 (2 mins):} Faculty Insights, Common Misconceptions, and University Semester Exam Review.
+\end{itemize}
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{1. LEARNING OBJECTIVES}
 By the end of this lecture, students will be able to:
 \begin{enumerate}
-\item \textbf{Factor} high-order IIR transfer functions into second-order biquad sections (SOS).
-\item \textbf{Draw} complete Cascade realization signal flow graphs.
-\item \textbf{Analyze} computational complexity of cascade structures.
+    \item \textbf{Formulate} the factorized rational transfer function $H(z) = g \prod_{k=1}^K H_k(z)$ from high-order numerator and denominator polynomials.
+    \item \textbf{Explain} why cascade realization dramatically reduces coefficient quantization sensitivity compared to Direct Form I and Direct Form II (Kaiser's root sensitivity theorem).
+    \item \textbf{Synthesize} canonical second-order Direct Form II sections (biquads) with minimum memory registers ($\max(M_k, N_k) \le 2$).
+    \item \textbf{Apply} optimal pole-zero pairing criteria to flatten section frequency responses and prevent internal register saturation.
+    \item \textbf{Order} cascaded biquad sections to maximize signal-to-noise ratio (SNR) and prevent dynamic range overflow.
+    \item \textbf{Audit} total hardware complexity (multipliers, adders, delay registers) for canonical and non-canonical cascade structures.
+    \item \textbf{Realize} odd-order IIR filters using a modular combination of first-order and second-order sections.
+\end{enumerate}
 
 \noindent\rule{\textwidth}{0.5pt}
-\section*{2. MATHEMATICAL FOUNDATIONS}
 
-\subsection*{2.1 The Cascade Realization Formulation}
-\end{enumerate}
-$$ H(z) = g \prod_{k=1}^{K} H_k(z) = g \prod_{k=1}^{K} \frac{b_{k0} + b_{k1} z^{-1} + b_{k2} z^{-2}}{1 + a_{k1} z^{-1} + a_{k2} z^{-2}}, \quad K = \lceil N/2 \rceil $$
-Each biquad $H_k(z)$ realizes one real pole pair and one real zero pair:
-$$ 1 + a_{k1} z^{-1} + a_{k2} z^{-2} = (1 - p_k z^{-1})(1 - p_k^* z^{-1}) = 1 - 2r_k \cos(\theta_k) z^{-1} + r_k^2 z^{-2} $$
+\section{2. MATHEMATICAL FOUNDATIONS OF CASCADE REALIZATION}
 
-\subsection*{Pictorial Representations}
+\subsection{2.1 Why Not High-Order Direct Forms? (The Root Sensitivity Catastrophe)}
+In Lecture 17, we studied the Direct Form I and Direct Form II realizations of general IIR systems:
+\begin{equation}
+H(z) = \frac{\sum_{k=0}^{M} b_k z^{-k}}{1 + \sum_{k=1}^{N} a_k z^{-k}}
+\end{equation}
+While direct form structures are mathematically sound and straightforward to implement for low orders ($N \le 2$), they suffer from a \textbf{fatal practical limitation in finite-precision digital hardware}: \textit{extreme sensitivity of root locations to coefficient quantization}.
+
+Consider a high-degree polynomial representing the denominator $A(z) = \prod_{i=1}^N (1 - p_i z^{-1})$. When implemented in fixed-point DSP registers (e.g., 16-bit or 24-bit words), each coefficient $a_k$ is quantized to $\hat{a}_k = a_k + \Delta a_k$. 
+
+According to \textbf{Kaiser's Root Sensitivity Theorem}, the displacement $\Delta p_i$ of the $i$-th pole due to an error $\Delta a_k$ in the $k$-th coefficient is given by:
+\begin{equation}
+\frac{\partial p_i}{\partial a_k} = -\frac{p_i^{N-k}}{\prod_{\substack{m=1 \\ m \ne i}}^{N} (p_i - p_m)}
+\end{equation}
+Notice the denominator product:
+\begin{equation}
+\prod_{m \ne i} (p_i - p_m)
+\end{equation}
+When a filter has high selectivity (such as a sharp cutoff low-pass or narrowband band-pass filter), multiple poles $p_m$ cluster tightly together near the unit circle ($|p_i| \approx 1$). Consequently:
+\begin{itemize}
+    \item The Euclidean distance between adjacent poles $(p_i - p_m)$ becomes exceptionally small ($\ll 1$).
+    \item Their product over high order $N$ shrinks to near zero: $\prod_{m \ne i} (p_i - p_m) \to 0$.
+    \item The partial derivative $\left| \frac{\partial p_i}{\partial a_k} \right|$ explodes exponentially with order $N$!
+\end{itemize}
+As a devastating result, a minuscule rounding error in the least significant bit of a single coefficient $a_k$ can displace a stable pole inside the unit circle ($|p_i| < 1$) across the boundary into the unstable region ($|p_i| \ge 1$), causing catastrophic unbounded oscillation.
+
+\begin{quote}
+\textbf{The Cascade Breakthrough:} By factoring the $N$-th order polynomial into a product of independent first- and second-order polynomials, each coefficient $a_{k1}, a_{k2}$ controls \textbf{only its own two localized roots}. The denominator product in Kaiser's formula involves at most one other root ($|p_1 - p_2|$), completely decoupling the roots and reducing root sensitivity by orders of magnitude!
+\end{quote}
+
+\subsection{2.2 General Cascade Decomposition Formulation}
+Any rational IIR transfer function with real coefficients can be factored into a product of second-order sections (SOS, commonly called \textbf{Biquads}) and at most one first-order section (if the order is odd):
+\begin{equation}
+H(z) = g \prod_{k=1}^{K} H_k(z) = g \prod_{k=1}^{K} \frac{b_{k0} + b_{k1} z^{-1} + b_{k2} z^{-2}}{1 + a_{k1} z^{-1} + a_{k2} z^{-2}}
+\label{eq:cascade_product}
+\end{equation}
+where:
+\begin{itemize}
+    \item $K = \lceil N/2 \rceil$ is the total number of cascaded sections.
+    \item $g$ is an overall scalar gain factor extracted such that $b_{k0} = 1$ (or normalized for dynamic range scaling).
+    \item Each section $H_k(z)$ has a numerator of degree $M_k \le 2$ and a denominator of degree $N_k \le 2$.
+    \item For an odd-order filter, one section has $b_{k2} = 0$ and $a_{k2} = 0$, reducing to a first-order section.
+\end{itemize}
+
+\subsection{2.3 Handling Real vs. Complex Conjugate Roots}
+Because the physical filter must operate using real arithmetic in hardware (multipliers and adders cannot process imaginary numbers without $4\times$ computational overhead), all coefficients $a_{ki}$ and $b_{ki}$ must be \textbf{strictly real}.
+
+\subsubsection{Case 1: Complex Conjugate Pole Pairs}
+Complex poles always occur in conjugate pairs for real-coefficient filters:
+\begin{equation}
+p_k = r_k e^{j\theta_k}, \quad p_k^* = r_k e^{-j\theta_k}
+\end{equation}
+Combining their factors algebraically yields a second-order polynomial with real coefficients:
+\begin{align}
+D_k(z) &= (1 - p_k z^{-1})(1 - p_k^* z^{-1}) \nonumber \\
+&= 1 - (p_k + p_k^*) z^{-1} + (p_k p_k^*) z^{-2} \nonumber \\
+&= 1 - 2 r_k \cos(\theta_k) z^{-1} + r_k^2 z^{-2}
+\label{eq:biquad_denom}
+\end{align}
+Comparing with $1 + a_{k1} z^{-1} + a_{k2} z^{-2}$:
+\begin{equation}
+\mathbf{a_{k1} = -2 r_k \cos(\theta_k)}, \qquad \mathbf{a_{k2} = r_k^2}
+\end{equation}
+For stability, the pole radius must satisfy $r_k < 1$, which directly imposes the coefficient bounds:
+\begin{equation}
+0 < a_{k2} < 1, \qquad |a_{k1}| < 1 + a_{k2}
+\end{equation}
+
+\subsubsection{Case 2: Real Pole Pairs}
+If two real poles $p_1, p_2 \in \mathbb{R}$ are present, they are grouped together into a single biquad:
+\begin{equation}
+(1 - p_1 z^{-1})(1 - p_2 z^{-1}) = 1 - (p_1 + p_2) z^{-1} + (p_1 p_2) z^{-2}
+\end{equation}
+where $a_{k1} = -(p_1 + p_2)$ and $a_{k2} = p_1 p_2$.
+
+\subsubsection{Case 3: Complex Conjugate and Real Zeros}
+Similarly, zeros $z_k = r_{zk} e^{\pm j\theta_{zk}}$ combine into:
+\begin{equation}
+1 - 2 r_{zk} \cos(\theta_{zk}) z^{-1} + r_{zk}^2 z^{-2}
+\end{equation}
+yielding real numerator coefficients $b_{k1} = -2 r_{zk} \cos(\theta_{zk})$ and $b_{k2} = r_{zk}^2$.
+
+\subsection{2.4 Modular Signal Interconnection}
+In the cascade realization, the output of the $(k-1)$-th biquad serves directly as the input to the $k$-th biquad:
+\begin{equation}
+x[n] \xrightarrow{\quad} \boxed{g} \xrightarrow{x_1[n]} \boxed{H_1(z)} \xrightarrow{y_1[n] = x_2[n]} \boxed{H_2(z)} \xrightarrow{y_2[n] = x_3[n]} \cdots \xrightarrow{y_{K-1}[n] = x_K[n]} \boxed{H_K(z)} \xrightarrow{\quad} y[n]
+\end{equation}
+
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.85\textwidth]{images/iir_cascade.png}
-\caption{Iir Cascade}
+\includegraphics[width=0.88\textwidth]{images/iir_cascade.png}
+\caption{Modular IIR Cascade Architecture. The high-order system is decomposed into a chain of $K = \lceil N/2 \rceil$ second-order sections (biquads) interconnected in series, where each intermediate link satisfies $x_k[n] = y_{k-1}[n]$.}
+\label{fig:iir_cascade}
 \end{figure}
 
 \noindent\rule{\textwidth}{0.5pt}
-\section*{3. WORKED NUMERICAL EXAMPLES}
 
-\subsection*{Example 18.1: 4th-Order IIR Cascade Realization}
-\textbf{Problem:} Realize $H(z) = \frac{(1 + z^{-1})(1 - \sqrt{2} z^{-1} + z^{-2})}{(1 - 0.9 e^{j\pi/4} z^{-1})(1 - 0.9 e^{-j\pi/4} z^{-1})(1 - 0.6 z^{-1})(1 + 0.5 z^{-1})}$ in Cascade Form with optimal pairing.
+\section{3. CANONICAL BIQUAD ARCHITECTURE (DIRECT FORM II SOS)}
 
-\textbf{Solution:}
+Each individual second-order section $H_k(z)$ in (\ref{eq:cascade_product}) can be realized using any LTI structure. In modern digital signal processors and VLSI ASICs, the \textbf{Direct Form II Canonical Biquad} is universally adopted because it minimizes register count.
+
+\subsection{3.1 Signal Flow Graph and Mathematical Derivation}
+The transfer function of the $k$-th biquad is:
+\begin{equation}
+H_k(z) = \frac{Y_k(z)}{X_k(z)} = \frac{b_{k0} + b_{k1} z^{-1} + b_{k2} z^{-2}}{1 + a_{k1} z^{-1} + a_{k2} z^{-2}}
+\end{equation}
+By defining the intermediate state sequence $W_k(z)$ such that:
+\begin{equation}
+W_k(z) = \frac{X_k(z)}{1 + a_{k1} z^{-1} + a_{k2} z^{-2}} \implies X_k(z) = W_k(z) + a_{k1} z^{-1} W_k(z) + a_{k2} z^{-2} W_k(z)
+\end{equation}
+and the output:
+\begin{equation}
+Y_k(z) = \left( b_{k0} + b_{k1} z^{-1} + b_{k2} z^{-2} \right) W_k(z)
+\end{equation}
+
+Taking the inverse $Z$-transform yields the two fundamental computational equations of the biquad:
+
+\begin{equation}
+\mathbf{w_k[n] = x_k[n] - a_{k1} w_k[n-1] - a_{k2} w_k[n-2]} \quad \text{\textbf{(Biquad State Equation)}}
+\label{eq:biquad_state}
+\end{equation}
+
+\begin{equation}
+\mathbf{y_k[n] = b_{k0} w_k[n] + b_{k1} w_k[n-1] + b_{k2} w_k[n-2]} \quad \text{\textbf{(Biquad Output Equation)}}
+\label{eq:biquad_output}
+\end{equation}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{images/iir_biquad_df2.png}
+\caption{Canonical Direct Form II Second-Order Section (SOS / Biquad). The central delay spine ($z^{-1}, z^{-1}$) stores the intermediate state variables $w_k[n-1]$ and $w_k[n-2]$, simultaneously serving both the feedback loop (left) and the feedforward chain (right).}
+\label{fig:iir_biquad_df2}
+\end{figure}
+
+\subsection{3.2 Hardware Resource Audit per Biquad}
+For each individual canonical second-order section:
+\begin{itemize}
+    \item \textbf{Delay Registers ($z^{-1}$):} Exactly \textbf{2} registers (storing $w_k[n-1]$ and $w_k[n-2]$).
+    \item \textbf{Multipliers:} Up to \textbf{5} multipliers ($b_{k0}, b_{k1}, b_{k2}, -a_{k1}, -a_{k2}$). When normalized ($b_{k0} = 1$), this reduces to \textbf{4} non-trivial multipliers.
+    \item \textbf{Adders:} Exactly \textbf{4} two-input adders (2 in the feedback summation, 2 in the feedforward summation).
+\end{itemize}
+
+If a non-canonical Direct Form I biquad were used instead, each section would require $M_k + N_k = 2 + 2 = 4$ delay registers. Over a 6th-order filter ($K=3$), DF-I cascade requires 12 delay registers, whereas canonical DF-II cascade requires only \textbf{6 delay registers}—a massive $50\%$ memory savings.
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{4. PRACTICAL ENGINEERING GUIDELINES: PAIRING, ORDERING, AND SCALING}
+
+While all pairings and orderings yield mathematically identical transfer functions under infinite precision, they exhibit \textbf{vastly different performance} under finite-precision fixed-point arithmetic! Three critical engineering rules must be followed:
+
+\subsection{\texorpdfstring{4.1 Optimal Pole-Zero Pairing ($\theta_z \approx \theta_p$)}{4.1 Optimal Pole-Zero Pairing (Frequency Alignment)}}
+A filter with $K$ sections has $(K!)^2$ possible ways to pair poles and zeros.
+\begin{itemize}
+    \item \textbf{The Phenomenon:} A pole pair close to the unit circle ($r_k \approx 1$) creates a sharp, resonant peak in the frequency response $|H_k(e^{j\omega})|$. Conversely, a transmission zero creates a deep attenuation notch.
+    \item \textbf{The Criterion:} Pair each complex pole pair with the \textbf{spatially closest zero pair} in the $z$-plane ($\theta_z \approx \theta_p$).
+    \item \textbf{Engineering Rationale:} The notch from the zero cancels out the sharp resonance peak of the adjacent pole within that specific biquad. This flattens the individual section's frequency response $|H_k(e^{j\omega})|$, minimizing the peak-to-valley dynamic range ratio:
+    \begin{equation}
+    \min \left( \frac{\max_{\omega} |H_k(e^{j\omega})|}{\min_{\omega} |H_k(e^{j\omega})|} \right)
+    \end{equation}
+    Preventing high resonance peaks eliminates internal state register overflow, while eliminating deep notches keeps signals well above the quantization noise floor.
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.88\textwidth]{images/iir_cascade_pole_zero_pairing.png}
+\caption{Optimal Pole-Zero Pairing Analysis. (Left) $z$-plane pole-zero geometry showing pairing of pole $p_1$ ($r=0.9, \theta=45^\circ$) with zero $z_1$ ($r=1.0, \theta=45^\circ$). (Right) Individual section magnitude responses showing how pairing suppresses extreme resonance peaks and maintains dynamic range balance.}
+\label{fig:pole_zero_pairing}
+\end{figure}
+
+\subsection{4.2 Section Ordering (Sequencing)}
+Once the biquads $H_1(z), H_2(z), \dots, H_K(z)$ are formed, in what physical sequence should they be chained?
+\begin{itemize}
+    \item \textbf{Standard Rule (Low-$Q$ to High-$Q$):} Arrange sections in order of \textbf{increasing pole radius} ($r_1 \le r_2 \le \dots \le r_K$).
+    \begin{itemize}
+        \item Sections with poles further from the unit circle (broad bandwidth, low resonance) are placed first.
+        \item Highly resonant sections (poles closest to the unit circle, high $Q$) are placed last.
+        \item \textit{Advantage:} Out-of-band noise and large input signal spikes are gradually attenuated by early sections before reaching the highly sensitive, resonant stages.
+    \end{itemize}
+    \item \textbf{High-SNR Rule (Alternative):} Place the section with the highest gain first to boost low-level signals above the quantization noise floor, provided scaling prevents overflow.
+\end{itemize}
+
+\subsection{\texorpdfstring{4.3 Dynamic Range Gain Scaling ($L_2$ and $L_\infty$ Scaling)}{4.3 Dynamic Range Gain Scaling (L2 and L-infinity Scaling)}}
+To prevent fixed-point arithmetic overflow at intermediate state nodes $w_k[n]$, a scaling factor $g_k$ is distributed before each section:
+\begin{equation}
+g = \prod_{k=1}^{K} g_k
+\end{equation}
+Using the $L_\infty$ norm (peak frequency response) scaling:
+\begin{equation}
+g_k = \frac{1}{\max_{\omega} \left| \prod_{i=1}^k H_i(e^{j\omega}) \right|}
+\end{equation}
+This guarantees that for any sinusoidal input with amplitude $\le 1$, no intermediate node in the cascade will exceed unity magnitude.
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{5. HARDWARE \& COMPUTATIONAL COMPLEXITY AUDIT}
+
+Table \ref{tab:cascade_complexity} provides a rigorous comparison between Direct Form realizations and Cascade Form realizations for an $N$-th order IIR filter (assuming $M = N$ even, $K = N/2$).
+
+\begin{table}[H]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+\textbf{Architectural Metric} & \textbf{Direct Form I} & \textbf{Direct Form II} & \textbf{Cascade (DF-I SOS)} & \textbf{Cascade (DF-II SOS)} \\ \midrule
+\textbf{Canonical Status}     & Non-Canonical          & \textbf{Canonical}      & Non-Canonical               & \textbf{Canonical} \\
+\textbf{Total Delay Registers ($z^{-1}$)} & $2N$       & $\mathbf{N}$            & $2N$                        & $\mathbf{N}$ \\
+\textbf{Total Multipliers}    & $2N + 1$               & $2N + 1$                & $2N + 1$                    & $2N + 1$ \\
+\textbf{Total Adders}         & $2N$                   & $2N$                    & $2N$                        & $2N$ \\
+\textbf{Root Quantization Sensitivity} & \textbf{Catastrophic ($O(N!)$)} & \textbf{Catastrophic ($O(N!)$)} & \textbf{Extremely Low} & \textbf{Extremely Low} \\
+\textbf{Stability Margin}     & Easily Lost            & Easily Lost             & \textbf{Guaranteed Robust}  & \textbf{Guaranteed Robust} \\
+\textbf{Internal Overflow Control} & None              & Extremely Difficult     & Moderate                    & \textbf{Easily Scaled per SOS} \\
+\textbf{Modularity for VLSI}  & Low (Irregular)        & Low (Irregular)         & High (Identical Cells)      & \textbf{Highest (Replication)} \\ \bottomrule
+\end{tabular}%
+}
+\caption{Comprehensive Architectural Complexity and Performance Audit.}
+\label{tab:cascade_complexity}
+\end{table}
+
+\begin{quote}
+\textbf{Crucial Takeaway for Examinations:} The canonical Cascade Form requires the \textbf{exact same number of multipliers ($2N+1$), adders ($2N$), and delay registers ($N$)} as Direct Form II, yet it completely eliminates the fatal root sensitivity and overflow vulnerability of high-order systems!
+\end{quote}
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{6. STEP-BY-STEP WORKED NUMERICAL EXAMPLES}
+
+\subsection{Example 18.1: Complete 4th-Order Cascade Realization with Mixed Roots}
+\textbf{Problem Statement:} An IIR digital filter is specified by the transfer function:
+\begin{equation}
+H(z) = \frac{(1 + z^{-1})(1 - \sqrt{2} z^{-1} + z^{-2})}{(1 - 0.9 e^{j\pi/4} z^{-1})(1 - 0.9 e^{-j\pi/4} z^{-1})(1 - 0.6 z^{-1})(1 + 0.5 z^{-1})}
+\end{equation}
+(a) Determine all pole and zero locations and group them into conjugate and real pairs. \\
+(b) Perform optimal pole-zero pairing based on frequency-domain proximity. \\
+(c) Order the sections to minimize noise and overflow. \\
+(d) Formulate the biquad transfer functions $H_1(z)$ and $H_2(z)$ with strictly real coefficients. \\
+(e) Write the complete difference equations for both stages using canonical Direct Form II. \\
+(f) Construct the overall hardware realization diagram. \\
+(g) Evaluate the first three output samples $y[0], y[1], y[2]$ for an impulse input $x[n] = \delta[n]$.
+
+\vspace{0.3cm}
+\noindent\textbf{Solution:}
+
+\noindent\textbf{(a) Pole-Zero Classification:}
+\begin{itemize}
+    \item \textbf{Poles:}
+    \begin{itemize}
+        \item Complex conjugate pair: $p_{1,2} = 0.9 e^{\pm j\pi/4}$. 
+        \begin{equation}
+        D_{\text{complex}}(z) = (1 - 0.9 e^{j\pi/4} z^{-1})(1 - 0.9 e^{-j\pi/4} z^{-1}) = 1 - 2(0.9)\cos(\pi/4) z^{-1} + 0.81 z^{-2}
+        \end{equation}
+        Since $\cos(\pi/4) = \sqrt{2}/2 \approx 0.7071$:
+        \begin{equation}
+        D_{\text{complex}}(z) = 1 - 1.2728 z^{-1} + 0.81 z^{-2} \quad (r = 0.9, \theta = 45^\circ, \text{High } Q)
+        \end{equation}
+        \item Real poles: $p_3 = 0.6, \; p_4 = -0.5$.
+        \begin{align}
+        D_{\text{real}}(z) &= (1 - 0.6 z^{-1})(1 + 0.5 z^{-1}) \nonumber \\
+        &= 1 - (0.6 - 0.5) z^{-1} - (0.6)(0.5) z^{-2} \nonumber \\
+        &= 1 - 0.1 z^{-1} - 0.3 z^{-2}
+        \end{align}
+    \end{itemize}
+    \item \textbf{Zeros:}
+    \begin{itemize}
+        \item Complex zero pair on the unit circle:
+        \begin{equation}
+        N_{\text{complex}}(z) = 1 - \sqrt{2} z^{-1} + z^{-2} = 1 - 1.4142 z^{-1} + z^{-2}
+        \end{equation}
+        Roots: $z_{1,2} = e^{\pm j\pi/4}$ (radius $r_z = 1.0$, angle $\theta_z = 45^\circ$).
+        \item Real zero: $z_3 = -1 \implies N_{\text{real}}(z) = 1 + z^{-1}$.
+    \end{itemize}
+\end{itemize}
+
+\noindent\textbf{(b) Optimal Pole-Zero Pairing:}
+\begin{itemize}
+    \item The complex zero pair is at angle $\theta_z = 45^\circ$.
+    \item The complex pole pair is also at angle $\theta_p = 45^\circ$ ($\Delta\theta = 0^\circ$).
+    \item Pairing these two together provides exact frequency-alignment, allowing the transmission notch at $45^\circ$ to suppress the resonant peak of the pole at $45^\circ$.
+    \item The remaining real zero $(1 + z^{-1})$ is paired with the real pole quadratic $(1 - 0.1 z^{-1} - 0.3 z^{-2})$.
+\end{itemize}
+
+\noindent\textbf{(c) Section Ordering:}
+We order from lowest pole radius to highest pole radius (Low-$Q$ to High-$Q$):
+\begin{itemize}
+    \item \textbf{Section 1 (Biquad 1):} Real poles (maximum radius $r = 0.6$).
+    \item \textbf{Section 2 (Biquad 2):} Complex poles (radius $r = 0.9$).
+\end{itemize}
+
+\noindent\textbf{(d) Factored Transfer Functions:}
+\begin{equation}
+H_1(z) = \frac{1 + z^{-1}}{1 - 0.1 z^{-1} - 0.3 z^{-2}}
+\end{equation}
+\begin{equation}
+H_2(z) = \frac{1 - 1.4142 z^{-1} + z^{-2}}{1 - 1.2728 z^{-1} + 0.81 z^{-2}}
+\end{equation}
+Overall transfer function: $H(z) = H_1(z) \cdot H_2(z)$.
+
+\noindent\textbf{(e) Canonical Direct Form II Difference Equations:}
+Let $w_1[n]$ and $w_2[n]$ be the internal state variables for Section 1 and Section 2 respectively.
+
+\textbf{Section 1 Computations:}
+\begin{align}
+w_1[n] &= x[n] - (-0.1) w_1[n-1] - (-0.3) w_1[n-2] \nonumber \\
+\mathbf{w_1[n]} &\mathbf{= x[n] + 0.1 w_1[n-1] + 0.3 w_1[n-2]} \quad \text{\textbf{(State Equation 1)}} \\
+\mathbf{y_1[n]} &\mathbf{= w_1[n] + w_1[n-1]} \quad \text{\textbf{(Output Equation 1)}}
+\end{align}
+
+\textbf{Intermediate Coupling Link:}
+\begin{equation}
+\mathbf{x_2[n] = y_1[n]}
+\end{equation}
+
+\textbf{Section 2 Computations:}
+\begin{align}
+w_2[n] &= x_2[n] - (-1.2728) w_2[n-1] - (0.81) w_2[n-2] \nonumber \\
+\mathbf{w_2[n]} &\mathbf{= x_2[n] + 1.2728 w_2[n-1] - 0.81 w_2[n-2]} \quad \text{\textbf{(State Equation 2)}} \\
+\mathbf{y[n]} &\mathbf{= w_2[n] - 1.4142 w_2[n-1] + w_2[n-2]} \quad \text{\textbf{(Output Equation 2)}}
+\end{align}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.92\textwidth]{images/iir_cascade_4th_order_realization.png}
+\caption{Complete 4th-Order IIR Cascade Realization (Example 18.1). Biquad 1 ($H_1(z)$) processes the real poles and zero, feeding intermediate sequence $y_1[n] = x_2[n]$ directly into Biquad 2 ($H_2(z)$), which realizes the complex conjugate poles and zeros.}
+\label{fig:cascade_4th_order_realization}
+\end{figure}
+
+\noindent\textbf{(g) Impulse Response Evaluation ($x[n] = \delta[n]$):}
+Assuming initially relaxed conditions ($w_1[-1] = w_1[-2] = w_2[-1] = w_2[-2] = 0$):
+
+\textbf{At $n = 0$ ($x[0] = 1$):}
+\begin{itemize}
+    \item $w_1[0] = 1 + 0.1(0) + 0.3(0) = \mathbf{1.0}$
+    \item $y_1[0] = w_1[0] + w_1[-1] = 1.0 + 0 = \mathbf{1.0} \implies x_2[0] = 1.0$
+    \item $w_2[0] = x_2[0] + 1.2728(0) - 0.81(0) = \mathbf{1.0}$
+    \item $y[0] = w_2[0] - 1.4142(0) + 0 = \mathbf{1.0}$
+\end{itemize}
+
+\textbf{At $n = 1$ ($x[1] = 0$):}
+\begin{itemize}
+    \item $w_1[1] = 0 + 0.1(1.0) + 0.3(0) = \mathbf{0.1}$
+    \item $y_1[1] = w_1[1] + w_1[0] = 0.1 + 1.0 = \mathbf{1.1} \implies x_2[1] = 1.1$
+    \item $w_2[1] = x_2[1] + 1.2728(1.0) - 0.81(0) = 1.1 + 1.2728 = \mathbf{2.3728}$
+    \item $y[1] = w_2[1] - 1.4142 w_2[0] + w_2[-1] = 2.3728 - 1.4142(1.0) + 0 = \mathbf{0.9586}$
+\end{itemize}
+
+\textbf{At $n = 2$ ($x[2] = 0$):}
+\begin{itemize}
+    \item $w_1[2] = 0 + 0.1(0.1) + 0.3(1.0) = 0.01 + 0.30 = \mathbf{0.31}$
+    \item $y_1[2] = w_1[2] + w_1[1] = 0.31 + 0.10 = \mathbf{0.41} \implies x_2[2] = 0.41$
+    \item $w_2[2] = 0.41 + 1.2728(2.3728) - 0.81(1.0) = 0.41 + 3.0201 - 0.81 = \mathbf{2.6201}$
+    \item $y[2] = w_2[2] - 1.4142(2.3728) + 1.0 = 2.6201 - 3.3556 + 1.0 = \mathbf{0.2645}$
+\end{itemize}
+The first three impulse response samples are $h[n] = \{ \underline{1.0}, \; 0.9586, \; 0.2645, \dots \}$.
+
+\vspace{0.4cm}
+\subsection{Example 18.2: Third-Order Odd System Realization (1st-Order + 2nd-Order)}
+\textbf{Problem Statement:} Realize the third-order IIR system in Cascade Form:
+\begin{equation}
+H(z) = \frac{0.5 (1 - z^{-1})(1 + 0.8 z^{-1} + 0.64 z^{-2})}{(1 - 0.5 z^{-1})(1 - 0.8 z^{-1} + 0.5 z^{-2})}
+\end{equation}
+
+\noindent\textbf{Solution:}
+Because the system order is odd ($N = 3$), it must be decomposed into $K = \lceil 3/2 \rceil = 2$ sections:
+\begin{itemize}
+    \item One First-Order Section ($H_1(z)$) realizing real pole $p_1 = 0.5$ and real zero $z_1 = 1$.
+    \item One Second-Order Section ($H_2(z)$) realizing complex conjugate poles and zeros.
+\end{itemize}
+
+\noindent\textbf{Section Definitions:}
+\begin{align}
+H_1(z) &= 0.5 \left( \frac{1 - z^{-1}}{1 - 0.5 z^{-1}} \right) \\
+H_2(z) &= \frac{1 + 0.8 z^{-1} + 0.64 z^{-2}}{1 - 0.8 z^{-1} + 0.5 z^{-2}}
+\end{align}
+
+\noindent\textbf{Canonical Difference Equations:}
+\textbf{Stage 1 (First-Order Section):}
+\begin{align}
+w_1[n] &= 0.5 x[n] + 0.5 w_1[n-1] \\
+y_1[n] &= w_1[n] - w_1[n-1] \implies x_2[n] = y_1[n]
+\end{align}
+(Requires 1 delay register, 2 multipliers, 2 adders).
+
+\textbf{Stage 2 (Second-Order Biquad):}
+\begin{align}
+w_2[n] &= x_2[n] + 0.8 w_2[n-1] - 0.5 w_2[n-2] \\
+y[n] &= w_2[n] + 0.8 w_2[n-1] + 0.64 w_2[n-2]
+\end{align}
+(Requires 2 delay registers, 4 multipliers, 4 adders).
+
+\textbf{Total Hardware Count:}
+\begin{itemize}
+    \item Total Delays: $1 + 2 = \mathbf{3}$ registers (strictly canonical, $\max(M, N) = 3$).
+    \item Total Multipliers: $2 + 4 = \mathbf{6}$ multipliers.
+    \item Total Adders: $2 + 4 = \mathbf{6}$ adders.
+\end{itemize}
+
+\vspace{0.4cm}
+\subsection{Example 18.3: Reverse Synthesis — Extracting Transfer Function from Cascade SFG}
+\textbf{Problem Statement:} A cascaded filter has two biquads with intermediate equations:
+\begin{align*}
+\text{Biquad 1:} \quad & w_1[n] = x[n] + 0.4 w_1[n-1], \quad y_1[n] = w_1[n] - 0.2 w_1[n-1] \\
+\text{Biquad 2:} \quad & w_2[n] = y_1[n] - 0.6 w_2[n-1], \quad y[n] = 2 w_2[n] + w_2[n-1]
+\end{align*}
+Find the overall system transfer function $H(z)$ and evaluate system stability.
+
+\noindent\textbf{Solution:}
+Transforming to the $Z$-domain:
+\begin{equation}
+H_1(z) = \frac{Y_1(z)}{X(z)} = \frac{1 - 0.2 z^{-1}}{1 - 0.4 z^{-1}}, \qquad H_2(z) = \frac{Y(z)}{Y_1(z)} = \frac{2 + z^{-1}}{1 + 0.6 z^{-1}}
+\end{equation}
+Overall transfer function:
+\begin{equation}
+H(z) = H_1(z) \cdot H_2(z) = \frac{(1 - 0.2 z^{-1})(2 + z^{-1})}{(1 - 0.4 z^{-1})(1 + 0.6 z^{-1})} = \frac{2 + 0.6 z^{-1} - 0.2 z^{-2}}{1 + 0.2 z^{-1} - 0.24 z^{-2}}
+\end{equation}
+\textbf{Stability Check:} The system poles are $p_1 = 0.4$ and $p_2 = -0.6$. Since $|p_1| = 0.4 < 1$ and $|p_2| = 0.6 < 1$, both poles lie strictly inside the unit circle, confirming that the system is \textbf{Bounded-Input Bounded-Output (BIBO) stable}.
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{7. FACULTY INSIGHTS, COMMON MISCONCEPTIONS \& EXAM TRAPS}
+
 \begin{enumerate}
-\item \textbf{Poles:}
+    \item \textbf{Misconception 1: "Cascade realization requires more delay elements than Direct Form II."}
+    \begin{itemize}
+        \item \textit{Reality:} \textbf{False.} A canonical cascade using Direct Form II biquads requires:
+        \begin{equation*}
+        \sum_{k=1}^K \max(M_k, N_k) = N \quad \text{delay registers}
+        \end{equation*}
+        which is \textbf{identically equal} to the delay count of Direct Form II.
+    \end{itemize}
+
+    \item \textbf{Exam Trap 1: The Minus Sign in Feedback Coefficients ($-a_{k1}, -a_{k2}$):}
+    \begin{itemize}
+        \item In the denominator polynomial $1 + a_{k1} z^{-1} + a_{k2} z^{-2}$, if $a_{k1} = -1.2728$, students often mistakenly write $-1.2728$ in the state equation.
+        \item \textit{Correct Rule:} The state update is $w_k[n] = x_k[n] - a_{k1} w_k[n-1] - a_{k2} w_k[n-2]$. Therefore:
+        $$-a_{k1} = -(-1.2728) = \mathbf{+1.2728}$$
+        Remember: In the signal flow diagram, the feedback multiplier is \textbf{negated} relative to the denominator polynomial coefficient!
+    \end{itemize}
+
+    \item \textbf{Exam Trap 2: Does Section Cascading Order Matter?}
+    \begin{itemize}
+        \item \textit{Theoretical Answer:} In infinite-precision arithmetic,
+        \begin{equation*}
+        H_1(z) H_2(z) = H_2(z) H_1(z)
+        \end{equation*}
+        because linear time-invariant systems commute under convolution.
+        \item \textit{Practical Hardware Answer:} \textbf{Yes, order matters critically!} In fixed-point digital signal processors with finite word-length, placing high-$Q$ resonant sections first causes internal state overflow and massive quantization noise amplification. Always place low-$Q$ sections first in physical hardware.
+    \end{itemize}
+
+    \item \textbf{Misconception 3: "Can a single complex pole be realized in a 1st-order section?"}
+    \begin{itemize}
+        \item \textit{Reality:} \textbf{Never.} A 1st-order section $(1 - p z^{-1})$ with complex $p = r e^{j\theta}$ produces complex coefficients, requiring complex arithmetic hardware ($4\times$ real multipliers). Complex poles \textbf{must always be paired with their complex conjugates} to form a second-order section with purely real coefficients.
+    \end{itemize}
 \end{enumerate}
-   * Complex pair: $p_{1,2} = 0.9 e^{\pm j\pi/4} \implies 1 - 2(0.9)\cos(\pi/4) z^{-1} + 0.81 z^{-2} = 1 - 1.2728 z^{-1} + 0.81 z^{-2}$. (Radius $r = 0.9$, high $Q$).
-   * Real poles: $p_3 = 0.6, \; p_4 = -0.5 \implies (1 - 0.6 z^{-1})(1 + 0.5 z^{-1}) = 1 - 0.1 z^{-1} - 0.3 z^{-2}$. (Low $Q$).
-\begin{enumerate}
-\item \textbf{Zeros:}
-\end{enumerate}
-   * Complex pair: $z_{1,2} = 1 \cdot e^{\pm j\pi/4} \implies 1 - \sqrt{2} z^{-1} + z^{-2} = 1 - 1.4142 z^{-1} + z^{-2}$ (at angle $\pi/4$).
-   * Real zeros: $z_3 = -1 \implies (1 + z^{-1})$.
-\begin{enumerate}
-\item \textbf{Cascade Sections:}
-\end{enumerate}
-   * Section 1: $H_1(z) = \frac{1 + z^{-1}}{1 - 0.1 z^{-1} - 0.3 z^{-2}}$.
-   * Section 2: $H_2(z) = \frac{1 - 1.4142 z^{-1} + z^{-2}}{1 - 1.2728 z^{-1} + 0.81 z^{-2}}$.
-\begin{enumerate}
-\item \textbf{Realization:} $H(z) = H_1(z)H_2(z)$.
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{8. SUMMARY \& QUICK REVISION TABLE}
+
+\begin{table}[H]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Concept / Metric} & \textbf{Key Formula / Summary Rule} \\ \midrule
+\textbf{Cascade Transfer Function} & $H(z) = g \prod_{k=1}^K H_k(z) = g \prod_{k=1}^K \frac{b_{k0} + b_{k1} z^{-1} + b_{k2} z^{-2}}{1 + a_{k1} z^{-1} + a_{k2} z^{-2}}$ \\
+\textbf{Total Sections ($K$)}      & $K = \lceil N/2 \rceil$ ($N/2$ biquads for even $N$; $(N-1)/2$ biquads $+ 1$ first-order for odd $N$) \\
+\textbf{Biquad State Equation}     & $w_k[n] = x_k[n] - a_{k1} w_k[n-1] - a_{k2} w_k[n-2]$ \\
+\textbf{Biquad Output Equation}    & $y_k[n] = b_{k0} w_k[n] + b_{k1} w_k[n-1] + b_{k2} w_k[n-2]$ \\
+\textbf{Complex Pole Expansion}    & $1 - 2 r_k \cos(\theta_k) z^{-1} + r_k^2 z^{-2} \implies a_{k1} = -2r_k\cos(\theta_k), \; a_{k2} = r_k^2$ \\
+\textbf{Pole-Zero Pairing Rule}    & Pair closest pole-zero pairs in frequency ($\theta_z \approx \theta_p$) to suppress resonance peaks \\
+\textbf{Section Ordering Rule}     & Order sections by increasing pole radius $r_k$ (Low-$Q$ to High-$Q$) to maximize SNR \\
+\textbf{Canonical Hardware Count}  & $N$ delay registers, $2N+1$ multipliers, $2N$ adders (matches DF-II exactly) \\ \bottomrule
+\end{tabular}%
+}
+\caption{Lecture 18 Quick Revision Reference.}
+\label{tab:summary_cascade}
+\end{table}
 
 \end{document}
