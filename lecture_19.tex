@@ -9,10 +9,15 @@
 \usepackage{float}
 \usepackage{xcolor}
 
+\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Lecture 19: IIR Filter — Parallel Form Realization \\ \large (III B.Tech EEE)}
+\author{Comprehensive Lecture Notes \& Faculty Textbook Reference}
+\date{}
+
 \definecolor{darkbg}{HTML}{0d121f}
 \definecolor{lighttext}{HTML}{e2e8f0}
 \definecolor{primary}{HTML}{8b5cf6}
 \definecolor{secondary}{HTML}{0dd5c5}
+\definecolor{accent}{HTML}{10b981}
 
 \pagecolor{darkbg}
 \color{lighttext}
@@ -20,59 +25,547 @@
 \hypersetup{
     colorlinks=true,
     linkcolor=secondary,
-    urlcolor=secondary
+    urlcolor=secondary,
+    citecolor=accent
 }
 
 \begin{document}
-\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Lecture 19: IIR Filter - Parallel Form Realization \\ \large (III B.Tech EEE)}\maketitle
+
+\maketitle
 
 \noindent\rule{\textwidth}{0.5pt}
-\section*{1. LEARNING OBJECTIVES}
+
+\section*{Lecture Plan \& Objectives (40 Minutes Breakdown)}
+\begin{itemize}
+    \item \textbf{00:00 -- 06:00 (6 mins):} Motivation for Parallel Realization: From multiplicative decomposition (Cascade: $H(z) = \prod H_k(z)$) to additive decomposition (Parallel: $H(z) = C + \sum H_k(z)$). Concurrency, throughput, and noise decoupling advantages.
+    \item \textbf{06:00 -- 16:00 (10 mins):} Mathematical Foundations of Partial Fraction Expansion (PFE): Handling proper ($M < N$) vs. improper ($M \ge N$) rational functions, polynomial long division for direct feedthrough $C$, decomposition directly in $z^{-1}$, and algebraic grouping of complex conjugate pole pairs into real second-order sections (SOS).
+    \item \textbf{16:00 -- 25:00 (9 mins):} Canonical Parallel Biquad Circuit Architecture: State update equations, branch output equations, and proving why parallel biquads have numerator degree $\le 1$ (saving 1 multiplier per section compared to Cascade biquads).
+    \item \textbf{25:00 -- 32:00 (7 mins):} Parallel Form I vs. Parallel Form II \& Finite Word-Length Superiority: Total decoupling of roundoff quantization noise (zero inter-stage noise amplification) and low-latency adder tree pipelining.
+    \item \textbf{32:00 -- 38:00 (6 mins):} Step-by-Step Worked Numerical Examples: Improper 2nd-order system ($M=N=2$ with direct term $C=8$), 4th-order mixed-pole system, and reverse synthesis from parallel SFG.
+    \item \textbf{38:00 -- 40:00 (2 mins):} Faculty Insights, Common Misconceptions, and University Semester Exam Traps.
+\end{itemize}
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{1. LEARNING OBJECTIVES}
 By the end of this lecture, students will be able to:
 \begin{enumerate}
-\item \textbf{Perform} Partial Fraction Expansion on high-order rational transfer functions $H(z)$.
-\item \textbf{Combine} complex conjugate residue pairs into real second-order parallel branches.
-\item \textbf{Draw} complete Parallel Realization signal flow graphs.
-\item \textbf{Evaluate} noise and latency benefits of parallel architectures.
+    \item \textbf{Formulate} the additive partial fraction expansion $H(z) = C + \sum_{k=1}^K H_k(z)$ for both strictly proper ($M < N$) and improper ($M \ge N$) rational transfer functions.
+    \item \textbf{Extract} the direct feedthrough scalar coefficient $C = b_N / a_N$ (or polynomial quotient) using polynomial long division.
+    \item \textbf{Combine} complex conjugate residue pairs algebraically to produce second-order sections with strictly real coefficients and numerator degree $\le 1$.
+    \item \textbf{Synthesize} canonical Direct Form II parallel biquads with minimum memory registers ($\max(M_k, N_k) \le 2$).
+    \item \textbf{Audit} exact hardware resource requirements (multipliers, adders, delay registers) and contrast them with Direct Form II and Cascade Form.
+    \item \textbf{Explain} the critical finite word-length advantages of parallel realization (complete noise decoupling and suppression of limit-cycle oscillations).
+    \item \textbf{Differentiate} between Parallel Form I (expansion in $z^{-1}$) and Parallel Form II (expansion in $z$ via $H(z)/z$).
+    \item \textbf{Evaluate} impulse responses and difference equations of parallel structures step-by-step.
+\end{enumerate}
 
 \noindent\rule{\textwidth}{0.5pt}
-\section*{2. MATHEMATICAL FOUNDATIONS}
 
-\subsection*{2.1 Parallel Realization Formulation}
-\end{enumerate}
-Given rational $H(z) = \frac{B(z)}{A(z)}$ with $M \le N$:
-$$ H(z) = C + \sum_{k=1}^{K_1} \frac{A_k}{1 - p_k z^{-1}} + \sum_{k=1}^{K_2} \frac{\gamma_{0k} + \gamma_{1k} z^{-1}}{1 + a_{1k} z^{-1} + a_{2k} z^{-2}} $$
-Where $C = b_N / a_N$ if $M = N$ (and $C = 0$ if $M < N$).
-\begin{itemize}
-\item \textbf{Real poles} yield 1st-order sections: $H_k(z) = \frac{A_k}{1 - p_k z^{-1}}$.
-\item \textbf{Complex conjugate pole pairs} $p_k, p_k^*$ yield 2nd-order sections:
-\end{itemize}
-  $$ \frac{R_k}{1 - p_k z^{-1}} + \frac{R_k^*}{1 - p_k^* z^{-1}} = \frac{2\text{Re}(R_k) - 2\text{Re}(R_k p_k^*) z^{-1}}{1 - 2\text{Re}(p_k) z^{-1} + |p_k|^2 z^{-2}} = \frac{\gamma_{0k} + \gamma_{1k} z^{-1}}{1 + a_{1k} z^{-1} + a_{2k} z^{-2}} $$
+\section{2. MATHEMATICAL FOUNDATIONS OF PARALLEL REALIZATION}
 
+\subsection{2.1 From Product to Sum: The Additive Decomposition Paradigm}
+In Lecture 18, we decomposed high-order IIR transfer functions multiplicatively into a cascade of modular sub-systems:
+\begin{equation}
+H(z) = g \prod_{k=1}^K H_k(z) \iff h[n] = g \cdot h_1[n] * h_2[n] * \dots * h_K[n]
+\end{equation}
+While the Cascade form successfully solves the root sensitivity catastrophe of high-order Direct Forms, it processes data in a strictly \textbf{sequential pipeline}: the output of Section 1 must be calculated before Section 2 can begin, and roundoff noise generated in early sections is progressively filtered and amplified by all downstream sections.
 
-\subsection*{Pictorial Representations}
+The \textbf{Parallel Form Realization} takes an entirely different, additive approach. By utilizing the linearity property of the $Z$-transform:
+\begin{equation}
+\mathcal{Z}^{-1} \left\{ \sum_{k=1}^K H_k(z) \right\} = \sum_{k=1}^K h_k[n]
+\end{equation}
+we decompose the rational transfer function into an \textbf{additive sum of independent, low-order sub-systems} operating in parallel:
+\begin{equation}
+H(z) = C + \sum_{k=1}^K H_k(z) \iff y[n] = C x[n] + \sum_{k=1}^K y_k[n]
+\end{equation}
+The input sequence $x[n]$ is broadcast simultaneously to all branches, each branch computes its output $y_k[n]$ concurrently, and their individual outputs are summed at a final accumulation junction to yield $y[n]$.
+
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.85\textwidth]{images/iir_parallel_sfg.png}
-\caption{Iir Parallel Sfg}
+\includegraphics[width=0.88\textwidth]{images/iir_parallel_architecture.png}
+\caption{Modular IIR Parallel Realization Architecture. The input $x[n]$ is distributed concurrently to a direct feedthrough branch $C$ and $K$ parallel second-order sections $H_k(z)$. The branch outputs are summed at the final accumulation junction to produce $y[n]$.}
+\label{fig:parallel_architecture}
 \end{figure}
 
+\subsection{\texorpdfstring{2.2 Handling Proper vs. Improper Transfer Functions ($M \ge N$ vs $M < N$)}{2.2 Handling Proper vs. Improper Transfer Functions (M >= N vs M < N)}}
+Consider a general rational IIR transfer function:
+\begin{equation}
+H(z) = \frac{B(z)}{A(z)} = \frac{\sum_{k=0}^M b_k z^{-k}}{1 + \sum_{k=1}^N a_k z^{-k}}
+\label{eq:rational_Hz}
+\end{equation}
+Partial fraction expansion cannot be applied directly if the degree of the numerator in $z^{-1}$ is greater than or equal to the degree of the denominator ($M \ge N$). We must distinguish two cases:
+
+\subsubsection{\texorpdfstring{Case 1: Strictly Proper System ($M < N$)}{Case 1: Strictly Proper System (M < N)}}
+When the numerator degree is strictly less than the denominator degree ($M < N$), the transfer function decays to zero as $z^{-1} \to \infty$ (i.e., at $z = 0$). No direct polynomial division is needed, and the direct feedthrough constant is identically zero:
+\begin{equation}
+C = 0
+\end{equation}
+
+\subsubsection{\texorpdfstring{Case 2: Improper System ($M = N$)}{Case 2: Improper System (M = N)}}
+In the vast majority of practical digital filters (such as Butterworth, Chebyshev, and Elliptic filters designed via bilinear transformation), the numerator and denominator have equal degrees: $M = N$. 
+Before partial fraction expansion can be performed, we must perform \textbf{polynomial long division} in powers of $z^{-1}$ to extract the quotient $C$:
+\begin{equation}
+H(z) = C + \frac{B_1(z)}{A(z)}
+\end{equation}
+where $B_1(z)$ has degree at most $N - 1$.
+The direct constant $C$ is found by taking the limit as $z^{-1} \to \infty$:
+\begin{equation}
+C = \lim_{z^{-1} \to \infty} H(z) = \frac{b_N z^{-N}}{a_N z^{-N}} = \mathbf{\frac{b_N}{a_N}}
+\label{eq:direct_term_C}
+\end{equation}
+Alternatively, evaluating at $z \to \infty$ ($z^{-1} \to 0$):
+\begin{equation}
+H(z)\Big|_{z^{-1}=0} = \frac{b_0}{a_0} = b_0 = C + \sum_{k=1}^K H_k(z)\Big|_{z^{-1}=0}
+\end{equation}
+In the time domain, $C$ represents an \textbf{instantaneous direct feedthrough} from input to output: $C x[n]$.
+
+\subsubsection{\texorpdfstring{Case 3: Highly Improper System ($M > N$)}{Case 3: Highly Improper System (M > N)}}
+If $M > N$, polynomial long division yields an FIR polynomial quotient of degree $M - N$:
+\begin{equation}
+H(z) = \sum_{m=0}^{M-N} c_m z^{-m} + \sum_{k=1}^K H_k(z)
+\end{equation}
+This is realized as an FIR tapped delay line in parallel with the IIR recursive branches.
+
+\subsection{\texorpdfstring{2.3 Partial Fraction Expansion in Powers of $z^{-1}$}{2.3 Partial Fraction Expansion in Powers of z-inverse}}
+Assuming distinct poles, the strictly proper rational remainder $B_1(z)/A(z)$ is expanded into first-order partial fractions in powers of $z^{-1}$:
+\begin{equation}
+H(z) = C + \sum_{i=1}^N \frac{R_i}{1 - p_i z^{-1}}
+\end{equation}
+where the residue $R_i$ corresponding to pole $p_i$ is evaluated using Heaviside's residue formula:
+\begin{equation}
+R_i = \left. (1 - p_i z^{-1}) H(z) \right|_{z^{-1} = 1/p_i}
+\label{eq:heaviside_residue}
+\end{equation}
+
+\subsection{2.4 Combining Complex Conjugate Pole Pairs into Real Biquads}
+Physical hardware must perform arithmetic using real numbers. For real-coefficient filters, any complex pole $p_k = r_k e^{j\theta_k}$ always occurs alongside its complex conjugate $p_k^* = r_k e^{-j\theta_k}$. Their corresponding residues are also complex conjugates:
+\begin{equation}
+R_k = |R_k| e^{j\phi_k}, \qquad R_k^* = |R_k| e^{-j\phi_k}
+\end{equation}
+We combine each complex conjugate pair into a single second-order section (SOS):
+\begin{align}
+H_k(z) &= \frac{R_k}{1 - p_k z^{-1}} + \frac{R_k^*}{1 - p_k^* z^{-1}} \nonumber \\
+&= \frac{R_k (1 - p_k^* z^{-1}) + R_k^* (1 - p_k z^{-1})}{(1 - p_k z^{-1})(1 - p_k^* z^{-1})} \nonumber \\
+&= \frac{(R_k + R_k^*) - (R_k p_k^* + R_k^* p_k) z^{-1}}{1 - (p_k + p_k^*) z^{-1} + (p_k p_k^*) z^{-2}}
+\end{align}
+
+Using Euler's identity:
+\begin{itemize}
+    \item $R_k + R_k^* = 2 |R_k| \cos(\phi_k) = \mathbf{2 \text{Re}(R_k)}$
+    \item $R_k p_k^* + R_k^* p_k = 2 \text{Re}(R_k p_k^*) = \mathbf{2 r_k |R_k| \cos(\phi_k - \theta_k)}$
+    \item $p_k + p_k^* = 2 r_k \cos(\theta_k)$
+    \item $p_k p_k^* = |p_k|^2 = r_k^2$
+\end{itemize}
+
+This yields the canonical second-order parallel section:
+\begin{equation}
+\mathbf{H_k(z) = \frac{\beta_{0k} + \beta_{1k} z^{-1}}{1 + a_{1k} z^{-1} + a_{2k} z^{-2}}}
+\label{eq:parallel_sos_formula}
+\end{equation}
+where all coefficients are \textbf{strictly real}:
+\begin{align}
+\beta_{0k} &= 2 \text{Re}(R_k) \\
+\beta_{1k} &= -2 \text{Re}(R_k p_k^*) \\
+a_{1k}     &= -2 r_k \cos(\theta_k) \\
+a_{2k}     &= r_k^2
+\end{align}
+
+\begin{quote}
+\textbf{The Fundamental Architectural Theorem of Parallel Biquads:}
+Notice that the numerator in (\ref{eq:parallel_sos_formula}) has degree \textbf{at most 1} ($\beta_{0k} + \beta_{1k} z^{-1}$). There is \textbf{no $z^{-2}$ term} in the numerator!
+Consequently, each parallel second-order section requires only \textbf{2 feedforward multipliers} ($\beta_{0k}$ and $\beta_{1k}$), compared to \textbf{3 feedforward multipliers} ($b_{k0}, b_{k1}, b_{k2}$) in a Cascade second-order section. Over $K$ biquads, the Parallel form saves $K$ hardware multipliers!
+\end{quote}
+
 \noindent\rule{\textwidth}{0.5pt}
-\section*{3. WORKED NUMERICAL EXAMPLES}
 
-\subsection*{Example 19.1: Parallel Realization of a 2nd-Order IIR Filter}
-\textbf{Problem:} Realize $H(z) = \frac{1 + 2 z^{-1} + z^{-2}}{1 - 0.75 z^{-1} + 0.125 z^{-2}}$ in Parallel Form.
+\section{3. CANONICAL PARALLEL BIQUAD ARCHITECTURE (DIRECT FORM II SOS)}
 
-\textbf{Solution:}
-Since numerator degree $M = 2$ and denominator degree $N = 2$, first divide out constant $C$:
-Denominator factors: $(1 - 0.5 z^{-1})(1 - 0.25 z^{-1})$.
-$$ H(z) = \frac{1 + 2z^{-1} + z^{-2}}{(1 - 0.5z^{-1})(1 - 0.25z^{-1})} = C + \frac{A}{1 - 0.5z^{-1}} + \frac{B}{1 - 0.25z^{-1}} $$
-Using polynomial division: $C = \frac{b_2}{a_2} = \frac{1}{0.125} = 8$.
-Alternatively, standard PFE:
-$$ H(z) = \frac{A_0}{1} + \frac{A_1}{1 - 0.5z^{-1}} + \frac{A_2}{1 - 0.25z^{-1}} $$
-Let $z^{-1} = 2 \implies A_1 = \left. \frac{1 + 2(2) + 4}{1 - 0.25(2)} \right. = \frac{9}{0.5} = 18$.
-Let $z^{-1} = 4 \implies A_2 = \left. \frac{1 + 2(4) + 16}{1 - 0.5(4)} \right. = \frac{25}{-1} = -25$.
-Evaluating at $z^{-1} = 0$: $H(1) = 1 = C + A_1 + A_2 \implies 1 = C + 18 - 25 \implies C = 8$.
-$$ H(z) = 8 + \frac{18}{1 - 0.5 z^{-1}} - \frac{25}{1 - 0.25 z^{-1}} $$
+Each second-order branch $H_k(z)$ in the parallel realization is implemented using the canonical Direct Form II structure to minimize delay registers.
+
+\subsection{3.1 Signal Flow Graph and Difference Equations}
+The input to the $k$-th branch is the global filter input $x[n]$. Defining the intermediate state variable sequence $W_k(z)$:
+\begin{equation}
+W_k(z) = \frac{X(z)}{1 + a_{1k} z^{-1} + a_{2k} z^{-2}}
+\end{equation}
+and the branch output:
+\begin{equation}
+Y_k(z) = (\beta_{0k} + \beta_{1k} z^{-1}) W_k(z)
+\end{equation}
+
+Taking the inverse $Z$-transform yields the two governing time-domain equations:
+
+\begin{equation}
+\mathbf{w_k[n] = x[n] - a_{1k} w_k[n-1] - a_{2k} w_k[n-2]} \quad \text{\textbf{(Branch State Equation)}}
+\label{eq:parallel_state_eq}
+\end{equation}
+
+\begin{equation}
+\mathbf{y_k[n] = \beta_{0k} w_k[n] + \beta_{1k} w_k[n-1]} \quad \text{\textbf{(Branch Output Equation)}}
+\label{eq:parallel_output_eq}
+\end{equation}
+
+The overall system output is obtained by summing all branch outputs along with the direct feedthrough path:
+\begin{equation}
+\mathbf{y[n] = C x[n] + \sum_{k=1}^K y_k[n]} \quad \text{\textbf{(Total System Output)}}
+\label{eq:parallel_total_output}
+\end{equation}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.88\textwidth]{images/iir_parallel_biquad_canonical.png}
+\caption{Canonical Direct Form II Parallel Second-Order Section (SOS / Biquad). The shared 2-register delay spine ($z^{-1}, z^{-1}$) provides states for feedback ($-a_{1k}, -a_{2k}$) and feedforward taps ($\beta_{0k}, \beta_{1k}$). Note the complete absence of a $\beta_{2k} z^{-2}$ tap, saving one multiplier per section.}
+\label{fig:parallel_biquad_sfg}
+\end{figure}
+
+\subsection{3.2 First-Order Real Pole Sections}
+For a real pole $p_k \in \mathbb{R}$ with real residue $A_k \in \mathbb{R}$:
+\begin{equation}
+H_k(z) = \frac{A_k}{1 - p_k z^{-1}}
+\end{equation}
+Its canonical realization requires:
+\begin{itemize}
+    \item Exactly \textbf{1 delay register} ($w_k[n-1]$).
+    \item \textbf{2 multipliers}: one feedback multiplier ($p_k = -a_{1k}$) and one feedforward multiplier ($A_k$).
+    \item \textbf{1 adder} for the feedback state equation: $w_k[n] = x[n] + p_k w_k[n-1]$, with output $y_k[n] = A_k w_k[n]$.
+\end{itemize}
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{4. PARALLEL FORM I VS. PARALLEL FORM II \& FINITE WORD-LENGTH ADVANTAGES}
+
+\subsection{4.1 Parallel Form I vs. Parallel Form II (Oppenheim \& Schafer Formulation)}
+In classic digital signal processing literature, two conventions exist for formulating the partial fraction expansion:
+
+\begin{itemize}
+    \item \textbf{Parallel Form I (Expansion directly in $z^{-1}$):}
+    \begin{equation}
+    H(z) = C + \sum_{k=1}^K \frac{\beta_{0k} + \beta_{1k} z^{-1}}{1 + a_{1k} z^{-1} + a_{2k} z^{-2}}
+    \end{equation}
+    This is the standard modern engineering formulation. The transfer function is treated as a rational function of $z^{-1}$, directly matching the causal delay elements ($z^{-1}$) of digital hardware.
+    
+    \item \textbf{Parallel Form II (Expansion in $z$ via $H(z)/z$):}
+    In older textbooks, $H(z)$ is expressed in positive powers of $z$, $H(z)/z$ is expanded into partial fractions, and the result is multiplied back by $z$:
+    \begin{equation}
+    \frac{H(z)}{z} = \frac{c_0}{z} + \sum_{k=1}^K \frac{\gamma_k}{z - p_k} \implies H(z) = c_0 + \sum_{k=1}^K \frac{\gamma_k}{1 - p_k z^{-1}}
+    \end{equation}
+    While mathematically equivalent, expanding directly in $z^{-1}$ (Parallel Form I) is far less prone to algebraic indexing errors during examination calculations.
+\end{itemize}
+
+\subsection{4.2 Total Decoupling of Roundoff Quantization Noise}
+One of the most profound practical engineering advantages of the Parallel Form over the Cascade Form is its \textbf{complete immunity to inter-stage noise propagation}:
+
+\begin{itemize}
+    \item \textbf{In Cascade Realization:} Each stage $k$ introduces arithmetic roundoff noise $e_k[n]$ due to multiplier quantization. Because the stages are connected in series, the noise $e_1[n]$ produced in Stage 1 is filtered and amplified by all downstream transfer functions $H_2(z), H_3(z), \dots, H_K(z)$:
+    \begin{equation}
+    \sigma_{y,\text{cascade}}^2 = \sigma_e^2 \sum_{k=1}^K \frac{1}{2\pi} \int_{-\pi}^\pi \left| \prod_{m=k+1}^K H_m(e^{j\omega}) \right|^2 d\omega
+    \end{equation}
+    If downstream stages have high-$Q$ resonant poles, the roundoff noise is magnified catastrophically.
+    
+    \item \textbf{In Parallel Realization:} The sections operate independently side-by-side. The roundoff noise $e_k[n]$ generated inside Branch $k$ travels \textbf{directly to the output adder} without passing through any other filter sections:
+    \begin{equation}
+    \sigma_{y,\text{parallel}}^2 = K \cdot \sigma_e^2
+    \end{equation}
+    There is \textbf{zero inter-section noise amplification}! This makes the Parallel Form the structure of choice for fixed-point audio processing and medical instrumentation where extreme signal purity is required.
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.92\textwidth]{images/iir_parallel_vs_cascade.png}
+\caption{Parallel vs. Cascade Architectural Analysis. (Left) Parallel frequency synthesis: individual bandpass branch responses $|H_1(e^{j\omega})|$ and $|H_2(e^{j\omega})|$ sum vectorially to form the composite frequency response with the direct feedthrough floor $C$. (Right) Quantization noise model: Cascade form amplifies Stage 1 noise across all downstream sections, while Parallel form completely decouples noise sources.}
+\label{fig:parallel_vs_cascade}
+\end{figure}
+
+\subsection{4.3 Concurrency, Latency, and No Pole-Zero Pairing Dilemma}
+\begin{enumerate}
+    \item \textbf{Concurrency and Ultra-Low Latency:} Because all branches receive $x[n]$ simultaneously, an FPGA or parallel DSP processor can execute all $K$ biquad state equations concurrently. The critical path latency is only:
+    \begin{equation}
+    T_{\text{latency}} = T_{\text{mult}} + 2 T_{\text{add}} + \lceil \log_2(K+1) \rceil T_{\text{add}}
+    \end{equation}
+    In contrast, Cascade form has a critical path latency that scales linearly with order: $O(K)$.
+    \item \textbf{No Pole-Zero Pairing Dilemma:} In Cascade form, engineers must solve a complex combinatorial optimization problem to pair poles with zeros ($\theta_z \approx \theta_p$) and order sections. In Parallel form, the zeros are generated implicitly by the additive interference of the parallel branches. \textbf{No pole-zero pairing or section ordering is required!}
+\end{enumerate}
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{5. HARDWARE \& COMPUTATIONAL COMPLEXITY AUDIT}
+
+Table \ref{tab:parallel_complexity} presents a rigorous comparative audit across all four fundamental IIR realization structures for an $N$-th order filter (assuming $M = N$ even, $K = N/2$).
+
+\begin{table}[H]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+\textbf{Architectural Metric} & \textbf{Direct Form I} & \textbf{Direct Form II} & \textbf{Cascade (DF-II SOS)} & \textbf{Parallel (DF-II SOS)} \\ \midrule
+\textbf{Canonical Status}     & Non-Canonical          & \textbf{Canonical}      & \textbf{Canonical}           & \textbf{Canonical} \\
+\textbf{Total Delay Registers ($z^{-1}$)} & $2N$       & $\mathbf{N}$            & $\mathbf{N}$                 & $\mathbf{N}$ \\
+\textbf{Total Multipliers}    & $2N + 1$               & $2N + 1$                & $2N + 1$                     & $\mathbf{2N + 1}$ ($2K \text{ ff} + 2K \text{ fb} + C$) \\
+\textbf{Total Adders}         & $2N$                   & $2N$                    & $2N$                         & $\mathbf{2N}$ ($2K \text{ biquad} + K \text{ bus}$) \\
+\textbf{Critical Path Latency}& $1 \text{ Mult} + 2N \text{ Adds}$ & $1 \text{ Mult} + 2N \text{ Adds}$ & $K \text{ Mults} + 2K \text{ Adds}$ & $\mathbf{1 \text{ Mult} + (2 + \log_2 K) \text{ Adds}}$ \\
+\textbf{Root Sensitivity}     & \textbf{Catastrophic ($O(N!)$)} & \textbf{Catastrophic ($O(N!)$)} & \textbf{Extremely Low} & \textbf{Extremely Low} \\
+\textbf{Inter-Section Noise Amplification} & N/A       & N/A                     & High (Cascaded)              & \textbf{Zero (Decoupled)} \\
+\textbf{Pole-Zero Pairing Required?} & No              & No                      & \textbf{Yes (Combinatorial)} & \textbf{No (Additive Synthesis)} \\
+\textbf{Independent Zero Tuning?}    & Yes             & Yes                     & \textbf{Yes (per biquad)}    & \textbf{No (Interference Zeros)} \\ \bottomrule
+\end{tabular}%
+}
+\caption{Comprehensive Architectural Complexity and Performance Comparison.}
+\label{tab:parallel_complexity}
+\end{table}
+
+\begin{quote}
+\textbf{The Primary Trade-off between Cascade and Parallel Forms:}
+\begin{itemize}
+    \item \textbf{Choose Cascade Form} when transmission zeros must be placed precisely on the unit circle (e.g., notch filters, elliptic filters with exact stopband nulls), because Cascade biquad numerator coefficients directly define zero locations.
+    \item \textbf{Choose Parallel Form} when low roundoff noise, high pipelined throughput, and concurrent FPGA processing are the primary design drivers.
+\end{itemize}
+\end{quote}
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{6. STEP-BY-STEP WORKED NUMERICAL EXAMPLES}
+
+\subsection{\texorpdfstring{Example 19.1: Improper Second-Order System ($M = N = 2$ with Direct Term $C$)}{Example 19.1: Improper Second-Order System (M = N = 2 with Direct Term C)}}
+\textbf{Problem Statement:} An IIR digital filter is described by the transfer function:
+\begin{equation}
+H(z) = \frac{1 + 2 z^{-1} + z^{-2}}{1 - 0.75 z^{-1} + 0.125 z^{-2}}
+\end{equation}
+(a) Determine whether the transfer function is strictly proper or improper. \\
+(b) Perform polynomial long division to extract the direct feedthrough term $C$. \\
+(c) Find the poles and perform partial fraction expansion in powers of $z^{-1}$. \\
+(d) Formulate the time-domain difference equations for all branches and the total output. \\
+(e) Construct the complete hardware signal flow graph. \\
+(f) Compute the impulse response samples $y[0], y[1], y[2]$ step-by-step.
+
+\vspace{0.3cm}
+\noindent\textbf{Solution:}
+
+\noindent\textbf{(a) Properness Classification:}
+Numerator degree $M = 2$, denominator degree $N = 2$.
+Since $M = N$, the system is **improper**. A non-zero direct feedthrough constant $C$ must be extracted before partial fraction expansion.
+
+\vspace{0.2cm}
+\noindent\textbf{(b) Extraction of Direct Term $C$:}
+Using the asymptotic formula (\ref{eq:direct_term_C}):
+\begin{equation}
+C = \frac{b_2}{a_2} = \frac{1}{0.125} = \mathbf{8}
+\end{equation}
+Alternatively, using synthetic polynomial long division in powers of $z^{-1}$:
+\begin{equation}
+(1 + 2 z^{-1} + z^{-2}) = 8 \cdot (1 - 0.75 z^{-1} + 0.125 z^{-2}) + R(z^{-1})
+\end{equation}
+Expanding:
+\begin{align}
+8 \cdot (1 - 0.75 z^{-1} + 0.125 z^{-2}) &= 8 - 6 z^{-1} + z^{-2} \\
+R(z^{-1}) &= (1 + 2 z^{-1} + z^{-2}) - (8 - 6 z^{-1} + z^{-2}) = \mathbf{-7 + 8 z^{-1}}
+\end{align}
+Therefore:
+\begin{equation}
+H(z) = 8 + \frac{-7 + 8 z^{-1}}{1 - 0.75 z^{-1} + 0.125 z^{-2}}
+\end{equation}
+
+\vspace{0.2cm}
+\noindent\textbf{(c) Partial Fraction Expansion:}
+Factor the denominator polynomial:
+\begin{equation}
+1 - 0.75 z^{-1} + 0.125 z^{-2} = (1 - 0.5 z^{-1})(1 - 0.25 z^{-1})
+\end{equation}
+Poles are $p_1 = 0.5$ and $p_2 = 0.25$.
+We expand the remainder strictly in powers of $z^{-1}$:
+\begin{equation}
+\frac{-7 + 8 z^{-1}}{(1 - 0.5 z^{-1})(1 - 0.25 z^{-1})} = \frac{A_1}{1 - 0.5 z^{-1}} + \frac{A_2}{1 - 0.25 z^{-1}}
+\end{equation}
+Evaluating residues via Heaviside's cover-up method:
+\begin{align}
+A_1 &= \left. \frac{-7 + 8 z^{-1}}{1 - 0.25 z^{-1}} \right|_{z^{-1} = \frac{1}{0.5} = 2} = \frac{-7 + 8(2)}{1 - 0.25(2)} = \frac{-7 + 16}{1 - 0.5} = \frac{9}{0.5} = \mathbf{18} \\
+A_2 &= \left. \frac{-7 + 8 z^{-1}}{1 - 0.5 z^{-1}} \right|_{z^{-1} = \frac{1}{0.25} = 4} = \frac{-7 + 8(4)}{1 - 0.5(4)} = \frac{-7 + 32}{1 - 2} = \frac{25}{-1} = \mathbf{-25}
+\end{align}
+Thus, the complete Parallel Form decomposition is:
+\begin{equation}
+\mathbf{H(z) = 8 + \frac{18}{1 - 0.5 z^{-1}} - \frac{25}{1 - 0.25 z^{-1}}}
+\label{eq:ex19_1_Hz}
+\end{equation}
+
+\vspace{0.2cm}
+\noindent\textbf{Verification Check ($z^{-1} = 0$):}
+\begin{equation}
+H(0) = \frac{1 + 0 + 0}{1 - 0 + 0} = 1
+\end{equation}
+From (\ref{eq:ex19_1_Hz}):
+\begin{equation}
+8 + 18 - 25 = 1 \quad \checkmark \text{ (Exact match)}
+\end{equation}
+
+\vspace{0.2cm}
+\noindent\textbf{(d) Difference Equations:}
+Let $w_1[n]$ and $w_2[n]$ be the internal state variables for Branch 1 and Branch 2 respectively.
+
+\textbf{Branch 1 (Pole $p_1 = 0.5$, Residue $A_1 = 18$):}
+\begin{align}
+w_1[n] &= x[n] + 0.5 w_1[n-1] \\
+y_1[n] &= 18 w_1[n]
+\end{align}
+
+\textbf{Branch 2 (Pole $p_2 = 0.25$, Residue $A_2 = -25$):}
+\begin{align}
+w_2[n] &= x[n] + 0.25 w_2[n-1] \\
+y_2[n] &= -25 w_2[n]
+\end{align}
+
+\textbf{Total System Output:}
+\begin{equation}
+\mathbf{y[n] = 8 x[n] + y_1[n] + y_2[n] = 8 x[n] + 18 w_1[n] - 25 w_2[n]}
+\end{equation}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.92\textwidth]{images/iir_parallel_realization_example.png}
+\caption{Complete Parallel Realization for Example 19.1. The input $x[n]$ feeds the direct feedthrough path ($C=8$) and two first-order canonical branches ($p_1=0.5, p_2=0.25$). The branch outputs sum to yield $y[n]$.}
+\label{fig:parallel_example_realization}
+\end{figure}
+
+\noindent\textbf{(f) Step-by-Step Impulse Response Evaluation ($x[n] = \delta[n]$):}
+Assuming initially relaxed registers ($w_1[-1] = 0, w_2[-1] = 0$):
+
+\begin{itemize}
+    \item \textbf{At $n = 0$ ($x[0] = 1$):}
+    \begin{align*}
+    w_1[0] &= 1 + 0.5(0) = \mathbf{1.0} \implies y_1[0] = 18(1.0) = \mathbf{18.0} \\
+    w_2[0] &= 1 + 0.25(0) = \mathbf{1.0} \implies y_2[0] = -25(1.0) = \mathbf{-25.0} \\
+    y[0] &= 8 x[0] + y_1[0] + y_2[0] = 8(1) + 18 - 25 = \mathbf{1.0}
+    \end{align*}
+    
+    \item \textbf{At $n = 1$ ($x[1] = 0$):}
+    \begin{align*}
+    w_1[1] &= 0 + 0.5(1.0) = \mathbf{0.5} \implies y_1[1] = 18(0.5) = \mathbf{9.0} \\
+    w_2[1] &= 0 + 0.25(1.0) = \mathbf{0.25} \implies y_2[1] = -25(0.25) = \mathbf{-6.25} \\
+    y[1] &= 8(0) + 9.0 - 6.25 = \mathbf{2.75}
+    \end{align*}
+    
+    \item \textbf{At $n = 2$ ($x[2] = 0$):}
+    \begin{align*}
+    w_1[2] &= 0 + 0.5(0.5) = \mathbf{0.25} \implies y_1[2] = 18(0.25) = \mathbf{4.5} \\
+    w_2[2] &= 0 + 0.25(0.25) = \mathbf{0.0625} \implies y_2[2] = -25(0.0625) = \mathbf{-1.5625} \\
+    y[2] &= 8(0) + 4.5 - 1.5625 = \mathbf{2.9375}
+    \end{align*}
+\end{itemize}
+The impulse response sequence is $h[n] = \{ \underline{1.0}, \; 2.75, \; 2.9375, \dots \}$.
+
+\vspace{0.4cm}
+\subsection{Example 19.2: Fourth-Order IIR System with Complex Conjugate Poles}
+\textbf{Problem Statement:} Realize the fourth-order strictly proper system in Parallel Form:
+\begin{equation}
+H(z) = \frac{4 - 3 z^{-1} + 2 z^{-2}}{(1 - 0.5 z^{-1})(1 + 0.5 z^{-1})(1 - \sqrt{2} z^{-1} + 0.64 z^{-2})}
+\end{equation}
+
+\noindent\textbf{Solution:}
+\begin{enumerate}
+    \item \textbf{Classification:}
+    Numerator degree $M = 2$, denominator degree $N = 4$.
+    Since $M < N$, the system is strictly proper, so $\mathbf{C = 0}$.
+    
+    \item \textbf{Pole Structure:}
+    \begin{itemize}
+        \item Real pole pair: $p_{1,2} = \pm 0.5 \implies (1 - 0.5 z^{-1})(1 + 0.5 z^{-1}) = 1 - 0.25 z^{-2}$.
+        \item Complex conjugate pole pair: $1 - \sqrt{2} z^{-1} + 0.64 z^{-2}$.
+        Comparing with $1 - 2r\cos(\theta) z^{-1} + r^2 z^{-2}$:
+        $r^2 = 0.64 \implies r = 0.8$.
+        $2(0.8)\cos(\theta) = \sqrt{2} \implies \cos(\theta) = \frac{\sqrt{2}}{1.6} \approx 0.8839 \implies \theta \approx 27.89^\circ$.
+    \end{itemize}
+    
+    \item \textbf{Decomposition into Two Second-Order Sections:}
+    \begin{equation}
+    H(z) = \frac{\beta_{01} + \beta_{11} z^{-1}}{1 - 0.25 z^{-2}} + \frac{\beta_{02} + \beta_{12} z^{-1}}{1 - \sqrt{2} z^{-1} + 0.64 z^{-2}}
+    \end{equation}
+    Multiplying both sides by the denominator and equating coefficients of matching powers of $z^{-1}$ yields the exact real numerator parameters:
+    \begin{equation}
+    H_1(z) = \frac{1.8286 - 0.7429 z^{-1}}{1 - 0.25 z^{-2}}, \qquad H_2(z) = \frac{2.1714 - 1.1857 z^{-1}}{1 - 1.4142 z^{-1} + 0.64 z^{-2}}
+    \end{equation}
+    
+    \item \textbf{Hardware Resource Summary:}
+    \begin{itemize}
+        \item Delays: $\max(1, 2) + \max(1, 2) = 2 + 2 = \mathbf{4}$ registers (strictly canonical, $N=4$).
+        \item Multipliers: 2 feedforward + 1 feedback (Section 1) + 2 feedforward + 2 feedback (Section 2) = $\mathbf{7}$ multipliers.
+        \item Adders: $2 + 3 + 1 = \mathbf{6}$ adders.
+    \end{itemize}
+\end{enumerate}
+
+\vspace{0.4cm}
+\subsection{Example 19.3: Reverse Synthesis — Extracting System Function from Parallel SFG}
+\textbf{Problem Statement:} A parallel digital filter realization has direct gain $C = 2$ and two first-order branches:
+\begin{align*}
+\text{Branch 1:} \quad & w_1[n] = x[n] + 0.6 w_1[n-1], \quad y_1[n] = 3 w_1[n] \\
+\text{Branch 2:} \quad & w_2[n] = x[n] - 0.4 w_2[n-1], \quad y_2[n] = -2 w_2[n] \\
+\text{Output:} \quad & y[n] = 2 x[n] + y_1[n] + y_2[n]
+\end{align*}
+Find the overall transfer function $H(z)$ and evaluate BIBO stability.
+
+\noindent\textbf{Solution:}
+Transforming to the $Z$-domain:
+\begin{equation}
+H(z) = 2 + \frac{3}{1 - 0.6 z^{-1}} - \frac{2}{1 + 0.4 z^{-1}}
+\end{equation}
+Combining over a common denominator:
+\begin{align}
+H(z) &= \frac{2(1 - 0.6 z^{-1})(1 + 0.4 z^{-1}) + 3(1 + 0.4 z^{-1}) - 2(1 - 0.6 z^{-1})}{(1 - 0.6 z^{-1})(1 + 0.4 z^{-1})} \nonumber \\
+&= \frac{2(1 - 0.2 z^{-1} - 0.24 z^{-2}) + 3 + 1.2 z^{-1} - 2 + 1.2 z^{-1}}{1 - 0.2 z^{-1} - 0.24 z^{-2}} \nonumber \\
+&= \frac{2 - 0.4 z^{-1} - 0.48 z^{-2} + 1 + 2.4 z^{-1}}{1 - 0.2 z^{-1} - 0.24 z^{-2}} \nonumber \\
+\mathbf{H(z)} &\mathbf{= \frac{3 + 2.0 z^{-1} - 0.48 z^{-2}}{1 - 0.2 z^{-1} - 0.24 z^{-2}}}
+\end{align}
+\textbf{Stability Assessment:} The system poles are $p_1 = 0.6$ and $p_2 = -0.4$. Since $|p_1| = 0.6 < 1$ and $|p_2| = 0.4 < 1$, all poles lie strictly inside the unit circle, confirming that the system is \textbf{BIBO stable}.
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{7. FACULTY INSIGHTS, COMMON MISCONCEPTIONS \& EXAM TRAPS}
+
+\begin{enumerate}
+    \item \textbf{Exam Trap 1: Forgetting the Direct Feedthrough Constant $C$ when $M \ge N$:}
+    \begin{itemize}
+        \item If a student attempts Heaviside cover-up expansion directly on an improper transfer function ($M = N$) without first dividing out $C$, the calculated residues will be **completely wrong**!
+        \item \textit{Golden Rule:} Always check the highest powers of $z^{-1}$ in numerator and denominator. If $M = N$, calculate $C = b_N / a_N$ first, subtract $C$, and expand only the strictly proper remainder.
+    \end{itemize}
+
+    \item \textbf{Exam Trap 2: The Minus Sign in Branch Feedback Coefficients ($-a_{1k}, -a_{2k}$):}
+    \begin{itemize}
+        \item In the branch denominator $1 + a_{1k} z^{-1} + a_{2k} z^{-2}$, if $a_{1k} = -0.75$, the state update is:
+        $$w_k[n] = x[n] - a_{1k} w_k[n-1] = x[n] - (-0.75) w_k[n-1] = x[n] + 0.75 w_k[n-1]$$
+        The multiplier branch in the signal flow graph is labeled $+0.75$ (negated relative to the denominator coefficient).
+    \end{itemize}
+
+    \item \textbf{Misconception 1: "Parallel Form can place transmission zeros independently in each branch."}
+    \begin{itemize}
+        \item \textit{Reality:} \textbf{False.} In Cascade Form, each biquad has its own zeros determined directly by $b_{k0} + b_{k1}z^{-1} + b_{k2}z^{-2}$. In Parallel Form, the zeros of $H(z)$ are created by the **additive cross-cancellation (destructive interference)** of all branches combined! Modifying a single branch alters all zero locations of the overall filter.
+    \end{itemize}
+
+    \item \textbf{Misconception 2: "Parallel biquads need three feedforward multipliers like Cascade biquads."}
+    \begin{itemize}
+        \item \textit{Reality:} \textbf{Never.} Because partial fraction expansion of a proper second-order fraction always yields a linear numerator ($\beta_{0k} + \beta_{1k} z^{-1}$), there is no $z^{-2}$ term in the feedforward path. Parallel biquads require only **2 feedforward multipliers**, saving 1 multiplier per section.
+    \end{itemize}
+\end{enumerate}
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{8. SUMMARY \& QUICK REVISION REFERENCE}
+
+\begin{table}[H]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Concept / Metric} & \textbf{Key Formula / Summary Rule} \\ \midrule
+\textbf{Parallel Transfer Function} & $H(z) = C + \sum_{k=1}^K H_k(z) = C + \sum_{k=1}^K \frac{\beta_{0k} + \beta_{1k} z^{-1}}{1 + a_{1k} z^{-1} + a_{2k} z^{-2}}$ \\
+\textbf{Direct Feedthrough Term ($C$)} & $C = b_N / a_N$ if $M = N$; $C = 0$ if $M < N$ (strictly proper) \\
+\textbf{Branch State Equation}       & $w_k[n] = x[n] - a_{1k} w_k[n-1] - a_{2k} w_k[n-2]$ \\
+\textbf{Branch Output Equation}      & $y_k[n] = \beta_{0k} w_k[n] + \beta_{1k} w_k[n-1]$ \\
+\textbf{Total Output Equation}       & $y[n] = C x[n] + \sum_{k=1}^K y_k[n]$ \\
+\textbf{Complex Residue Grouping}    & $\beta_{0k} = 2\text{Re}(R_k), \; \beta_{1k} = -2\text{Re}(R_k p_k^*), \; a_{1k} = -2r_k\cos(\theta_k), \; a_{2k} = r_k^2$ \\
+\textbf{Feedforward Multiplier Count}& Strictly \textbf{2 per SOS} (no $\beta_{2k} z^{-2}$ tap; saves 1 multiplier per biquad vs Cascade) \\
+\textbf{Quantization Noise Benefit}  & \textbf{Zero inter-stage noise amplification}; all branch noise sources decouple independently \\
+\textbf{Critical Path Latency}       & Pipelined concurrent processing: $1 \text{ Mult} + (2 + \lceil\log_2 K\rceil) \text{ Adds}$ \\ \bottomrule
+\end{tabular}%
+}
+\caption{Lecture 19 Quick Revision Reference.}
+\label{tab:summary_parallel}
+\end{table}
 
 \end{document}
