@@ -9,10 +9,15 @@
 \usepackage{float}
 \usepackage{xcolor}
 
+\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Lecture 21: Linear-Phase FIR Filters: Characteristic Response \& Z-Plane Zero Constellations \\ \large (III B.Tech EEE)}
+\author{Comprehensive Lecture Notes \& Faculty Textbook Reference}
+\date{}
+
 \definecolor{darkbg}{HTML}{0d121f}
 \definecolor{lighttext}{HTML}{e2e8f0}
 \definecolor{primary}{HTML}{8b5cf6}
 \definecolor{secondary}{HTML}{0dd5c5}
+\definecolor{accent}{HTML}{10b981}
 
 \pagecolor{darkbg}
 \color{lighttext}
@@ -20,85 +25,625 @@
 \hypersetup{
     colorlinks=true,
     linkcolor=secondary,
-    urlcolor=secondary
+    urlcolor=secondary,
+    citecolor=accent
 }
 
 \begin{document}
-\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Lecture 21: Linear phase FIR filter, characteristic response, location of zeros \\ \large (III B.Tech EEE)}\maketitle
+
+\maketitle
 
 \noindent\rule{\textwidth}{0.5pt}
-\section*{1. LEARNING OBJECTIVES}
+
+\section*{Lecture Plan \& Objectives (40 Minutes Breakdown)}
+\begin{itemize}
+    \item \textbf{00:00 -- 05:00 (5 mins):} Motivation for Linear Phase: Phase distortion in multi-carrier communication, high-fidelity audio, biomedical ECG waveforms, and radar. Definitions of Phase Delay $\tau_p(\omega)$ and Group Delay $\tau_g(\omega)$.
+    \item \textbf{05:00 -- 14:00 (9 mins):} Mathematical Conditions for Linear Phase: Derivation of Strict Linear Phase ($\theta(\omega) = -\alpha \omega$) and Generalized Linear Phase ($\theta(\omega) = \beta - \alpha \omega$). Rigorous proof that linear phase forces impulse response symmetry ($h[n] = h[N-1-n]$) or antisymmetry ($h[n] = -h[N-1-n]$) with fixed delay $\alpha = (N-1)/2$.
+    \item \textbf{14:00 -- 24:00 (10 mins):} The Four Canonical Types of Linear-Phase FIR Filters: Mathematical derivations of the real amplitude function $A(\omega)$ for Types 1, 2, 3, and 4. Formal algebraic proofs for mandatory zeros at $\omega = 0$ ($z = 1$) and $\omega = \pi$ ($z = -1$), and establishing the filter selection suitability matrix.
+    \item \textbf{24:00 -- 30:00 (6 mins):} Complex Z-Plane Zero Constellation Geometry: Reciprocal polynomial symmetry $H(z) = \pm z^{-(N-1)} H(z^{-1})$ and the fundamental theorem of reciprocal zero quadruplets ($z_0, 1/z_0, z_0^*, 1/z_0^*$). Real axis pairs, unit-circle conjugate pairs, and boundary zero constraints.
+    \item \textbf{30:00 -- 38:00 (8 mins):} Step-by-Step Worked Numerical Examples: Complete analytical analysis of a 5-tap Type 1 FIR filter, derivation of mandatory zeros in a Type 2 highpass impossibility proof, and reverse synthesis of an 8-tap linear-phase filter from prescribed $z$-plane zero roots.
+    \item \textbf{38:00 -- 40:00 (2 mins):} Faculty Insights, Common Misconceptions, and University Semester Exam Traps.
+\end{itemize}
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{1. LEARNING OBJECTIVES}
 By the end of this lecture, students will be able to:
 \begin{enumerate}
-\item \textbf{Derive} linear phase conditions for symmetric and antisymmetric FIR impulse responses.
-\item \textbf{Classify} FIR filters into Types I, II, III, and IV based on length $N$ and symmetry.
-\item \textbf{Determine} boundary zero constraints at $\omega = 0$ and $\omega = \pi$ for each FIR type.
-\item \textbf{Analyze} zero locations in the complex $z$-plane.
+    \item \textbf{Differentiate} between Phase Delay $\tau_p(\omega) = -\theta(\omega)/\omega$ and Group Delay $\tau_g(\omega) = -d\theta(\omega)/d\omega$, explaining how non-linear phase induces signal waveform dispersion.
+    \item \textbf{Derive} the necessary and sufficient time-domain conditions on the impulse response $h[n]$ that guarantee strict and generalized linear phase.
+    \item \textbf{Classify} any linear-phase FIR filter into Type 1, Type 2, Type 3, or Type 4 based on its length $N$ (or order $M = N-1$) and impulse response symmetry.
+    \item \textbf{Formulate} the real-valued amplitude function $A(\omega)$ for each of the four FIR filter types.
+    \item \textbf{Prove} algebraically why Type 2 filters possess a mandatory transmission zero at $\omega = \pi$, Type 3 filters at $\omega = 0$ and $\omega = \pi$, and Type 4 filters at $\omega = 0$.
+    \item \textbf{Evaluate} the suitability of each filter type for Lowpass, Highpass, Bandpass, Bandstop, Differentiator, and Hilbert Transformer applications.
+    \item \textbf{Map} zeros of linear-phase FIR systems in the complex $z$-plane, demonstrating the existence of reciprocal conjugate quadruplets.
+    \item \textbf{Synthesize} linear-phase transfer functions $H(z)$ and difference equations directly from specified zero constellations.
 \end{enumerate}
 
 \noindent\rule{\textwidth}{0.5pt}
-\section*{2. MATHEMATICAL FOUNDATIONS}
 
-\subsection*{2.1 The 4 Types of Linear-Phase FIR Filters}
+\section{2. MATHEMATICAL FOUNDATIONS OF LINEAR-PHASE FIR FILTERS}
 
-| Type | Symmetry | Length $N$ (Order $M=N-1$) | Amplitude Function $A(\omega)$ | Mandatory Boundary Zeros |
-| :---: | :---: | :---: | :---: | :---: |
-| \textbf{Type I} | Symmetric ($h[n] = h[N-1-n]$) | $N$ Odd ($M$ Even) | $\sum a[k] \cos(\omega k)$ | None |
-| \textbf{Type II} | Symmetric ($h[n] = h[N-1-n]$) | $N$ Even ($M$ Odd) | $\sum b[k] \cos(\omega(k-1/2))$ | Zero at $\omega = \pi$ ($z = -1$) |
-| \textbf{Type III} | Antisymmetric ($h[n] = -h[N-1-n]$) | $N$ Odd ($M$ Even) | $\sum c[k] \sin(\omega k)$ | Zeros at $\omega = 0$ ($z=1$) \& $\omega = \pi$ ($z=-1$) |
-| \textbf{Type IV} | Antisymmetric ($h[n] = -h[N-1-n]$) | $N$ Even ($M$ Odd) | $\sum d[k] \sin(\omega(k-1/2))$ | Zero at $\omega = 0$ ($z = 1$) |
+\subsection{2.1 Phase Distortion, Phase Delay, and Group Delay}
+In digital communications, audio reproduction, biomedical telemetry (such as ECG monitoring), and image processing, preserving the exact geometric shape of a waveform is often just as critical as shaping its magnitude spectrum. 
 
-\subsection*{2.2 Proof of Mandatory Zeros}
-\begin{itemize}
-\item \textbf{Type II at $\omega = \pi$ ($z = -1$):}
-\end{itemize}
-  $$ H(-1) = \sum_{n=0}^{N-1} h[n] (-1)^{-n} = \sum_{n=0}^{N/2-1} h[n] [(-1)^{-n} + (-1)^{-(N-1-n)}] $$
-  Since $N$ is even, $N-1$ is odd $\implies (-1)^{-(N-1-n)} = -(-1)^{-n} \implies H(-1) = 0$.
-  Therefore, a Type II filter always has a zero at $\omega = \pi$ and can \textbf{never} be used as a Highpass or Bandstop filter.
-
-\subsection*{2.3 Zero Quadruplet Locations}
-Because $h[n]$ is real and symmetric/antisymmetric:
-$$ H(z) = \pm z^{-(N-1)} H(z^{-1}) $$
-If $z_0 = r e^{j\theta}$ is a zero, then:
+When a multi-frequency signal $x[n] = \sum_{k} A_k \cos(\omega_k n + \phi_k)$ passes through an LTI system with frequency response $H(e^{j\omega}) = |H(e^{j\omega})| e^{j\theta(\omega)}$, each sinusoidal component experiences:
 \begin{enumerate}
-\item $z_0^* = r e^{-j\theta}$ is a zero (conjugate symmetry for real coefficients).
-\item $1/z_0 = \frac{1}{r} e^{-j\theta}$ is a zero (linear phase symmetry).
-\item $1/z_0^* = \frac{1}{r} e^{j\theta}$ is a zero.
+    \item An amplitude scaling by $|H(e^{j\omega_k})|$.
+    \item A phase shift by $\theta(\omega_k)$.
 \end{enumerate}
-Zeros off the unit circle always occur in groups of 4 (quadruplets).
+To characterize the temporal delay introduced by the phase response $\theta(\omega)$, two distinct delay metrics are defined:
+\begin{align}
+\text{\textbf{Phase Delay:}} \quad \tau_p(\omega) &= -\frac{\theta(\omega)}{\omega} \label{eq:phase_delay} \\
+\text{\textbf{Group Delay:}} \quad \tau_g(\omega) &= -\frac{d\theta(\omega)}{d\omega} \label{eq:group_delay}
+\end{align}
+\begin{itemize}
+    \item \textbf{Phase Delay $\tau_p(\omega)$} measures the time delay experienced by individual sinusoidal carrier oscillations at frequency $\omega$.
+    \item \textbf{Group Delay $\tau_g(\omega)$} measures the propagation delay experienced by the slowly varying envelope (or packet) of a group of frequencies centered around $\omega$.
+\end{itemize}
 
+\noindent\textbf{The Condition for Zero Phase Distortion:}
+A system is said to be free of phase distortion if all spectral components undergo the \textbf{exact same time delay} $\alpha$ (in samples). Setting $\tau_p(\omega) = \alpha = \text{constant}$ leads directly to:
+\begin{equation}
+\theta(\omega) = -\alpha \omega
+\label{eq:strict_linear_phase}
+\end{equation}
+When \eqref{eq:strict_linear_phase} holds, the group delay is also strictly constant:
+\begin{equation}
+\tau_g(\omega) = -\frac{d}{d\omega}(-\alpha \omega) = \alpha = \tau_p(\omega)
+\end{equation}
+If the phase response is non-linear, different frequency components travel at different group velocities, resulting in \textbf{dispersion} (pulse broadening, severe ringing, and mutual symbol interference), as illustrated in Figure~\ref{fig:phase_distortion}.
 
-\subsection*{Pictorial Representations}
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.85\textwidth]{images/zero_quadruplet.png}
-\caption{Zero Quadruplet}
+\includegraphics[width=0.92\textwidth]{images/fir_phase_delay_group_delay.png}
+\caption{Phase Response and Waveform Transmission: Comparison between Strict Linear Phase (top row: constant phase and group delay $\tau = 5$, preserving wavepacket envelope shape) and Non-Linear Phase (bottom row: frequency-dependent group delay causing severe dispersion and pulse splitting).}
+\label{fig:phase_distortion}
 \end{figure}
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.85\textwidth]{images/fir_types.png}
-\caption{Fir Types}
-\end{figure}
+
+\subsection{2.2 Strict vs. Generalized Linear Phase}
+In digital filter theory, two classes of linear-phase systems are distinguished:
+
+\subsubsection{Class I: Strict (Pure) Linear Phase}
+The frequency response is expressed as:
+\begin{equation}
+H(e^{j\omega}) = A(\omega) e^{-j\alpha \omega}
+\label{eq:class1}
+\end{equation}
+where $A(\omega)$ is a strictly real-valued function of $\omega$ (which can take positive and negative values), and the phase is $\theta(\omega) = -\alpha \omega$. For this class:
+\begin{equation}
+\tau_p(\omega) = \alpha, \quad \tau_g(\omega) = \alpha \quad \forall \omega
+\end{equation}
+
+\subsubsection{Class II: Generalized Linear Phase}
+Here, the phase response includes a constant phase offset $\beta$:
+\begin{equation}
+\theta(\omega) = \beta - \alpha \omega \implies H(e^{j\omega}) = A(\omega) e^{j(\beta - \alpha \omega)}
+\label{eq:class2}
+\end{equation}
+In this case, the group delay remains strictly constant:
+\begin{equation}
+\tau_g(\omega) = -\frac{d\theta}{d\omega} = \alpha = \text{constant}
+\end{equation}
+while the phase delay is frequency-dependent: $\tau_p(\omega) = \alpha - \beta/\omega$. Class II systems preserve the envelope shape of modulated signals (since group delay is constant) while introducing a constant $90^\circ$ phase shift ($\beta = \pm \pi/2$), which is precisely required for \textbf{Hilbert transformers} and \textbf{differentiators}.
+
+\subsection{2.3 Derivation of Time-Domain Symmetry Conditions}
+Consider a causal FIR filter of length $N$ (order $M = N-1$) with real impulse response $h[n]$ for $n = 0, 1, \dots, N-1$. Its frequency response is:
+\begin{equation}
+H(e^{j\omega}) = \sum_{n=0}^{N-1} h[n] e^{-j\omega n} = |H(e^{j\omega})| e^{j\theta(\omega)}
+\end{equation}
+We now derive the necessary condition for generalized linear phase $\theta(\omega) = \beta - \alpha \omega$.
+
+From Euler's formula:
+\begin{equation}
+H(e^{j\omega}) = \sum_{n=0}^{N-1} h[n] \cos(\omega n) - j \sum_{n=0}^{N-1} h[n] \sin(\omega n)
+\end{equation}
+Equating the phase angle:
+\begin{equation}
+\tan(\theta(\omega)) = \tan(\beta - \alpha \omega) = \frac{-\sum_{n=0}^{N-1} h[n] \sin(\omega n)}{\sum_{n=0}^{N-1} h[n] \cos(\omega n)}
+\end{equation}
+Cross-multiplying and applying the trigonometric identity $\sin(A-B) = \sin A \cos B - \cos A \sin B$:
+\begin{align}
+\sin(\beta - \alpha \omega) \sum_{n=0}^{N-1} h[n] \cos(\omega n) + \cos(\beta - \alpha \omega) \sum_{n=0}^{N-1} h[n] \sin(\omega n) &= 0 \nonumber \\
+\sum_{n=0}^{N-1} h[n] \sin(\beta - \alpha \omega + \omega n) &= 0 \nonumber \\
+\sum_{n=0}^{N-1} h[n] \sin\big(\beta + \omega(n - \alpha)\big) &= 0 \quad \forall \omega
+\label{eq:symm_master}
+\end{align}
+For \eqref{eq:symm_master} to vanish identically for all continuous frequencies $\omega \in [-\pi, \pi]$, we expand the sine term:
+\begin{equation}
+\sin\beta \sum_{n=0}^{N-1} h[n] \cos\big(\omega(n - \alpha)\big) + \cos\beta \sum_{n=0}^{N-1} h[n] \sin\big(\omega(n - \alpha)\big) = 0
+\end{equation}
+This yields two fundamental cases:
+
+\subsubsection{Case 1: $\beta = 0$ (Strict Linear Phase $\implies$ Even Symmetry)}
+When $\beta = 0$, $\sin\beta = 0$ and $\cos\beta = 1$, reducing the condition to:
+\begin{equation}
+\sum_{n=0}^{N-1} h[n] \sin\big(\omega(n - \alpha)\big) = 0 \quad \forall \omega
+\end{equation}
+Since $\sin(\cdot)$ is an odd function, this summation cancels pairwise for all $\omega$ if and only if:
+\begin{equation}
+\mathbf{\alpha = \frac{N-1}{2}} \quad \text{and} \quad \mathbf{h[n] = h[N-1-n]} \quad \text{\textbf{(Symmetric)}}
+\label{eq:symmetric_cond}
+\end{equation}
+
+\subsubsection{Case 2: $\beta = \pm \pi/2$ (Generalized Linear Phase $\implies$ Odd Antisymmetry)}
+When $\beta = \pm \pi/2$, $\cos\beta = 0$ and $\sin\beta = \pm 1$, reducing the condition to:
+\begin{equation}
+\sum_{n=0}^{N-1} h[n] \cos\big(\omega(n - \alpha)\big) = 0 \quad \forall \omega
+\end{equation}
+Since $\cos(\cdot)$ is an even function, this summation cancels pairwise if and only if:
+\begin{equation}
+\mathbf{\alpha = \frac{N-1}{2}} \quad \text{and} \quad \mathbf{h[n] = -h[N-1-n]} \quad \text{\textbf{(Antisymmetric)}}
+\label{eq:antisymmetric_cond}
+\end{equation}
+Notice that for an antisymmetric impulse response with $N$ odd, evaluating at the center index $n = \alpha = (N-1)/2$ gives:
+\begin{equation}
+h\left[\frac{N-1}{2}\right] = -h\left[N-1 - \frac{N-1}{2}\right] = -h\left[\frac{N-1}{2}\right] \implies \mathbf{h\left[\frac{N-1}{2}\right] = 0}
+\end{equation}
+The center sample of any odd-length antisymmetric FIR filter must be identically zero!
 
 \noindent\rule{\textwidth}{0.5pt}
-\section*{3. WORKED NUMERICAL EXAMPLES}
 
-\subsection*{Example 21.1: FIR Type Identification \& Zero Locations}
-\textbf{Problem:} An FIR filter has transfer function $H(z) = 1 + 2z^{-1} + 3z^{-2} + 2z^{-3} + z^{-4}$.
-(a) Determine its FIR Type, filter length $N$, and group delay $\tau_g$.
-(b) Can this filter be used as a Highpass filter?
+\section{3. THE FOUR CANONICAL TYPES OF LINEAR-PHASE FIR FILTERS}
 
-\textbf{Solution:}
-\textbf{(a)} Coefficients: $h = [1, 2, 3, 2, 1]$.
+Based on the symmetry of $h[n]$ (Symmetric vs. Antisymmetric) and the parity of the filter length $N$ (Odd vs. Even), linear-phase FIR filters are categorized into four distinct classes:
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.92\textwidth]{images/fir_linear_phase_types.png}
+\caption{The Four Types of Linear-Phase FIR Filters: Time-domain impulse response stem plots showing centers of symmetry $\alpha = (N-1)/2$, accompanied by inset plots of their characteristic amplitude response $A(\omega)$.}
+\label{fig:four_types}
+\end{figure}
+
+\subsection{3.1 Type 1: Symmetric Impulse Response, $N$ Odd ($M$ Even)}
+Here, $h[n] = h[N-1-n]$ and $N$ is odd, meaning $\alpha = (N-1)/2$ is an \textbf{integer}.
+
+\noindent\textbf{Frequency Response Derivation:}
+Factoring out the pure linear-phase delay term $e^{-j\alpha \omega}$:
+\begin{align}
+H(e^{j\omega}) &= \sum_{n=0}^{N-1} h[n] e^{-j\omega n} = e^{-j\alpha \omega} \sum_{n=0}^{N-1} h[n] e^{j\omega(\alpha - n)} \nonumber \\
+&= e^{-j\alpha \omega} \left[ h[\alpha] + \sum_{n=0}^{\alpha-1} h[n] \left( e^{j\omega(\alpha - n)} + e^{-j\omega(\alpha - n)} \right) \right] \nonumber \\
+&= e^{-j\alpha \omega} \left[ h[\alpha] + 2 \sum_{k=1}^{(N-1)/2} h[\alpha - k] \cos(\omega k) \right]
+\end{align}
+Defining $a[0] = h[\alpha]$ and $a[k] = 2h[\alpha - k]$ for $k = 1, 2, \dots, (N-1)/2$:
+\begin{equation}
+\mathbf{H(e^{j\omega}) = e^{-j\left(\frac{N-1}{2}\right)\omega} A_1(\omega)}, \quad \text{where} \quad \mathbf{A_1(\omega) = a[0] + \sum_{k=1}^{(N-1)/2} a[k] \cos(\omega k)}
+\label{eq:type1_A}
+\end{equation}
+\textbf{Boundary Properties:}
 \begin{itemize}
-\item Length $N = 5$ (Odd), Order $M = 4$ (Even).
-\item Symmetry: $h[0]=h[4]=1, \; h[1]=h[3]=2, \; h[2]=3 \implies$ \textbf{Symmetric}.
-\item Therefore, it is a \textbf{Type I FIR Filter}.
-\item Group delay: $\tau_g = \frac{N-1}{2} = \frac{5-1}{2} = 2 \text{ samples}$.
-
+    \item At $\omega = 0$: $A_1(0) = a[0] + \sum a[k] = \sum_{n=0}^{N-1} h[n]$ (generally non-zero).
+    \item At $\omega = \pi$: $A_1(\pi) = a[0] + \sum a[k](-1)^k$ (generally non-zero).
 \end{itemize}
-\textbf{(b)} Highpass Feasibility:
-Check $H(e^{j\pi}) = H(-1) = 1 - 2 + 3 - 2 + 1 = 1 \ne 0$.
-Since Type I has no mandatory zeros at $\omega = \pi$, it can theoretically operate as a Highpass filter (though this specific impulse response has $H(e^{j0}) = 9$ and $H(e^{j\pi}) = 1$, making it a Lowpass filter).
+Because $A_1(0)$ and $A_1(\pi)$ are unconstrained, \textbf{Type 1 is universally suitable for Lowpass, Highpass, Bandpass, and Bandstop filters}.
+
+\subsection{3.2 Type 2: Symmetric Impulse Response, $N$ Even ($M$ Odd)}
+Here, $h[n] = h[N-1-n]$ and $N$ is even, so $\alpha = (N-1)/2$ is a \textbf{half-integer}.
+
+\noindent\textbf{Frequency Response Derivation:}
+Grouping symmetric pairs equidistant from the half-integer center:
+\begin{align}
+H(e^{j\omega}) &= e^{-j\alpha \omega} \sum_{n=0}^{N/2-1} h[n] \left( e^{j\omega(\alpha - n)} + e^{-j\omega(\alpha - n)} \right) \nonumber \\
+&= e^{-j\alpha \omega} \sum_{k=1}^{N/2} 2h\left[\frac{N}{2} - k\right] \cos\left( \omega\left(k - \frac{1}{2}\right) \right)
+\end{align}
+Defining $b[k] = 2h[N/2 - k]$ for $k = 1, 2, \dots, N/2$:
+\begin{equation}
+\mathbf{H(e^{j\omega}) = e^{-j\left(\frac{N-1}{2}\right)\omega} A_2(\omega)}, \quad \text{where} \quad \mathbf{A_2(\omega) = \sum_{k=1}^{N/2} b[k] \cos\left( \omega\left(k - \frac{1}{2}\right) \right)}
+\label{eq:type2_A}
+\end{equation}
+\textbf{The Mandatory Zero Proof at $\omega = \pi$ ($z = -1$):}
+Evaluating $A_2(\pi)$:
+\begin{equation}
+A_2(\pi) = \sum_{k=1}^{N/2} b[k] \cos\left( \pi k - \frac{\pi}{2} \right) = \sum_{k=1}^{N/2} b[k] \sin(\pi k) \equiv \mathbf{0}
+\end{equation}
+Alternatively, evaluating the Z-transform at $z = -1$:
+\begin{equation}
+H(-1) = \sum_{n=0}^{N-1} h[n] (-1)^{-n} = \sum_{n=0}^{N/2-1} h[n] \big[(-1)^{-n} + (-1)^{-(N-1-n)}\big]
+\end{equation}
+Since $N-1$ is odd, $(-1)^{-(N-1-n)} = (-1)^{-(N-1)} (-1)^n = (-1)(-1)^{-n} = -(-1)^{-n}$. Therefore:
+\begin{equation}
+(-1)^{-n} + (-1)^{-(N-1-n)} = (-1)^{-n} - (-1)^{-n} = 0 \implies \mathbf{H(-1) = 0}
+\end{equation}
+\textbf{Fundamental Consequence:} Because $H(e^{j\pi}) = 0$ identically, a \textbf{Type 2 FIR filter can NEVER be used as a Highpass or Bandstop filter}! It is strictly restricted to Lowpass and Bandpass designs.
+
+\subsection{3.3 Type 3: Antisymmetric Impulse Response, $N$ Odd ($M$ Even)}
+Here, $h[n] = -h[N-1-n]$, $N$ is odd, $\alpha = (N-1)/2$ is an integer, and $h[\alpha] = 0$.
+
+\noindent\textbf{Frequency Response Derivation:}
+\begin{align}
+H(e^{j\omega}) &= \sum_{n=0}^{N-1} h[n] e^{-j\omega n} = e^{-j\alpha \omega} \sum_{n=0}^{\alpha-1} h[n] \left( e^{j\omega(\alpha - n)} - e^{-j\omega(\alpha - n)} \right) \nonumber \\
+&= e^{-j\alpha \omega} (j) \sum_{k=1}^{(N-1)/2} 2h[\alpha + k] \sin(\omega k) = e^{-j\alpha \omega} e^{j\pi/2} \sum_{k=1}^{(N-1)/2} c[k] \sin(\omega k)
+\end{align}
+where $c[k] = 2h[\alpha + k]$:
+\begin{equation}
+\mathbf{H(e^{j\omega}) = e^{j\left(\frac{\pi}{2} - \frac{N-1}{2}\omega\right)} A_3(\omega)}, \quad \text{where} \quad \mathbf{A_3(\omega) = \sum_{k=1}^{(N-1)/2} c[k] \sin(\omega k)}
+\label{eq:type3_A}
+\end{equation}
+\textbf{Mandatory Zeros at $\omega = 0$ ($z = +1$) and $\omega = \pi$ ($z = -1$):}
+\begin{itemize}
+    \item At $\omega = 0$: $\sin(0) = 0 \implies \mathbf{A_3(0) = 0 \iff H(1) = 0}$.
+    \item At $\omega = \pi$: $\sin(k\pi) = 0 \implies \mathbf{A_3(\pi) = 0 \iff H(-1) = 0}$.
+\end{itemize}
+\textbf{Fundamental Consequence:} Because it possesses mandatory zeros at both DC ($\omega = 0$) and Nyquist ($\omega = \pi$), \textbf{Type 3 CANNOT be Lowpass, Highpass, or Bandstop}. It is strictly suitable only for \textbf{Bandpass filters, Hilbert Transformers, and Differentiators}.
+
+\subsection{3.4 Type 4: Antisymmetric Impulse Response, $N$ Even ($M$ Odd)}
+Here, $h[n] = -h[N-1-n]$ and $N$ is even, so $\alpha = (N-1)/2$ is a half-integer.
+
+\noindent\textbf{Frequency Response Derivation:}
+\begin{align}
+H(e^{j\omega}) &= e^{-j\alpha \omega} (j) \sum_{k=1}^{N/2} 2h\left[\frac{N}{2} + k - 1\right] \sin\left( \omega\left(k - \frac{1}{2}\right) \right) \nonumber \\
+&= e^{j\left(\frac{\pi}{2} - \frac{N-1}{2}\omega\right)} \sum_{k=1}^{N/2} d[k] \sin\left( \omega\left(k - \frac{1}{2}\right) \right)
+\end{align}
+where $d[k] = 2h[N/2 + k - 1]$:
+\begin{equation}
+\mathbf{H(e^{j\omega}) = e^{j\left(\frac{\pi}{2} - \frac{N-1}{2}\omega\right)} A_4(\omega)}, \quad \text{where} \quad \mathbf{A_4(\omega) = \sum_{k=1}^{N/2} d[k] \sin\left( \omega\left(k - \frac{1}{2}\right) \right)}
+\label{eq:type4_A}
+\end{equation}
+\textbf{Mandatory Zero at $\omega = 0$ ($z = +1$):}
+\begin{equation}
+A_4(0) = \sum_{k=1}^{N/2} d[k] \sin(0) \equiv \mathbf{0 \iff H(1) = 0}
+\end{equation}
+However, at $\omega = \pi$:
+\begin{equation}
+A_4(\pi) = \sum_{k=1}^{N/2} d[k] \sin\left( \pi k - \frac{\pi}{2} \right) = \sum_{k=1}^{N/2} d[k] (-1)^{k-1} \ne 0
+\end{equation}
+\textbf{Fundamental Consequence:} Because $H(1) = 0$, a \textbf{Type 4 FIR filter can NEVER be used as a Lowpass or Bandstop filter}. However, because $A_4(\pi) \ne 0$, it is the \textbf{ideal structure for wideband Differentiators and Hilbert Transformers}.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.92\textwidth]{images/fir_type_filter_suitability.png}
+\caption{Linear-Phase FIR Filter Suitability Matrix: Visualizing allowed ($\checkmark$) and prohibited ($\times$) filter types based on mandatory boundary zero constraints at DC ($\omega=0$) and Nyquist ($\omega=\pi$).}
+\label{fig:suitability_matrix}
+\end{figure}
+
+\subsection{3.5 Comprehensive Summary of the Four FIR Filter Types}
+Table~\ref{tab:fir_types_audit} provides a rigorous faculty reference for the four filter types.
+
+\begin{table}[H]
+\centering
+\caption{Comprehensive Architectural Audit of the Four Linear-Phase FIR Filter Types}
+\label{tab:fir_types_audit}
+\vspace{2mm}
+\resizebox{\textwidth}{!}{
+\begin{tabular}{lcccccc}
+\toprule
+\textbf{Type} & \textbf{Symmetry} & \textbf{Length $N$} & \textbf{Delay $\alpha$} & \textbf{Amplitude Function $A(\omega)$} & \textbf{Mandatory Zeros} & \textbf{Allowable Filter Types} \\
+\midrule
+\textbf{Type 1} & $h[n] = h[N-1-n]$ & Odd ($M$ Even) & Integer & $\sum_{k=0}^{(N-1)/2} a[k] \cos(\omega k)$ & None & \textbf{LPF, HPF, BPF, BSF} \\
+\textbf{Type 2} & $h[n] = h[N-1-n]$ & Even ($M$ Odd) & Half-Integer & $\sum_{k=1}^{N/2} b[k] \cos(\omega(k-1/2))$ & $\omega = \pi$ ($z = -1$) & \textbf{LPF, BPF} (No HPF/BSF) \\
+\textbf{Type 3} & $h[n] = -h[N-1-n]$ & Odd ($M$ Even) & Integer & $\sum_{k=1}^{(N-1)/2} c[k] \sin(\omega k)$ & $\omega = 0, \pi$ ($z = \pm 1$) & \textbf{BPF, Diff, Hilbert} (No LPF/HPF/BSF) \\
+\textbf{Type 4} & $h[n] = -h[N-1-n]$ & Even ($M$ Odd) & Half-Integer & $\sum_{k=1}^{N/2} d[k] \sin(\omega(k-1/2))$ & $\omega = 0$ ($z = 1$) & \textbf{HPF, BPF, Diff, Hilbert} (No LPF/BSF) \\
+\bottomrule
+\end{tabular}
+}
+\end{table}
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{4. Z-PLANE ZERO CONSTELLATION GEOMETRY}
+
+\subsection{4.1 The Reciprocal Polynomial Symmetry Theorem}
+The Z-transform of a causal FIR filter of length $N$ is:
+\begin{equation}
+H(z) = \sum_{n=0}^{N-1} h[n] z^{-n}
+\end{equation}
+Substituting the linear-phase symmetry condition $h[n] = \pm h[N-1-n]$ (where $+$ applies to Types 1/2 and $-$ applies to Types 3/4):
+\begin{align}
+H(z) &= \sum_{n=0}^{N-1} \pm h[N-1-n] z^{-n} = \pm z^{-(N-1)} \sum_{n=0}^{N-1} h[N-1-n] z^{N-1-n}
+\end{align}
+Letting $m = N-1-n$, as $n$ ranges from $0$ to $N-1$, $m$ ranges from $N-1$ down to $0$:
+\begin{equation}
+\mathbf{H(z) = \pm z^{-(N-1)} H(z^{-1})}
+\label{eq:reciprocal_poly}
+\end{equation}
+This elegant equation governs all zero locations of linear-phase FIR filters.
+
+\subsection{4.2 The Reciprocal Zero Quadruplet Theorem}
+Suppose $z_0$ is a complex zero of $H(z)$ off the real axis and not on the unit circle:
+\begin{equation}
+H(z_0) = 0, \quad \text{where} \quad z_0 = r e^{j\theta} \quad (r \ne 1, \; \theta \ne 0, \pi)
+\end{equation}
+From fundamental complex analysis and \eqref{eq:reciprocal_poly}, the following four zeros are guaranteed to exist simultaneously:
+\begin{enumerate}
+    \item \textbf{Conjugate Zero:} Because $h[n]$ is real-valued, complex roots must occur in conjugate pairs:
+    \begin{equation}
+    H(z_0^*) = 0 \implies \mathbf{z_0^* = r e^{-j\theta}}
+    \end{equation}
+    \item \textbf{Reciprocal Zero:} Evaluating \eqref{eq:reciprocal_poly} at $z = z_0^{-1}$:
+    \begin{equation}
+    H(z_0^{-1}) = \pm (z_0^{-1})^{-(N-1)} H(z_0) = \pm z_0^{N-1} \cdot 0 = 0 \implies \mathbf{\frac{1}{z_0} = \frac{1}{r} e^{-j\theta}}
+    \end{equation}
+    \item \textbf{Conjugate-Reciprocal Zero:} Combining real coefficients and reciprocal symmetry:
+    \begin{equation}
+    \mathbf{\frac{1}{z_0^*} = \frac{1}{r} e^{j\theta}}
+    \end{equation}
+\end{enumerate}
+
+\noindent\textbf{Theorem Conclusion:}
+Every complex zero $z_0 = r e^{j\theta}$ located off the unit circle ($r \ne 1$) is accompanied by three sibling zeros, forming a \textbf{reciprocal quadruplet} in the complex $z$-plane:
+\begin{equation}
+\mathbf{\{z_0, \; z_0^*, \; 1/z_0, \; 1/z_0^*\} \equiv \left\{ r e^{j\theta}, \; r e^{-j\theta}, \; \frac{1}{r} e^{-j\theta}, \; \frac{1}{r} e^{j\theta} \right\}}
+\end{equation}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.88\textwidth]{images/fir_zero_locations_zplane.png}
+\caption{Linear Phase FIR Z-Plane Zero Constellations: Visualizing (1) 4-zero reciprocal quadruplets off the unit circle, (2) 2-zero conjugate pairs on the unit circle ($r=1$), (3) 2-zero real reciprocal pairs, and (4) mandatory boundary zeros at $z = +1$ and $z = -1$.}
+\label{fig:zplane_quadruplet}
+\end{figure}
+
+\subsection{4.3 Degenerate Zero Subgroups}
+When zeros fall onto geometric symmetry lines, the 4-zero quadruplet collapses into smaller subgroups:
+\begin{enumerate}
+    \item \textbf{Zeros on the Unit Circle ($r = 1$):}
+    Here $1/r = 1$, meaning $1/z_0 = z_0^*$. The quadruplet collapses into a \textbf{complex conjugate pair} on the unit circle:
+    \begin{equation}
+    \{e^{j\phi}, \; e^{-j\phi}\} \quad \text{\textbf{(2 zeros)}}
+    \end{equation}
+    Since they lie directly on the unit circle, these zeros produce transmission nulls in the filter's stopband ($A(\phi) = 0$).
+    
+    \item \textbf{Real Zeros off the Unit Circle ($\theta = 0$ or $\pi$):}
+    Here $z_0 = \sigma_0$ is purely real ($z_0^* = z_0$). The quadruplet collapses into a \textbf{real reciprocal pair}:
+    \begin{equation}
+    \{\sigma_0, \; 1/\sigma_0\} \quad \text{\textbf{(2 zeros)}}
+    \end{equation}
+    
+    \item \textbf{Real Zeros on the Unit Circle ($z = \pm 1$):}
+    For $z = 1$, $1/z = 1$ (self-reciprocal). For $z = -1$, $1/z = -1$ (self-reciprocal). These occur as \textbf{single zeros} (or odd multiplicities):
+    \begin{equation}
+    z = +1 \quad (\omega = 0) \quad \text{and/or} \quad z = -1 \quad (\omega = \pi)
+    \end{equation}
+\end{enumerate}
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{5. STEP-BY-STEP WORKED NUMERICAL EXAMPLES}
+
+\subsection{Example 21.1: Complete Analytical Analysis of a Type 1 FIR Filter}
+\textbf{Problem Statement:} An FIR digital filter is specified by the causal transfer function:
+\begin{equation}
+H(z) = 1 + 2z^{-1} + 3z^{-2} + 2z^{-3} + z^{-4}
+\end{equation}
+\begin{enumerate}
+    \item Identify the filter type, length $N$, order $M$, and group delay $\tau_g$.
+    \item Derive the analytical expression for the amplitude response $A(\omega)$.
+    \item Find all four zeros of $H(z)$ algebraically in the complex $z$-plane.
+    \item Verify that the zeros satisfy the reciprocal quadruplet / conjugate geometry.
+    \item Evaluate the filter's magnitude at $\omega = 0$, $\omega = \pi/2$, and $\omega = \pi$.
+\end{enumerate}
+
+\vspace{1mm}
+\noindent\textbf{Solution:}
+
+\noindent\textbf{Step 1: Classification and Group Delay}
+The impulse response sequence is:
+\begin{equation}
+h[n] = \{1, \; 2, \; 3, \; 2, \; 1\} \quad \text{for } n = 0, 1, 2, 3, 4
+\end{equation}
+\begin{itemize}
+    \item Length $N = 5$ (Odd), Order $M = N - 1 = 4$ (Even).
+    \item Symmetry check: $h[0] = h[4] = 1$, $h[1] = h[3] = 2$, $h[2] = 3$. Because $h[n] = h[4-n]$, the impulse response is \textbf{strictly symmetric}.
+    \item Therefore, this is a \textbf{Type 1 Linear-Phase FIR Filter}.
+    \item Group delay: $\tau_g = \alpha = \frac{N-1}{2} = \frac{5-1}{2} = \mathbf{2 \text{ samples}}$ (constant for all $\omega$).
+\end{itemize}
+
+\vspace{1mm}
+\noindent\textbf{Step 2: Amplitude Response Derivation}
+Factoring out the delay $e^{-j 2\omega}$:
+\begin{align}
+H(e^{j\omega}) &= e^{-j2\omega} \left[ h[2] + 2h[1]\cos(\omega) + 2h[0]\cos(2\omega) \right] \nonumber \\
+&= e^{-j2\omega} \big[ 3 + 4\cos(\omega) + 2\cos(2\omega) \big]
+\end{align}
+Thus, the real-valued amplitude function is:
+\begin{equation}
+\mathbf{A(\omega) = 3 + 4\cos(\omega) + 2\cos(2\omega)}
+\end{equation}
+
+\vspace{1mm}
+\noindent\textbf{Step 3: Algebraic Extraction of Zeros}
+To find the zeros, set $H(z) = 0$:
+\begin{equation}
+z^4 + 2z^3 + 3z^2 + 2z + 1 = 0
+\end{equation}
+Divide both sides by $z^2$:
+\begin{equation}
+\left(z^2 + \frac{1}{z^2}\right) + 2\left(z + \frac{1}{z}\right) + 3 = 0
+\end{equation}
+Let $u = z + z^{-1}$. Then $u^2 = z^2 + 2 + z^{-2} \implies z^2 + z^{-2} = u^2 - 2$. Substituting:
+\begin{equation}
+(u^2 - 2) + 2u + 3 = 0 \implies u^2 + 2u + 1 = 0 \implies (u + 1)^2 = 0
+\end{equation}
+This gives a repeated root $u = -1$ with multiplicity 2!
+
+Now solve for $z$ from $z + z^{-1} = -1$:
+\begin{equation}
+z^2 + z + 1 = 0 \implies z = \frac{-1 \pm \sqrt{1 - 4}}{2} = -\frac{1}{2} \pm j \frac{\sqrt{3}}{2}
+\end{equation}
+In polar form:
+\begin{equation}
+z_{1,2} = e^{\pm j \frac{2\pi}{3}} \quad \text{(each of multiplicity 2)}
+\end{equation}
+
+\vspace{1mm}
+\noindent\textbf{Step 4: Verification of Zero Constellation}
+\begin{itemize}
+    \item Magnitude: $|z_1| = |z_2| = \sqrt{(-1/2)^2 + (\sqrt{3}/2)^2} = \sqrt{1/4 + 3/4} = 1$.
+    \item All zeros lie \textbf{on the unit circle} at angles $\pm 2\pi/3$ ($\pm 120^\circ$).
+    \item For unit-circle zeros, $1/z_1 = z_1^* = z_2$. The reciprocal property is self-satisfied:
+    \begin{equation}
+    \frac{1}{e^{j 2\pi/3}} = e^{-j 2\pi/3} \quad \text{\textbf{(Q.E.D.)}}
+    \end{equation}
+\end{itemize}
+
+\vspace{1mm}
+\noindent\textbf{Step 5: Magnitude Evaluation}
+\begin{itemize}
+    \item At $\omega = 0$ (DC): $A(0) = 3 + 4(1) + 2(1) = \mathbf{9}$.
+    \item At $\omega = \frac{\pi}{2}$: $A(\pi/2) = 3 + 4(0) + 2(-1) = \mathbf{1}$.
+    \item At $\omega = \frac{2\pi}{3}$: $A(2\pi/3) = 3 + 4(-0.5) + 2(-0.5) = 3 - 2 - 1 = \mathbf{0}$ (Transmission Null).
+    \item At $\omega = \pi$ (Nyquist): $A(\pi) = 3 + 4(-1) + 2(1) = 3 - 4 + 2 = \mathbf{1}$.
+\end{itemize}
+This filter exhibits lowpass-like characteristics with a double notch at $\omega = 120^\circ$.
+
+\subsection{Example 21.2: Filter Suitability Proof and Type 2 / Type 4 Analysis}
+\textbf{Problem Statement:} An electrical engineering student attempts to design a digital Highpass filter meeting the following specifications: Passband edge $\omega_p = 0.7\pi$, stopband edge $\omega_s = 0.5\pi$, using an FIR filter of length $N = 10$.
+\begin{enumerate}
+    \item Can a symmetric FIR filter of length $N = 10$ fulfill this requirement? Prove your answer rigorously.
+    \item What is the minimum modification to $N$ to allow a symmetric linear-phase design?
+    \item Could an antisymmetric filter of length $N = 10$ be used instead? Explain the engineering trade-off.
+\end{enumerate}
+
+\vspace{1mm}
+\noindent\textbf{Solution:}
+
+\noindent\textbf{Step 1: Analysis of Length $N = 10$ Symmetric Filter}
+A symmetric filter with $N = 10$ has an even length ($M = 9$ odd), which is a \textbf{Type 2 FIR filter}.
+From \eqref{eq:type2_A}, its amplitude response is:
+\begin{equation}
+A_2(\omega) = \sum_{k=1}^5 b[k] \cos\left(\omega\left(k - \frac{1}{2}\right)\right)
+\end{equation}
+At the Nyquist frequency $\omega = \pi$:
+\begin{equation}
+A_2(\pi) = \sum_{k=1}^5 b[k] \cos\left(\pi k - \frac{\pi}{2}\right) = \sum_{k=1}^5 b[k] \sin(\pi k) \equiv 0
+\end{equation}
+Because $A_2(\pi) = 0$ identically regardless of coefficient values, the filter has an inescapable transmission zero at $\omega = \pi$. But a Highpass filter requires $|H(e^{j\pi})| \approx 1$ (unity passband gain). Therefore, \textbf{it is mathematically impossible for a Type 2 filter to function as a Highpass filter}.
+
+\vspace{1mm}
+\noindent\textbf{Step 2: Correcting the Design via Filter Length}
+To design a symmetric Highpass filter, the filter must be **Type 1** ($N$ odd, $M$ even), which has no mandatory zero at $\omega = \pi$.
+The student must change the length to:
+\begin{equation}
+\mathbf{N = 11} \quad (\text{or } N = 9)
+\end{equation}
+Choosing $N = 11$ increases the order to $M = 10$ (even), creating a Type 1 filter that can freely synthesize non-zero gain at $\omega = \pi$.
+
+\vspace{1mm}
+\noindent\textbf{Step 3: Evaluating an Antisymmetric Filter of Length $N = 10$}
+An antisymmetric filter of even length $N = 10$ is a \textbf{Type 4 FIR filter}.
+\begin{itemize}
+    \item At $\omega = 0$: $A_4(0) = 0$ (mandatory zero, which is perfectly compatible with Highpass behavior since a Highpass filter must reject DC).
+    \item At $\omega = \pi$: $A_4(\pi) \ne 0$ (no zero constraint, allowing passband transmission at Nyquist).
+\end{itemize}
+\textbf{Engineering Trade-Off:} While a Type 4 filter CAN achieve the magnitude response of a Highpass filter, it introduces a \textbf{constant $+90^\circ$ phase shift} ($\beta = \pi/2$), making $H(e^{j\omega}) = j A_4(\omega) e^{-j 4.5 \omega}$. In audio and general filtering, this $+90^\circ$ phase shift alters waveform symmetry. Hence, Type 1 with $N = 11$ is strongly preferred unless Hilbert/differential processing is specifically desired.
+
+\subsection{Example 21.3: Reverse Synthesis from Z-Plane Zero Constellation}
+\textbf{Problem Statement:} A linear-phase FIR filter is required to have:
+\begin{itemize}
+    \item A complex conjugate zero pair on the unit circle at $z = e^{\pm j \pi/2} = \pm j$.
+    \item A complex zero quadruplet off the unit circle with radius $r = 2$ and angle $\theta = \pi/3$ ($60^\circ$).
+\end{itemize}
+Determine the filter length $N$, find the impulse response $h[n]$ normalized such that $h[0] = 1$, verify its linear-phase symmetry, and state the group delay.
+
+\vspace{1mm}
+\noindent\textbf{Solution:}
+
+\noindent\textbf{Step 1: Enumerating All Zeros}
+\begin{enumerate}
+    \item \textbf{Unit Circle Zeros:}
+    \begin{equation}
+    z_1 = j, \quad z_2 = -j \implies (z - j)(z + j) = \mathbf{z^2 + 1}
+    \end{equation}
+    \item \textbf{Reciprocal Quadruplet Zeros ($r = 2, \theta = \pi/3$):}
+    \begin{align}
+    z_3 &= 2 e^{j\pi/3} = 2(0.5 + j\sqrt{3}/2) = 1 + j\sqrt{3} \\
+    z_4 &= 2 e^{-j\pi/3} = 1 - j\sqrt{3} \\
+    z_5 &= \frac{1}{2} e^{j\pi/3} = 0.5(0.5 + j\sqrt{3}/2) = 0.25 + j\frac{\sqrt{3}}{4} \\
+    z_6 &= \frac{1}{2} e^{-j\pi/3} = 0.25 - j\frac{\sqrt{3}}{4}
+    \end{align}
+\end{enumerate}
+Combine conjugate pairs:
+\begin{align}
+P_{\text{outer}}(z) &= (z - z_3)(z - z_4) = z^2 - 2\mathrm{Re}(z_3)z + |z_3|^2 = z^2 - 2z + 4 \\
+P_{\text{inner}}(z) &= (z - z_5)(z - z_6) = z^2 - 2\mathrm{Re}(z_5)z + |z_5|^2 = z^2 - 0.5z + 0.25
+\end{align}
+Multiply the outer and inner quadratic factors to form the 4th-order quadruplet polynomial:
+\begin{align}
+P_{\text{quad}}(z) &= (z^2 - 2z + 4)(z^2 - 0.5z + 0.25) \nonumber \\
+&= z^2(z^2 - 0.5z + 0.25) - 2z(z^2 - 0.5z + 0.25) + 4(z^2 - 0.5z + 0.25) \nonumber \\
+&= (z^4 - 0.5z^3 + 0.25z^2) - (2z^3 - z^2 + 0.5z) + (4z^2 - 2z + 1) \nonumber \\
+&= \mathbf{z^4 - 2.5 z^3 + 5.25 z^2 - 2.5 z + 1}
+\end{align}
+Notice the beautiful internal symmetry of $P_{\text{quad}}(z)$! Its coefficients are $[1, -2.5, 5.25, -2.5, 1]$.
+
+\vspace{1mm}
+\noindent\textbf{Step 2: Multiply by the Unit Circle Quadratic Factor}
+The overall system polynomial $P(z)$ is of 6th degree:
+\begin{align}
+P(z) &= (z^2 + 1)(z^4 - 2.5 z^3 + 5.25 z^2 - 2.5 z + 1) \nonumber \\
+&= (z^6 - 2.5 z^5 + 5.25 z^4 - 2.5 z^3 + z^2) + (z^4 - 2.5 z^3 + 5.25 z^2 - 2.5 z + 1) \nonumber \\
+&= \mathbf{z^6 - 2.5 z^5 + 6.25 z^4 - 5.0 z^3 + 6.25 z^2 - 2.5 z + 1}
+\end{align}
+
+\vspace{1mm}
+\noindent\textbf{Step 3: Express Causal System Function $H(z)$ and Impulse Response $h[n]$}
+Dividing by $z^6$ to convert to causal powers of $z^{-1}$:
+\begin{equation}
+H(z) = 1 - 2.5 z^{-1} + 6.25 z^{-2} - 5.0 z^{-3} + 6.25 z^{-4} - 2.5 z^{-5} + z^{-6}
+\end{equation}
+The impulse response sequence is:
+\begin{equation}
+\mathbf{h[n] = \{1.0, \; -2.5, \; 6.25, \; -5.0, \; 6.25, \; -2.5, \; 1.0\}}
+\end{equation}
+
+\vspace{1mm}
+\noindent\textbf{Step 4: Symmetry and Group Delay Verification}
+\begin{itemize}
+    \item Length $N = 7$ (Odd), Order $M = 6$ (Even).
+    \item Center of symmetry: $\alpha = (7-1)/2 = 3$.
+    \item Check pairs: $h[0]=h[6]=1.0$, $h[1]=h[5]=-2.5$, $h[2]=h[4]=6.25$, center $h[3]=-5.0$.
+    \item Because $h[n] = h[6-n]$, this is a \textbf{Type 1 Linear-Phase FIR Filter}.
+    \item Group delay: $\mathbf{\tau_g = 3 \text{ samples}}$ (constant across all frequencies).
+\end{itemize}
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{6. FACULTY INSIGHTS, COMMON PITFALLS \& EXAM TRAPS}
+
+\begin{itemize}
+    \item \textbf{Pitfall 1: Confusing Order $M$ with Length $N$ in Formulas:}
+    A filter with $N = 8$ taps has order $M = N-1 = 7$. In university exams, students frequently write $\alpha = N/2 = 4$, which is catastrophic. The group delay is \textbf{always} $\alpha = \frac{N-1}{2}$. For $N = 8$, $\alpha = 3.5$ samples.
+    
+    \item \textbf{Pitfall 2: Attempting to Build a Highpass Filter with Even Length $N$ (Type 2):}
+    This is one of the most common exam traps. When a question asks for a Highpass filter with an even number of coefficients ($N = 10, 12, \dots$), students who attempt a standard symmetric design fail because $H(-1) = 0$ is mathematically forced. A Highpass filter with symmetric impulse response \textbf{MUST have an odd length $N$ (Type 1)}.
+    
+    \item \textbf{Pitfall 3: Claiming Type 3 Filters Can Function as Lowpass Filters:}
+    Type 3 filters have $h[n] = -h[N-1-n]$. Setting $z = 1$ ($\omega = 0$) gives $H(1) = \sum h[n] = 0$. A filter whose DC gain is zero can never be a Lowpass filter!
+    
+    \item \textbf{Pitfall 4: Miscounting Zeros in Reciprocal Quadruplets:}
+    Remember that a zero on the unit circle ($|z|=1$) generates only \textbf{2 zeros} ($e^{j\phi}, e^{-j\phi}$), NOT 4, because $1/z_0 = z_0^*$. Similarly, a real zero off the unit circle generates only \textbf{2 zeros} ($\sigma, 1/\sigma$). Only complex zeros off the unit circle generate full \textbf{4-zero quadruplets}.
+    
+    \item \textbf{Pitfall 5: Non-Causal vs Causal Symmetry Centers:}
+    For a non-causal zero-phase filter, $h[-n] = h[n]$ and $\alpha = 0$. For a causal physical filter, $h[n] = h[N-1-n]$ and the center of symmetry is delayed to $\alpha = (N-1)/2$.
+\end{itemize}
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{7. QUICK REVISION \& SUMMARY CHEAT-SHEET}
+
+\begin{table}[H]
+\centering
+\caption{Linear-Phase FIR Filters Quick Reference Reference Sheet}
+\label{tab:quick_reference}
+\vspace{2mm}
+\resizebox{\textwidth}{!}{
+\begin{tabular}{ll}
+\toprule
+\textbf{Concept / Parameter} & \textbf{Mathematical Definition / Operational Formula} \\
+\midrule
+\textbf{Phase Delay} & $\tau_p(\omega) = -\theta(\omega) / \omega$ \\
+\textbf{Group Delay} & $\tau_g(\omega) = -d\theta(\omega) / d\omega$ \\
+\textbf{Strict Linear Phase} & $\theta(\omega) = -\alpha \omega \implies h[n] = h[N-1-n], \quad \alpha = (N-1)/2$ \\
+\textbf{Generalized Linear Phase} & $\theta(\omega) = \beta - \alpha \omega \implies h[n] = \pm h[N-1-n], \quad \beta = \pm \pi/2$ \\
+\textbf{Type 1 FIR} & Symmetric, $N$ Odd ($M$ Even) $\implies$ Universal (LPF, HPF, BPF, BSF) \\
+\textbf{Type 2 FIR} & Symmetric, $N$ Even ($M$ Odd) $\implies$ Inherent zero at $\omega = \pi$ ($z = -1$) (No HPF/BSF) \\
+\textbf{Type 3 FIR} & Antisymmetric, $N$ Odd ($M$ Even) $\implies$ Inherent zeros at $\omega = 0, \pi$ ($z = \pm 1$) (BPF only) \\
+\textbf{Type 4 FIR} & Antisymmetric, $N$ Even ($M$ Odd) $\implies$ Inherent zero at $\omega = 0$ ($z = 1$) (Ideal Differentiator) \\
+\textbf{Polynomial Symmetry} & $H(z) = \pm z^{-(N-1)} H(z^{-1})$ \\
+\textbf{Reciprocal Quadruplet} & If $z_0 = r e^{j\theta}$ is a zero, $\{r e^{j\theta}, r e^{-j\theta}, \frac{1}{r} e^{-j\theta}, \frac{1}{r} e^{j\theta}\}$ are all zeros \\
+\textbf{Unit Circle Zeros} & Self-reciprocal pairs $e^{\pm j\phi}$ (provide stopband transmission nulls) \\
+\bottomrule
+\end{tabular}
+}
+\end{table}
 
 \end{document}

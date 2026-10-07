@@ -9,10 +9,15 @@
 \usepackage{float}
 \usepackage{xcolor}
 
+\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Lecture 22: Design of FIR Filters: The Windowing Method \\ \large (III B.Tech EEE)}
+\author{Comprehensive Lecture Notes \& Faculty Textbook Reference}
+\date{}
+
 \definecolor{darkbg}{HTML}{0d121f}
 \definecolor{lighttext}{HTML}{e2e8f0}
 \definecolor{primary}{HTML}{8b5cf6}
 \definecolor{secondary}{HTML}{0dd5c5}
+\definecolor{accent}{HTML}{10b981}
 
 \pagecolor{darkbg}
 \color{lighttext}
@@ -20,90 +25,531 @@
 \hypersetup{
     colorlinks=true,
     linkcolor=secondary,
-    urlcolor=secondary
+    urlcolor=secondary,
+    citecolor=accent
 }
 
 \begin{document}
-\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Lecture 22: Design of FIR filter - windowing method \\ \large (III B.Tech EEE)}\maketitle
+
+\maketitle
 
 \noindent\rule{\textwidth}{0.5pt}
-\section*{1. LEARNING OBJECTIVES}
+
+\section*{Lecture Plan \& Objectives (40 Minutes Breakdown)}
+\begin{itemize}
+    \item \textbf{00:00 -- 06:00 (6 mins):} The Core Philosophy of the Windowing Method: The Inverse DTFT dilemma—ideal frequency-selective filters possess non-causal, infinitely long impulse responses ($h_d[n] \sim \text{sinc}(n)$). Direct truncation via windowing ($h[n] = h_d[n] \cdot w[n]$) and the dual operation in the frequency domain: periodic circular convolution $H(e^{j\omega}) = \frac{1}{2\pi} H_d(e^{j\omega}) * W(e^{j\omega})$.
+    \item \textbf{06:00 -- 15:00 (9 mins):} The Gibbs Phenomenon \& Spectral Leakage: Abrupt rectangular truncation, the Dirichlet sinc kernel $W_R(e^{j\omega}) = \frac{\sin(\omega N/2)}{\sin(\omega/2)}$, proof of the invariant 8.95\% peak overshoot (1.0895 or $\approx 0.75$ dB ripple), and why increasing filter length $N$ only compresses ripple width without reducing overshoot amplitude.
+    \item \textbf{15:00 -- 24:00 (9 mins):} Mathematical Formulation of Classic Window Families: Rectangular, Bartlett (Triangular), Hann (Raised Cosine), Hamming (Shifted Raised Cosine), and Blackman. Derivations of mainlobe widths ($\Delta\omega = 4\pi/N, 8\pi/N, 12\pi/N$), peak sidelobe levels ($-13, -25, -31, -41, -57$ dB), and minimum stopband attenuation $A_s$.
+    \item \textbf{24:00 -- 30:00 (6 mins):} Formulation of Causal Ideal Impulse Responses: Analytical expressions for Ideal Lowpass, Highpass, Bandpass, and Bandstop filters with causal linear-phase delay $\tau = (N-1)/2$. Resolving the indeterminate $0/0$ form at the center of symmetry.
+    \item \textbf{30:00 -- 38:00 (8 mins):} Step-by-Step Worked Numerical Examples: Complete design of a 7-tap Lowpass filter using a Hann window, design of a 9-tap Highpass filter comparing Rectangular vs. Hamming truncation, and design of an 11-tap Bandpass filter using a Bartlett window.
+    \item \textbf{38:00 -- 40:00 (2 mins):} Faculty Insights, Common Misconceptions, and University Semester Exam Traps.
+\end{itemize}
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{1. LEARNING OBJECTIVES}
 By the end of this lecture, students will be able to:
 \begin{enumerate}
-\item \textbf{Derive} ideal impulse responses $h_d[n]$ for Lowpass, Highpass, Bandpass, and Bandstop filters.
-\item \textbf{Design} linear-phase FIR filters using Rectangular, Bartlett, and Hann windows to meet transition bandwidth and attenuation specs.
-\item \textbf{Evaluate} the frequency spectrum of window functions.
+    \item \textbf{Explain} the mathematical necessity of windowing in FIR filter design from an Inverse DTFT perspective.
+    \item \textbf{Analyze} the frequency-domain mechanism of windowing as a periodic convolution between the ideal brickwall response $H_d(e^{j\omega})$ and the window spectrum $W(e^{j\omega})$.
+    \item \textbf{Describe} the Gibbs phenomenon, proving why the peak overshoot of approximately 8.95\% does not vanish as filter length $N \to \infty$ for a rectangular window.
+    \item \textbf{Quantify} the fundamental trade-off between mainlobe width (transition bandwidth $\Delta\omega$) and sidelobe attenuation ($A_s$) across window families.
+    \item \textbf{Evaluate} time-domain equations and spectral characteristics for Rectangular, Bartlett, Hann, Hamming, and Blackman windows.
+    \item \textbf{Synthesize} causal, linear-phase impulse responses $h_d[n]$ for Lowpass, Highpass, Bandpass, and Bandstop filters by incorporating delay $\tau = (N-1)/2$.
+    \item \textbf{Execute} the end-to-end FIR filter design workflow to calculate numerical tap coefficients $h[n] = h_d[n] \cdot w[n]$.
+    \item \textbf{Verify} stopband attenuation and passband ripple tolerances against engineering specifications.
+\end{enumerate}
 
 \noindent\rule{\textwidth}{0.5pt}
-\section*{2. MATHEMATICAL FOUNDATIONS}
 
-\subsection*{2.1 Ideal Filter Impulse Responses ($\tau = \frac{N-1}{2}$)}
-\begin{itemize}
-\item \textbf{Lowpass ($\omega_c$):}
-\end{itemize}
-\end{enumerate}
-  $$ h_{d,\text{LP}}[n] = \frac{\sin(\omega_c(n - \tau))}{\pi(n - \tau)} $$
-\begin{itemize}
-\item \textbf{Highpass ($\omega_c$):}
-\end{itemize}
-  $$ h_{d,\text{HP}}[n] = \delta[n - \tau] - \frac{\sin(\omega_c(n - \tau))}{\pi(n - \tau)} $$
-\begin{itemize}
-\item \textbf{Bandpass ($\omega_{c1}, \omega_{c2}$):}
-\end{itemize}
-  $$ h_{d,\text{BP}}[n] = \frac{\sin(\omega_{c2}(n - \tau))}{\pi(n - \tau)} - \frac{\sin(\omega_{c1}(n - \tau))}{\pi(n - \tau)} $$
+\section{2. THEORETICAL FOUNDATIONS OF THE WINDOWING METHOD}
 
-\subsection*{2.2 Window Functions Formulation ($0 \le n \le N-1$)}
+\subsection{2.1 The Inverse DTFT Dilemma and Windowing Concept}
+The design of an FIR filter begins with a desired continuous frequency response $H_d(e^{j\omega})$, which typically possesses an ideal ``brickwall'' magnitude characteristic:
+\begin{equation}
+H_{d,\text{LP}}(e^{j\omega}) = \begin{cases} 1 \cdot e^{-j\alpha \omega}, & |\omega| \le \omega_c \\ 0, & \omega_c < |\omega| \le \pi \end{cases}
+\end{equation}
+where $\alpha$ represents a desired constant linear-phase delay.
+
+The corresponding ideal discrete-time impulse response $h_d[n]$ is obtained via the Inverse Discrete-Time Fourier Transform (IDTFT):
+\begin{equation}
+h_d[n] = \frac{1}{2\pi} \int_{-\pi}^\pi H_d(e^{j\omega}) e^{j\omega n} d\omega = \frac{1}{2\pi} \int_{-\omega_c}^{\omega_c} e^{-j\alpha \omega} e^{j\omega n} d\omega = \frac{1}{2\pi} \int_{-\omega_c}^{\omega_c} e^{j\omega(n - \alpha)} d\omega
+\end{equation}
+Evaluating this elementary definite integral:
+\begin{equation}
+h_d[n] = \frac{1}{2\pi} \left[ \frac{e^{j\omega(n - \alpha)}}{j(n - \alpha)} \right]_{-\omega_c}^{\omega_c} = \frac{e^{j\omega_c(n - \alpha)} - e^{-j\omega_c(n - \alpha)}}{2\pi j (n - \alpha)} = \mathbf{\frac{\sin(\omega_c(n - \alpha))}{\pi (n - \alpha)}}
+\label{eq:ideal_lpf_sinc}
+\end{equation}
+At the exact center of symmetry $n = \alpha$, \eqref{eq:ideal_lpf_sinc} yields an indeterminate $0/0$ ratio. Applying L'H\^opital's rule with respect to $n$:
+\begin{equation}
+\lim_{n \to \alpha} h_d[n] = \lim_{n \to \alpha} \frac{\omega_c \cos(\omega_c(n - \alpha))}{\pi} = \mathbf{\frac{\omega_c}{\pi}}
+\label{eq:lhopital_center}
+\end{equation}
+
+\noindent\textbf{The Fundamental Implementation Hurdle:}
+The ideal impulse response $h_d[n]$ in \eqref{eq:ideal_lpf_sinc} is a \textbf{sinc sequence} that decays as $1/n$:
 \begin{enumerate}
-\item \textbf{Rectangular Window:}
+    \item It extends infinitely in time from $n = -\infty$ to $n = +\infty$.
+    \item For any finite delay $\alpha$, it contains non-zero samples for $n < 0$, making it \textbf{strictly non-causal}.
 \end{enumerate}
-   $$ w[n] = 1, \quad \Delta\omega = \frac{4\pi}{N}, \quad \text{Peak Sidelobe: } -13 \text{ dB}, \quad A_s = 21 \text{ dB} $$
-\begin{enumerate}
-\item \textbf{Bartlett (Triangular) Window:}
-\end{enumerate}
-   $$ w[n] = 1 - \frac{2|n - \tau|}{N-1}, \quad \Delta\omega = \frac{8\pi}{N}, \quad \text{Peak Sidelobe: } -25 \text{ dB}, \quad A_s = 25 \text{ dB} $$
-\begin{enumerate}
-\item \textbf{Hann (Hanning) Window:}
-\end{enumerate}
-   $$ w[n] = 0.5 - 0.5\cos\left( \frac{2\pi n}{N-1} \right), \quad \Delta\omega = \frac{8\pi}{N}, \quad \text{Peak Sidelobe: } -31 \text{ dB}, \quad A_s = 44 \text{ dB} $$
+Physical realization requires an impulse response that is causal ($h[n] = 0$ for $n < 0$) and finite in length ($h[n] = 0$ for $n \ge N$). The simplest and most intuitive technique to achieve this is the \textbf{Windowing Method}: we truncate $h_d[n]$ by multiplying it with a finite-length window sequence $w[n]$ of length $N$:
+\begin{equation}
+\mathbf{h[n] = h_d[n] \cdot w[n]}, \quad 0 \le n \le N-1
+\label{eq:window_mult}
+\end{equation}
+where $w[n] = 0$ for $n < 0$ and $n \ge N$. To preserve linear phase, the window sequence $w[n]$ must be symmetric about the exact same delay center $\alpha = (N-1)/2$:
+\begin{equation}
+w[n] = w[N - 1 - n]
+\end{equation}
 
+\subsection{2.2 Frequency-Domain Mechanism: Periodic Convolution}
+By the modulation (multiplication) theorem of the DTFT, pointwise multiplication in the time domain corresponds to \textbf{periodic (circular) convolution} in the frequency domain:
+\begin{equation}
+\mathbf{H(e^{j\omega}) = \frac{1}{2\pi} H_d(e^{j\omega}) * W(e^{j\omega}) = \frac{1}{2\pi} \int_{-\pi}^\pi H_d(e^{j\theta}) W\big(e^{j(\omega - \theta)}\big) d\theta}
+\label{eq:freq_conv}
+\end{equation}
+where $W(e^{j\omega}) = \sum_{n=0}^{N-1} w[n] e^{-j\omega n}$ is the Fourier transform of the window.
 
-\subsection*{Pictorial Representations}
+Equation \eqref{eq:freq_conv} is the cornerstone of window design:
+\begin{itemize}
+    \item If the window were infinitely long, $W(e^{j\omega})$ would be an impulse $\delta(\omega)$, and $H(e^{j\omega})$ would match $H_d(e^{j\omega})$ perfectly.
+    \item Because $w[n]$ is finite, $W(e^{j\omega})$ possesses a central peak called the \textbf{mainlobe} and oscillatory ripples called \textbf{sidelobes}.
+    \item When the ideal brickwall discontinuity is convolved with the mainlobe of $W(e^{j\omega})$, the vertical step is smoothed into a continuous transition band of finite slope ($\Delta\omega$).
+    \item When the step discontinuity is convolved with the sidelobes of $W(e^{j\omega})$, ripple oscillations (ringing) are injected into both the passband and stopband.
+\end{itemize}
+
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.85\textwidth]{images/window_shapes.png}
-\caption{Window Shapes}
+\includegraphics[width=0.92\textwidth]{images/fir_window_truncation_gibbs.png}
+\caption{The Windowing Method and Gibbs Phenomenon: (Left) Time-domain truncation of the infinite sinc sequence $h_d[n]$ using a rectangular window ($N=15$). (Right) Resulting frequency response $|H(e^{j\omega})|$ illustrating the invariant 8.95\% peak overshoot (Gibbs ringing) at the band edge $\omega_c = 0.4\pi$ across various filter lengths $N = 15, 31, 63$.}
+\label{fig:gibbs}
+\end{figure}
+
+\subsection{2.3 The Gibbs Phenomenon}
+When a rectangular window $w_R[n] = 1$ ($0 \le n \le N-1$) is applied, the time-domain impulse response is abruptly cut off. The frequency transform of the rectangular window centered at $n = 0$ is the Dirichlet kernel:
+\begin{equation}
+W_R(e^{j\omega}) = \sum_{n=-(N-1)/2}^{(N-1)/2} e^{-j\omega n} = \mathbf{\frac{\sin(\omega N / 2)}{\sin(\omega / 2)}}
+\label{eq:dirichlet}
+\end{equation}
+The first sidelobe of $W_R(e^{j\omega})$ occurs at approximately $\omega \approx 3\pi/N$, with a height of:
+\begin{equation}
+\frac{|W_R(3\pi/N)|}{|W_R(0)|} \approx \frac{2}{3\pi} \approx 0.212 \implies \mathbf{20\log_{10}(0.212) \approx -13.4 \text{ dB}}
+\end{equation}
+Convolving the ideal step discontinuity of $H_d(e^{j\omega})$ with this Dirichlet kernel produces the famous \textbf{Gibbs Phenomenon}:
+\begin{enumerate}
+    \item An overshoot occurs directly adjacent to the discontinuity $\omega_c$, reaching:
+    \begin{equation}
+    |H(e^{j\omega_{\text{peak}}})| = \frac{1}{2} + \frac{1}{\pi} \int_0^\pi \frac{\sin x}{x} dx = \frac{1}{2} + \frac{1}{\pi} \text{Si}(\pi) \approx 0.5 + 0.5895 = \mathbf{1.0895}
+    \end{equation}
+    This corresponds to a \textbf{fixed 8.95\% overshoot} ($\approx 0.75$ dB peak ripple) in the passband, and a minimum stopband attenuation of only $A_s = 21$ dB.
+    \item \textbf{The Invariance of the Peak Overshoot:}
+    As filter length $N \to \infty$, the mainlobe narrows, compressing the ripple closer to the discontinuity. However, \textbf{the amplitude of the peak overshoot does NOT decrease}! It remains locked at 8.95\%.
+    \item Therefore, a rectangular window can \textbf{never} be used for applications requiring stopband attenuation greater than 21 dB, regardless of how large $N$ is chosen!
+\end{enumerate}
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{3. CLASSIC WINDOW FAMILIES AND PERFORMANCE TRADE-OFFS}
+
+To suppress Gibbs ringing and achieve high stopband attenuation, the window sequence must \textbf{taper smoothly to zero} at its boundaries $n = 0$ and $n = N-1$. Eliminating the abrupt step discontinuity in time eliminates the high-frequency sidelobes in frequency.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.90\textwidth]{images/fir_classic_windows_time.png}
+\caption{Time-Domain Profiles of Classic Window Sequences ($N = 51$): Comparing Rectangular, Bartlett, Hann, Hamming, and Blackman windows. Note the smooth tapering to near zero at the edges.}
+\label{fig:window_time}
+\end{figure}
+
+\subsection{3.1 Bartlett (Triangular) Window}
+The Bartlett window linearly tapers from 0 at the boundaries to 1 at the center:
+\begin{equation}
+w_B[n] = 1 - \frac{2\left|n - \frac{N-1}{2}\right|}{N-1}, \quad 0 \le n \le N-1
+\label{eq:bartlett}
+\end{equation}
+In the frequency domain, the Bartlett window is the convolution of two rectangular windows of length $N/2$, meaning its spectrum is proportional to $[\sin(\omega N/4)/\sin(\omega/2)]^2$. Because the spectrum is squared, its sidelobes decay as $1/\omega^2$ rather than $1/\omega$:
+\begin{itemize}
+    \item Mainlobe Width: $\Delta\omega = \frac{8\pi}{N}$ (doubled compared to rectangular).
+    \item Peak Sidelobe Level: $\mathbf{-25 \text{ dB}}$.
+    \item Minimum Stopband Attenuation: $\mathbf{A_s = 25 \text{ dB}}$.
+\end{itemize}
+
+\subsection{3.2 Hann (Hanning) Window (Raised Cosine)}
+The Hann window applies a full period of a raised cosine function:
+\begin{equation}
+w_{Hn}[n] = 0.5 - 0.5\cos\left( \frac{2\pi n}{N-1} \right) = \sin^2\left( \frac{\pi n}{N-1} \right), \quad 0 \le n \le N-1
+\label{eq:hann}
+\end{equation}
+Notice that $w_{Hn}[0] = w_{Hn}[N-1] = 0$. Both the window and its first derivative reach zero smoothly at the endpoints:
+\begin{itemize}
+    \item Mainlobe Width: $\Delta\omega = \frac{8\pi}{N}$.
+    \item Peak Sidelobe Level: $\mathbf{-31 \text{ dB}}$.
+    \item Sidelobe Roll-off Rate: \textbf{$-18$ dB/octave} (decays rapidly as $1/\omega^3$).
+    \item Minimum Stopband Attenuation: $\mathbf{A_s = 44 \text{ dB}}$.
+\end{itemize}
+
+\subsection{3.3 Hamming Window (Shifted Raised Cosine)}
+The Hamming window is an optimized modification of the raised cosine that adds a small pedestal to cancel the first and most destructive sidelobe:
+\begin{equation}
+w_{Hm}[n] = \alpha - (1 - \alpha)\cos\left( \frac{2\pi n}{N-1} \right) = \mathbf{0.54 - 0.46\cos\left( \frac{2\pi n}{N-1} \right)}, \quad 0 \le n \le N-1
+\label{eq:hamming}
+\end{equation}
+By setting $\alpha = 0.54$, the positive first sidelobe of the rectangular component exactly cancels the negative sidelobe of the cosine component:
+\begin{itemize}
+    \item Mainlobe Width: $\Delta\omega = \frac{8\pi}{N}$.
+    \item Peak Sidelobe Level: $\mathbf{-41 \text{ dB}}$ (a 10 dB improvement over Hann!).
+    \item Minimum Stopband Attenuation: $\mathbf{A_s = 53 \text{ dB}}$.
+    \item \textbf{Trade-off vs. Hann:} Because $w_{Hm}[0] = 0.08 \ne 0$, its boundary is discontinuous, so far-out sidelobes roll off at only $-6$ dB/octave (slower than Hann). However, its peak near-in sidelobe is significantly lower.
+\end{itemize}
+
+\subsection{3.4 Blackman Window (Three-Term Cosine Series)}
+The Blackman window introduces a second harmonic cosine term to achieve extreme sidelobe suppression:
+\begin{equation}
+w_{Bl}[n] = \mathbf{0.42 - 0.5\cos\left( \frac{2\pi n}{N-1} \right) + 0.08\cos\left( \frac{4\pi n}{N-1} \right)}, \quad 0 \le n \le N-1
+\label{eq:blackman}
+\end{equation}
+\begin{itemize}
+    \item Mainlobe Width: $\Delta\omega = \frac{12\pi}{N}$ (three times wider than rectangular).
+    \item Peak Sidelobe Level: $\mathbf{-57 \text{ dB}}$.
+    \item Minimum Stopband Attenuation: $\mathbf{A_s = 74 \text{ dB}}$ (suitable for high-fidelity audio and 12-bit ADC DSP front-ends).
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.92\textwidth]{images/fir_classic_windows_freq.png}
+\caption{Frequency Magnitude Spectra of Classic Windows ($N = 51$): Comparing mainlobe widths and peak sidelobe rejection levels ($-13$ dB for Rectangular, $-25$ dB for Bartlett, $-31$ dB for Hann, $-41$ dB for Hamming, and $-57$ dB for Blackman).}
+\label{fig:window_freq}
+\end{figure}
+
+\subsection{3.5 Comprehensive Window Comparison Audit}
+Table~\ref{tab:window_audit} summarizes the quantitative performance metrics of the standard window families.
+
+\begin{table}[H]
+\centering
+\caption{Quantitative Performance Audit of Standard FIR Window Functions}
+\label{tab:window_audit}
+\vspace{2mm}
+\resizebox{\textwidth}{!}{
+\begin{tabular}{lccccc}
+\toprule
+\textbf{Window Type} & \textbf{Time-Domain Definition $w[n]$ ($0 \le n \le N-1$)} & \textbf{Mainlobe Width} & \textbf{Peak Sidelobe} & \textbf{Min. Attenuation $A_s$} & \textbf{Transition Width $\Delta f = \frac{\Delta\omega}{2\pi}$} \\
+\midrule
+\textbf{Rectangular} & $1$ & $4\pi / N$ & $-13.3$ dB & $21$ dB & $\approx 0.9 / N$ \\
+\textbf{Bartlett}    & $1 - \frac{2|n - (N-1)/2|}{N-1}$ & $8\pi / N$ & $-25.0$ dB & $25$ dB & $\approx 1.6 / N$ \\
+\textbf{Hann}        & $0.5 - 0.5\cos\left(\frac{2\pi n}{N-1}\right)$ & $8\pi / N$ & $-31.5$ dB & $44$ dB & $\approx 3.1 / N$ \\
+\textbf{Hamming}     & $0.54 - 0.46\cos\left(\frac{2\pi n}{N-1}\right)$ & $8\pi / N$ & $-41.0$ dB & $53$ dB & $\approx 3.3 / N$ \\
+\textbf{Blackman}    & $0.42 - 0.5\cos\left(\frac{2\pi n}{N-1}\right) + 0.08\cos\left(\frac{4\pi n}{N-1}\right)$ & $12\pi / N$ & $-57.0$ dB & $74$ dB & $\approx 5.5 / N$ \\
+\bottomrule
+\end{tabular}
+}
+\end{table}
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{4. CAUSAL IDEAL IMPULSE RESPONSES FOR STANDARD FILTER TYPES}
+
+To synthesize causal linear-phase filters, the desired frequency response must incorporate the delay factor $e^{-j\tau \omega}$, where $\tau = (N-1)/2$. The analytical closed-form expressions for the four standard filter archetypes are derived below:
+
+\subsection{4.1 Ideal Lowpass Filter (LPF)}
+\begin{equation}
+H_{d,\text{LP}}(e^{j\omega}) = \begin{cases} e^{-j\tau \omega}, & |\omega| \le \omega_c \\ 0, & \omega_c < |\omega| \le \pi \end{cases} \implies \mathbf{h_{d,\text{LP}}[n] = \frac{\sin(\omega_c(n - \tau))}{\pi(n - \tau)}}
+\label{eq:hd_lpf}
+\end{equation}
+At $n = \tau$: $h_{d,\text{LP}}[\tau] = \frac{\omega_c}{\pi}$.
+
+\subsection{4.2 Ideal Highpass Filter (HPF)}
+Using the complementary relationship $H_{d,\text{HP}}(e^{j\omega}) = e^{-j\tau\omega} - H_{d,\text{LP}}(e^{j\omega})$:
+\begin{equation}
+\mathbf{h_{d,\text{HP}}[n] = \frac{\sin(\pi(n - \tau))}{\pi(n - \tau)} - \frac{\sin(\omega_c(n - \tau))}{\pi(n - \tau)}}
+\label{eq:hd_hpf}
+\end{equation}
+Since $\frac{\sin(\pi(n-\tau))}{\pi(n-\tau)} = \delta[n - \tau]$ when $\tau$ is an integer:
+\begin{equation}
+h_{d,\text{HP}}[n] = \begin{cases} 1 - \frac{\omega_c}{\pi}, & n = \tau \\ -\frac{\sin(\omega_c(n - \tau))}{\pi(n - \tau)}, & n \ne \tau \end{cases}
+\end{equation}
+
+\subsection{4.3 Ideal Bandpass Filter (BPF)}
+With lower cutoff $\omega_{c1}$ and upper cutoff $\omega_{c2}$ ($\omega_{c1} < \omega_{c2}$):
+\begin{equation}
+\mathbf{h_{d,\text{BP}}[n] = \frac{\sin(\omega_{c2}(n - \tau))}{\pi(n - \tau)} - \frac{\sin(\omega_{c1}(n - \tau))}{\pi(n - \tau)}}
+\label{eq:hd_bpf}
+\end{equation}
+At $n = \tau$: $h_{d,\text{BP}}[\tau] = \frac{\omega_{c2} - \omega_{c1}}{\pi}$.
+
+\subsection{4.4 Ideal Bandstop Filter (BSF)}
+Complementary to the bandpass filter:
+\begin{equation}
+\mathbf{h_{d,\text{BS}}[n] = \frac{\sin(\omega_{c1}(n - \tau))}{\pi(n - \tau)} + \left[ \frac{\sin(\pi(n - \tau))}{\pi(n - \tau)} - \frac{\sin(\omega_{c2}(n - \tau))}{\pi(n - \tau)} \right]}
+\label{eq:hd_bsf}
+\end{equation}
+At $n = \tau$: $h_{d,\text{BS}}[\tau] = 1 - \frac{\omega_{c2} - \omega_{c1}}{\pi}$.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.92\textwidth]{images/fir_window_design_flowchart.png}
+\caption{Systematic End-to-End FIR Filter Design Flowchart: Illustrating the 6 progressive design phases from frequency specifications to hardware-ready coefficients.}
+\label{fig:design_flowchart}
 \end{figure}
 
 \noindent\rule{\textwidth}{0.5pt}
-\section*{3. WORKED NUMERICAL EXAMPLES}
 
-\subsection*{Example 22.1: FIR Lowpass Filter Design using Hann Window}
-\textbf{Problem:} Design a causal FIR lowpass filter with cutoff $\omega_c = \frac{\pi}{4} \text{ rad/sample}$ and length $N = 7$ using a Hann window.
+\section{5. STEP-BY-STEP WORKED NUMERICAL EXAMPLES}
 
-\textbf{Solution:}
+\subsection{Example 22.1: Causal Lowpass Filter Design using Hann Window}
+\textbf{Problem Statement:} Design a 7-tap causal linear-phase FIR lowpass filter with a cutoff frequency $\omega_c = \pi/4$ radians/sample using a Hann window.
+\begin{enumerate}
+    \item Determine the filter order $M$, length $N$, and delay center $\tau$.
+    \item Calculate the exact analytical values of the ideal impulse response $h_d[n]$ for $n = 0, 1, \dots, 6$.
+    \item Compute the Hann window sequence $w[n]$ for $n = 0, 1, \dots, 6$.
+    \item Derive the final filter coefficients $h[n] = h_d[n] \cdot w[n]$.
+    \item Evaluate the DC gain $H(e^{j0})$ and Nyquist gain $H(e^{j\pi})$.
+\end{enumerate}
+
+\vspace{1mm}
+\noindent\textbf{Solution:}
+
+\noindent\textbf{Step 1: Filter Parameters}
 \begin{itemize}
-\item Length $N = 7 \implies \tau = \frac{7-1}{2} = 3$.
-\item Ideal impulse response:
+    \item Filter length: $N = 7$ (Odd $\implies$ Type 1 FIR Filter).
+    \item Filter order: $M = N - 1 = 6$.
+    \item Delay center: $\tau = \frac{N-1}{2} = \frac{7-1}{2} = \mathbf{3 \text{ samples}}$ (integer).
 \end{itemize}
-  $$ h_d[n] = \frac{\sin(\frac{\pi}{4}(n - 3))}{\pi(n - 3)} $$
-  * $h_d[3] = \frac{\omega_c}{\pi} = \frac{\pi/4}{\pi} = 0.2500$
-  * $h_d[2] = h_d[4] = \frac{\sin(-\pi/4)}{-\pi} = \frac{\sqrt{2}/2}{\pi} = \frac{0.7071}{\pi} = 0.2251$
-  * $h_d[1] = h_d[5] = \frac{\sin(-2\pi/4)}{-2\pi} = \frac{1}{2\pi} = 0.1592$
-  * $h_d[0] = h_d[6] = \frac{\sin(-3\pi/4)}{-3\pi} = \frac{0.7071}{3\pi} = 0.0750$
+
+\vspace{1mm}
+\noindent\textbf{Step 2: Ideal Impulse Response Evaluation}
+Using \eqref{eq:hd_lpf} with $\omega_c = \pi/4$ and $\tau = 3$:
+\begin{equation}
+h_d[n] = \frac{\sin\left(\frac{\pi}{4}(n - 3)\right)}{\pi(n - 3)}
+\end{equation}
+Exploiting symmetry $h_d[3 - k] = h_d[3 + k]$:
 \begin{itemize}
-\item \textbf{Hann Window Values ($w[n] = 0.5 - 0.5\cos(\frac{2\pi n}{6})$):}
+    \item \textbf{Center tap ($n = 3$):} Using \eqref{eq:lhopital_center}:
+    \begin{equation}
+    h_d[3] = \frac{\omega_c}{\pi} = \frac{\pi/4}{\pi} = \mathbf{0.2500}
+    \end{equation}
+    \item \textbf{Taps $n = 2$ and $n = 4$ ($k = 1$):}
+    \begin{equation}
+    h_d[2] = h_d[4] = \frac{\sin(-\pi/4)}{\pi(-1)} = \frac{-\sqrt{2}/2}{-\pi} = \frac{\sqrt{2}}{2\pi} \approx \frac{0.707107}{3.141593} = \mathbf{0.225079}
+    \end{equation}
+    \item \textbf{Taps $n = 1$ and $n = 5$ ($k = 2$):}
+    \begin{equation}
+    h_d[1] = h_d[5] = \frac{\sin(-2\pi/4)}{\pi(-2)} = \frac{\sin(-\pi/2)}{-2\pi} = \frac{-1}{-2\pi} = \frac{1}{2\pi} \approx \mathbf{0.159155}
+    \end{equation}
+    \item \textbf{Taps $n = 0$ and $n = 6$ ($k = 3$):}
+    \begin{equation}
+    h_d[0] = h_d[6] = \frac{\sin(-3\pi/4)}{\pi(-3)} = \frac{-\sqrt{2}/2}{-3\pi} = \frac{\sqrt{2}}{6\pi} \approx \frac{0.707107}{9.424778} = \mathbf{0.075026}
+    \end{equation}
 \end{itemize}
-  * $w[3] = 0.5 - 0.5\cos(\pi) = 1.0000$
-  * $w[2] = w[4] = 0.5 - 0.5\cos(2\pi/3) = 0.5 - 0.5(-0.5) = 0.7500$
-  * $w[1] = w[5] = 0.5 - 0.5\cos(\pi/3) = 0.5 - 0.5(0.5) = 0.2500$
-  * $w[0] = w[6] = 0.5 - 0.5\cos(0) = 0.0000$
+
+\vspace{1mm}
+\noindent\textbf{Step 3: Hann Window Sequence Evaluation}
+Using \eqref{eq:hann} with $N = 7$:
+\begin{equation}
+w[n] = 0.5 - 0.5\cos\left( \frac{2\pi n}{6} \right) = 0.5 - 0.5\cos\left( \frac{\pi n}{3} \right)
+\end{equation}
 \begin{itemize}
-\item \textbf{Final FIR Filter Coefficients ($h[n] = h_d[n] \cdot w[n]$):}
+    \item $w[0] = w[6] = 0.5 - 0.5\cos(0) = 0.5 - 0.5(1) = \mathbf{0.0000}$
+    \item $w[1] = w[5] = 0.5 - 0.5\cos(\pi/3) = 0.5 - 0.5(0.5) = 0.5 - 0.25 = \mathbf{0.2500}$
+    \item $w[2] = w[4] = 0.5 - 0.5\cos(2\pi/3) = 0.5 - 0.5(-0.5) = 0.5 + 0.25 = \mathbf{0.7500}$
+    \item $w[3] = 0.5 - 0.5\cos(\pi) = 0.5 - 0.5(-1) = 0.5 + 0.5 = \mathbf{1.0000}$
 \end{itemize}
-  * $h[0] = h[6] = 0.0750 \times 0.0000 = 0.0000$
-  * $h[1] = h[5] = 0.1592 \times 0.2500 = 0.0398$
-  * $h[2] = h[4] = 0.2251 \times 0.7500 = 0.1688$
-  * $h[3] = 0.2500 \times 1.0000 = 0.2500$
-$$ h[n] = \{ \underset{\uparrow}{0.0000}, 0.0398, 0.1688, 0.2500, 0.1688, 0.0398, 0.0000 \} $$
+
+\vspace{1mm}
+\noindent\textbf{Step 4: Windowed FIR Tap Coefficients $h[n] = h_d[n] \cdot w[n]$}
+\begin{align}
+h[0] &= h_d[0] \cdot w[0] = 0.075026 \times 0.0000 = \mathbf{0.0000} \\
+h[1] &= h_d[1] \cdot w[1] = 0.159155 \times 0.2500 = \mathbf{0.039789} \\
+h[2] &= h_d[2] \cdot w[2] = 0.225079 \times 0.7500 = \mathbf{0.168809} \\
+h[3] &= h_d[3] \cdot w[3] = 0.250000 \times 1.0000 = \mathbf{0.250000} \\
+h[4] &= h[2] = \mathbf{0.168809} \\
+h[5] &= h[1] = \mathbf{0.039789} \\
+h[6] &= h[0] = \mathbf{0.0000}
+\end{align}
+The synthesized causal impulse response is:
+\begin{equation}
+\mathbf{h[n] = \{0.0, \; 0.0398, \; 0.1688, \; 0.2500, \; 0.1688, \; 0.0398, \; 0.0\}}
+\end{equation}
+
+\vspace{1mm}
+\noindent\textbf{Step 5: Gain Verification}
+\begin{itemize}
+    \item \textbf{DC Gain ($\omega = 0$):}
+    \begin{equation}
+    H(e^{j0}) = \sum_{n=0}^6 h[n] = 0.2500 + 2(0.168809) + 2(0.039789) = 0.2500 + 0.3376 + 0.0796 = \mathbf{0.6672}
+    \end{equation}
+    (Normalized DC gain can be scaled to unity by dividing each coefficient by $0.6672$).
+    \item \textbf{Nyquist Gain ($\omega = \pi$):}
+    \begin{align}
+    H(e^{j\pi}) &= \sum_{n=0}^6 h[n](-1)^n = h[0] - h[1] + h[2] - h[3] + h[4] - h[5] + h[6] \nonumber \\
+    &= 0 - 0.0398 + 0.1688 - 0.2500 + 0.1688 - 0.0398 + 0 = \mathbf{0.0080}
+    \end{align}
+    Stopband attenuation at Nyquist: $20\log_{10}(0.0080 / 0.6672) = \mathbf{-38.4 \text{ dB}}$! Even with only 7 taps, the Hann window achieves impressive stopband suppression.
+\end{itemize}
+
+\subsection{Example 22.2: 9-Tap Highpass Filter Design (Rectangular vs. Hamming)}
+\textbf{Problem Statement:} Design a 9-tap linear-phase FIR Highpass filter with cutoff $\omega_c = \pi/2$ radians/sample using:
+\begin{enumerate}
+    \item A Rectangular window.
+    \item A Hamming window.
+\end{enumerate}
+Compare the resulting filter coefficients, boundary zeros, and discuss passband ripple behavior.
+
+\vspace{1mm}
+\noindent\textbf{Solution:}
+
+\noindent\textbf{Step 1: Filter Specifications}
+\begin{itemize}
+    \item Length $N = 9$ (Odd $\implies$ Type 1 FIR Filter).
+    \item Delay center: $\tau = (9-1)/2 = \mathbf{4 \text{ samples}}$.
+    \item Cutoff: $\omega_c = \pi/2$.
+\end{itemize}
+
+\vspace{1mm}
+\noindent\textbf{Step 2: Ideal Highpass Impulse Response}
+From \eqref{eq:hd_hpf}:
+\begin{equation}
+h_{d,\text{HP}}[n] = \frac{\sin(\pi(n - 4))}{\pi(n - 4)} - \frac{\sin\left(\frac{\pi}{2}(n - 4)\right)}{\pi(n - 4)}
+\end{equation}
+Evaluating for $n = 0, 1, 2, 3, 4$:
+\begin{itemize}
+    \item Center tap ($n = 4$): $h_{d,\text{HP}}[4] = 1 - \frac{\pi/2}{\pi} = 1 - 0.5 = \mathbf{0.5000}$.
+    \item Tap $n = 3$ ($n - 4 = -1$): $h_d[3] = 0 - \frac{\sin(-\pi/2)}{-\pi} = -\frac{-1}{-\pi} = -\frac{1}{\pi} \approx \mathbf{-0.318310}$.
+    \item Tap $n = 2$ ($n - 4 = -2$): $h_d[2] = 0 - \frac{\sin(-\pi)}{-2\pi} = \mathbf{0.0000}$.
+    \item Tap $n = 1$ ($n - 4 = -3$): $h_d[1] = 0 - \frac{\sin(-3\pi/2)}{-3\pi} = -\frac{1}{-3\pi} = \frac{1}{3\pi} \approx \mathbf{0.106103}$.
+    \item Tap $n = 0$ ($n - 4 = -4$): $h_d[0] = 0 - \frac{\sin(-2\pi)}{-4\pi} = \mathbf{0.0000}$.
+\end{itemize}
+
+\vspace{1mm}
+\noindent\textbf{Step 3: Design with Rectangular Window ($w_R[n] = 1$)}
+Since $w_R[n] = 1$, $h_R[n] = h_d[n]$:
+\begin{equation}
+\mathbf{h_R[n] = \{0.0, \; 0.1061, \; 0.0, \; -0.3183, \; 0.5000, \; -0.3183, \; 0.0, \; 0.1061, \; 0.0\}}
+\end{equation}
+DC Gain: $H_R(e^{j0}) = 0.5 + 2(-0.3183) + 2(0.1061) = 0.5 - 0.6366 + 0.2122 = \mathbf{0.0756}$ (poor stopband rejection $\approx -16$ dB due to Gibbs phenomenon).
+
+\vspace{1mm}
+\noindent\textbf{Step 4: Design with Hamming Window}
+Formula: $w_{Hm}[n] = 0.54 - 0.46\cos\left( \frac{2\pi n}{8} \right) = 0.54 - 0.46\cos\left( \frac{\pi n}{4} \right)$:
+\begin{align}
+w[4] &= 0.54 - 0.46\cos(\pi) = 0.54 + 0.46 = 1.0000 \\
+w[3] &= w[5] = 0.54 - 0.46\cos(3\pi/4) = 0.54 - 0.46(-0.7071) = 0.54 + 0.3253 = 0.8653 \\
+w[2] &= w[6] = 0.54 - 0.46\cos(\pi/2) = 0.54 - 0 = 0.5400 \\
+w[1] &= w[7] = 0.54 - 0.46\cos(\pi/4) = 0.54 - 0.46(0.7071) = 0.54 - 0.3253 = 0.2147 \\
+w[0] &= w[8] = 0.54 - 0.46(1) = 0.0800
+\end{align}
+Pointwise multiplication $h_{Hm}[n] = h_d[n] \cdot w[n]$:
+\begin{align}
+h_{Hm}[4] &= 0.5000 \times 1.0000 = \mathbf{0.5000} \\
+h_{Hm}[3] = h_{Hm}[5] &= -0.318310 \times 0.8653 = \mathbf{-0.2754} \\
+h_{Hm}[2] = h_{Hm}[6] &= 0.0000 \times 0.5400 = \mathbf{0.0000} \\
+h_{Hm}[1] = h_{Hm}[7] &= 0.106103 \times 0.2147 = \mathbf{0.0228} \\
+h_{Hm}[0] = h_{Hm}[8] &= 0.0000 \times 0.0800 = \mathbf{0.0000}
+\end{align}
+DC Gain: $H_{Hm}(e^{j0}) = 0.5 + 2(-0.2754) + 2(0.0228) = 0.5 - 0.5508 + 0.0456 = \mathbf{-0.0052}$!
+Stopband attenuation at DC: $20\log_{10}(|-0.0052|) = \mathbf{-45.7 \text{ dB}}$. The Hamming window provides almost $30$ dB greater rejection than the rectangular window!
+
+\subsection{Example 22.3: 11-Tap Bandpass Filter Design using Bartlett Window}
+\textbf{Problem Statement:} Design an 11-tap causal FIR Bandpass filter with lower cutoff $\omega_{c1} = 0.3\pi$ and upper cutoff $\omega_{c2} = 0.6\pi$ using a Bartlett (triangular) window. Find all non-zero coefficients.
+
+\vspace{1mm}
+\noindent\textbf{Solution:}
+
+\noindent\textbf{Step 1: Parameters}
+\begin{itemize}
+    \item Length $N = 11$, Order $M = 10$, Center $\tau = (11-1)/2 = \mathbf{5}$.
+    \item Passband bandwidth: $\Delta\omega_c = \omega_{c2} - \omega_{c1} = 0.6\pi - 0.3\pi = 0.3\pi$.
+\end{itemize}
+
+\vspace{1mm}
+\noindent\textbf{Step 2: Ideal Bandpass Impulse Response}
+From \eqref{eq:hd_bpf}:
+\begin{equation}
+h_d[n] = \frac{\sin(0.6\pi(n - 5))}{\pi(n - 5)} - \frac{\sin(0.3\pi(n - 5))}{\pi(n - 5)}
+\end{equation}
+\begin{itemize}
+    \item $n = 5$: $h_d[5] = \frac{0.6\pi - 0.3\pi}{\pi} = \mathbf{0.3000}$.
+    \item $n = 4$ ($k = -1$): $h_d[4] = \frac{\sin(-0.6\pi)}{-\pi} - \frac{\sin(-0.3\pi)}{-\pi} = \frac{-0.951057}{-\pi} - \frac{-0.809017}{-\pi} = 0.30273 - 0.25752 = \mathbf{0.04521}$.
+    \item $n = 3$ ($k = -2$): $h_d[3] = \frac{\sin(-1.2\pi)}{-2\pi} - \frac{\sin(-0.6\pi)}{-2\pi} = \frac{0.587785}{-2\pi} - \frac{-0.951057}{-2\pi} = -0.09355 - 0.15137 = \mathbf{-0.24492}$.
+    \item $n = 2$ ($k = -3$): $h_d[2] = \frac{\sin(-1.8\pi)}{-3\pi} - \frac{\sin(-0.9\pi)}{-3\pi} = \frac{0.587785}{-3\pi} - \frac{-0.309017}{-3\pi} = -0.06237 - 0.03279 = \mathbf{-0.09516}$.
+    \item $n = 1$ ($k = -4$): $h_d[1] = \frac{\sin(-2.4\pi)}{-4\pi} - \frac{\sin(-1.2\pi)}{-4\pi} = \frac{-0.951057}{-4\pi} - \frac{0.587785}{-4\pi} = 0.07568 + 0.04677 = \mathbf{0.12245}$.
+    \item $n = 0$ ($k = -5$): $h_d[0] = \frac{\sin(-3\pi)}{-5\pi} - \frac{\sin(-1.5\pi)}{-5\pi} = 0 - \frac{1}{-5\pi} = \frac{1}{5\pi} = \mathbf{0.06366}$.
+\end{itemize}
+
+\vspace{1mm}
+\noindent\textbf{Step 3: Bartlett Window Evaluation}
+Using \eqref{eq:bartlett} with $M = 10$: $w_B[n] = 1 - \frac{|n - 5|}{5}$:
+\begin{align}
+w_B[5] &= 1.0, \quad w_B[4] = w_B[6] = 0.8, \quad w_B[3] = w_B[7] = 0.6 \\
+w_B[2] &= w_B[8] = 0.4, \quad w_B[1] = w_B[9] = 0.2, \quad w_B[0] = w_B[10] = 0.0
+\end{align}
+
+\vspace{1mm}
+\noindent\textbf{Step 4: Windowed Filter Coefficients $h[n] = h_d[n] \cdot w_B[n]$}
+\begin{align}
+h[5] &= 0.3000 \times 1.0 = \mathbf{0.3000} \\
+h[4] = h[6] &= 0.04521 \times 0.8 = \mathbf{0.03617} \\
+h[3] = h[7] &= -0.24492 \times 0.6 = \mathbf{-0.14695} \\
+h[2] = h[8] &= -0.09516 \times 0.4 = \mathbf{-0.03806} \\
+h[1] = h[9] &= 0.12245 \times 0.2 = \mathbf{0.02449} \\
+h[0] = h[10] &= 0.06366 \times 0.0 = \mathbf{0.0000}
+\end{align}
+The synthesized 11-tap Bandpass filter is:
+\begin{align}
+\mathbf{h[n] = \{ }& \mathbf{0.0, \; 0.0245, \; -0.0381, \; -0.1470, \; 0.0362, \; 0.3000,} \nonumber \\
+& \mathbf{0.0362, \; -0.1470, \; -0.0381, \; 0.0245, \; 0.0 \} }
+\end{align}
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{6. FACULTY INSIGHTS, COMMON PITFALLS \& EXAM TRAPS}
+
+\begin{itemize}
+    \item \textbf{Pitfall 1: Attempting to Reduce Gibbs Overshoot by Increasing $N$ with a Rectangular Window:}
+    This is the classic student blunder. Increasing $N$ makes the transition slope steeper, but \textbf{the peak ripple remains fixed at 8.95\%}. To reduce ripple amplitude, one MUST change the window function (e.g. to Hann, Hamming, or Blackman).
+    
+    \item \textbf{Pitfall 2: Forgetting L'H\^opital's Rule at the Center Tap $n = \tau$:}
+    When calculating $h_d[\tau]$, evaluating $\sin(0)/0$ numerically causes a divide-by-zero crash in code or undefined value on paper. Always write:
+    \begin{equation}
+    h_d[\tau] = \frac{\omega_c}{\pi} \quad \text{(for LPF)}, \quad 1 - \frac{\omega_c}{\pi} \quad \text{(for HPF)}, \quad \frac{\omega_{c2} - \omega_{c1}}{\pi} \quad \text{(for BPF)}
+    \end{equation}
+    
+    \item \textbf{Pitfall 3: Transition Bandwidth Formula Mismatch:}
+    The transition bandwidth $\Delta\omega$ in rad/sample must not be confused with normalized frequency $\Delta f = \Delta\omega / (2\pi)$. For Hamming, $\Delta\omega \approx 6.6\pi/N$ (often approximated as $8\pi/N$), which gives $\Delta f \approx 3.3/N$. Using $\Delta\omega$ instead of $\Delta f$ in length formulas produces an order-of-magnitude error.
+    
+    \item \textbf{Pitfall 4: Window Endpoints Being Zero:}
+    For the Hann window of length $N$, $w[0] = w[N-1] = 0$. This means the first and last taps of the filter will be exactly zero: $h[0] = h[N-1] = 0$. Students often think they made a math error. In reality, an $N$-tap Hann filter has only $N-2$ active non-zero taps!
+    
+    \item \textbf{Pitfall 5: Window Symmetry Parity:}
+    When designing a Highpass filter via windowing, $N$ \textbf{must be odd} (Type 1). If an even length $N$ is chosen, the resulting Type 2 filter has an inescapable zero at $\omega = \pi$, completely canceling the highpass passband!
+\end{itemize}
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{7. QUICK REVISION \& SUMMARY CHEAT-SHEET}
+
+\begin{table}[H]
+\centering
+\caption{FIR Filter Design via Windowing Method Quick Reference}
+\label{tab:quick_reference}
+\vspace{2mm}
+\resizebox{\textwidth}{!}{
+\begin{tabular}{ll}
+\toprule
+\textbf{Concept / Formula} & \textbf{Mathematical Definition / Operational Rule} \\
+\midrule
+\textbf{Windowing Equation} & $h[n] = h_d[n] \cdot w[n], \quad 0 \le n \le N-1$ \\
+\textbf{Frequency Domain Dual} & $H(e^{j\omega}) = \frac{1}{2\pi} H_d(e^{j\omega}) * W(e^{j\omega})$ (Periodic Convolution) \\
+\textbf{Ideal LPF Impulse Response} & $h_d[n] = \frac{\sin(\omega_c(n - \tau))}{\pi(n - \tau)}, \quad h_d[\tau] = \frac{\omega_c}{\pi}, \quad \tau = (N-1)/2$ \\
+\textbf{Gibbs Phenomenon} & Rectangular window produces fixed 8.95\% overshoot ($\sim 0.75$ dB ripple), $A_s = 21$ dB \\
+\textbf{Rectangular Window} & $w[n] = 1 \implies \Delta\omega = 4\pi/N, \quad \text{Peak Sidelobe } = -13 \text{ dB}, \quad A_s = 21 \text{ dB}$ \\
+\textbf{Bartlett Window} & $w[n] = 1 - \frac{2|n - \tau|}{N-1} \implies \Delta\omega = 8\pi/N, \quad \text{Peak Sidelobe } = -25 \text{ dB}, \quad A_s = 25 \text{ dB}$ \\
+\textbf{Hann Window} & $w[n] = 0.5 - 0.5\cos\left(\frac{2\pi n}{N-1}\right) \implies \Delta\omega = 8\pi/N, \quad \text{Peak Sidelobe } = -31 \text{ dB}, \quad A_s = 44 \text{ dB}$ \\
+\textbf{Hamming Window} & $w[n] = 0.54 - 0.46\cos\left(\frac{2\pi n}{N-1}\right) \implies \Delta\omega = 8\pi/N, \quad \text{Peak Sidelobe } = -41 \text{ dB}, \quad A_s = 53 \text{ dB}$ \\
+\textbf{Blackman Window} & $w[n] = 0.42 - 0.5\cos + 0.08\cos \implies \Delta\omega = 12\pi/N, \quad \text{Peak Sidelobe } = -57 \text{ dB}, \quad A_s = 74 \text{ dB}$ \\
+\textbf{Length Calculation} & $N \ge \frac{C}{\Delta f} = \frac{2\pi C}{\Delta\omega}$ (where $C = 0.9$ for Rect, $3.3$ for Hamming, $5.5$ for Blackman) \\
+\textbf{Universal Parity Rule} & Always select $N$ ODD (Type 1) to support all filter types without boundary zero restrictions \\
+\bottomrule
+\end{tabular}
+}
+\end{table}
 
 \end{document}
