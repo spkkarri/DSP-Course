@@ -9,7 +9,7 @@
 \usepackage{float}
 \usepackage{xcolor}
 
-\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Lecture 21: Linear-Phase FIR Filters: Characteristic Response \& Z-Plane Zero Constellations \\ \large (III B.Tech EEE)}
+\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Lecture 21: Linear phase FIR filter, characteristic response, location of zeros \\ \large (III B.Tech EEE)}
 \author{Comprehensive Lecture Notes \& Faculty Textbook Reference}
 \date{}
 
@@ -37,11 +37,11 @@
 
 \section*{Lecture Plan \& Objectives (40 Minutes Breakdown)}
 \begin{itemize}
-    \item \textbf{00:00 -- 05:00 (5 mins):} Motivation for Linear Phase: Phase distortion in multi-carrier communication, high-fidelity audio, biomedical ECG waveforms, and radar. Definitions of Phase Delay $\tau_p(\omega)$ and Group Delay $\tau_g(\omega)$.
-    \item \textbf{05:00 -- 14:00 (9 mins):} Mathematical Conditions for Linear Phase: Derivation of Strict Linear Phase ($\theta(\omega) = -\alpha \omega$) and Generalized Linear Phase ($\theta(\omega) = \beta - \alpha \omega$). Rigorous proof that linear phase forces impulse response symmetry ($h[n] = h[N-1-n]$) or antisymmetry ($h[n] = -h[N-1-n]$) with fixed delay $\alpha = (N-1)/2$.
-    \item \textbf{14:00 -- 24:00 (10 mins):} The Four Canonical Types of Linear-Phase FIR Filters: Mathematical derivations of the real amplitude function $A(\omega)$ for Types 1, 2, 3, and 4. Formal algebraic proofs for mandatory zeros at $\omega = 0$ ($z = 1$) and $\omega = \pi$ ($z = -1$), and establishing the filter selection suitability matrix.
-    \item \textbf{24:00 -- 30:00 (6 mins):} Complex Z-Plane Zero Constellation Geometry: Reciprocal polynomial symmetry $H(z) = \pm z^{-(N-1)} H(z^{-1})$ and the fundamental theorem of reciprocal zero quadruplets ($z_0, 1/z_0, z_0^*, 1/z_0^*$). Real axis pairs, unit-circle conjugate pairs, and boundary zero constraints.
-    \item \textbf{30:00 -- 38:00 (8 mins):} Step-by-Step Worked Numerical Examples: Complete analytical analysis of a 5-tap Type 1 FIR filter, derivation of mandatory zeros in a Type 2 highpass impossibility proof, and reverse synthesis of an 8-tap linear-phase filter from prescribed $z$-plane zero roots.
+    \item \textbf{00:00 -- 05:00 (5 mins):} Motivation for Linear Phase: The distortionless transmission condition. Definitions of Phase Delay $\tau_p(\omega)$ and Group Delay $\tau_g(\omega)$ and the origin of waveform dispersion.
+    \item \textbf{05:00 -- 14:00 (9 mins):} Mathematical Conditions for Linear Phase: Derivation of Strict Linear Phase ($\theta(\omega) = -\alpha \omega$) and Generalized Linear Phase ($\theta(\omega) = \beta - \alpha \omega$). Rigorous proof that linear phase requires impulse response symmetry ($h[n] = h[N-1-n]$) or antisymmetry ($h[n] = -h[N-1-n]$) with fixed delay $\alpha = (N-1)/2$.
+    \item \textbf{14:00 -- 24:00 (10 mins):} The Four Types of Linear-Phase FIR Filters: Mathematical derivations of the characteristic amplitude response $A(\omega)$ for Types 1, 2, 3, and 4. Formal proofs for mandatory boundary zeros at $\omega = 0$ ($z = 1$) and $\omega = \pi$ ($z = -1$), and filter selection suitability.
+    \item \textbf{24:00 -- 30:00 (6 mins):} Location of Zeros in the Complex Z-Plane: Reciprocal polynomial symmetry $H(z) = \pm z^{-(N-1)} H(z^{-1})$ and the reciprocal zero quadruplet theorem ($z_0, 1/z_0, z_0^*, 1/z_0^*$). Real axis pairs, unit-circle conjugate pairs, and boundary zero constraints.
+    \item \textbf{30:00 -- 38:00 (8 mins):} Step-by-Step Worked Numerical Examples: Complete analytical analysis of a 5-tap Type 1 FIR filter, proof of why Type 2 cannot be Highpass, and zero-location analysis of a linear-phase filter.
     \item \textbf{38:00 -- 40:00 (2 mins):} Faculty Insights, Common Misconceptions, and University Semester Exam Traps.
 \end{itemize}
 
@@ -55,9 +55,9 @@ By the end of this lecture, students will be able to:
     \item \textbf{Classify} any linear-phase FIR filter into Type 1, Type 2, Type 3, or Type 4 based on its length $N$ (or order $M = N-1$) and impulse response symmetry.
     \item \textbf{Formulate} the real-valued amplitude function $A(\omega)$ for each of the four FIR filter types.
     \item \textbf{Prove} algebraically why Type 2 filters possess a mandatory transmission zero at $\omega = \pi$, Type 3 filters at $\omega = 0$ and $\omega = \pi$, and Type 4 filters at $\omega = 0$.
-    \item \textbf{Evaluate} the suitability of each filter type for Lowpass, Highpass, Bandpass, Bandstop, Differentiator, and Hilbert Transformer applications.
+    \item \textbf{Evaluate} the suitability of each filter type for Lowpass, Highpass, Bandpass, and Bandstop filter applications based on boundary zeros.
     \item \textbf{Map} zeros of linear-phase FIR systems in the complex $z$-plane, demonstrating the existence of reciprocal conjugate quadruplets.
-    \item \textbf{Synthesize} linear-phase transfer functions $H(z)$ and difference equations directly from specified zero constellations.
+    \item \textbf{Synthesize} linear-phase transfer functions $H(z)$ and evaluate zero constellations algebraically.
 \end{enumerate}
 
 \noindent\rule{\textwidth}{0.5pt}
@@ -264,7 +264,7 @@ where $c[k] = 2h[\alpha + k]$:
     \item At $\omega = 0$: $\sin(0) = 0 \implies \mathbf{A_3(0) = 0 \iff H(1) = 0}$.
     \item At $\omega = \pi$: $\sin(k\pi) = 0 \implies \mathbf{A_3(\pi) = 0 \iff H(-1) = 0}$.
 \end{itemize}
-\textbf{Fundamental Consequence:} Because it possesses mandatory zeros at both DC ($\omega = 0$) and Nyquist ($\omega = \pi$), \textbf{Type 3 CANNOT be Lowpass, Highpass, or Bandstop}. It is strictly suitable only for \textbf{Bandpass filters, Hilbert Transformers, and Differentiators}.
+\textbf{Fundamental Consequence:} Because it possesses mandatory zeros at both DC ($\omega = 0$) and Nyquist ($\omega = \pi$), \textbf{Type 3 CANNOT be Lowpass, Highpass, or Bandstop}. It is strictly suitable only for \textbf{Bandpass filters}.
 
 \subsection{3.4 Type 4: Antisymmetric Impulse Response, $N$ Even ($M$ Odd)}
 Here, $h[n] = -h[N-1-n]$ and $N$ is even, so $\alpha = (N-1)/2$ is a half-integer.
@@ -287,7 +287,7 @@ However, at $\omega = \pi$:
 \begin{equation}
 A_4(\pi) = \sum_{k=1}^{N/2} d[k] \sin\left( \pi k - \frac{\pi}{2} \right) = \sum_{k=1}^{N/2} d[k] (-1)^{k-1} \ne 0
 \end{equation}
-\textbf{Fundamental Consequence:} Because $H(1) = 0$, a \textbf{Type 4 FIR filter can NEVER be used as a Lowpass or Bandstop filter}. However, because $A_4(\pi) \ne 0$, it is the \textbf{ideal structure for wideband Differentiators and Hilbert Transformers}.
+\textbf{Fundamental Consequence:} Because $H(1) = 0$, a \textbf{Type 4 FIR filter can NEVER be used as a Lowpass or Bandstop filter}. However, because $A_4(\pi) \ne 0$, it can be used for \textbf{Highpass and Bandpass filters} (bearing in mind the constant $90^\circ$ phase shift).
 
 \begin{figure}[H]
 \centering
@@ -301,7 +301,7 @@ Table~\ref{tab:fir_types_audit} provides a rigorous faculty reference for the fo
 
 \begin{table}[H]
 \centering
-\caption{Comprehensive Architectural Audit of the Four Linear-Phase FIR Filter Types}
+\caption{Comprehensive Comparison of the Four Linear-Phase FIR Filter Types}
 \label{tab:fir_types_audit}
 \vspace{2mm}
 \resizebox{\textwidth}{!}{
@@ -309,10 +309,10 @@ Table~\ref{tab:fir_types_audit} provides a rigorous faculty reference for the fo
 \toprule
 \textbf{Type} & \textbf{Symmetry} & \textbf{Length $N$} & \textbf{Delay $\alpha$} & \textbf{Amplitude Function $A(\omega)$} & \textbf{Mandatory Zeros} & \textbf{Allowable Filter Types} \\
 \midrule
-\textbf{Type 1} & $h[n] = h[N-1-n]$ & Odd ($M$ Even) & Integer & $\sum_{k=0}^{(N-1)/2} a[k] \cos(\omega k)$ & None & \textbf{LPF, HPF, BPF, BSF} \\
+\textbf{Type 1} & $h[n] = h[N-1-n]$ & Odd ($M$ Even) & Integer & $\sum_{k=0}^{(N-1)/2} a[k] \cos(\omega k)$ & None & \textbf{LPF, HPF, BPF, BSF} (Universal) \\
 \textbf{Type 2} & $h[n] = h[N-1-n]$ & Even ($M$ Odd) & Half-Integer & $\sum_{k=1}^{N/2} b[k] \cos(\omega(k-1/2))$ & $\omega = \pi$ ($z = -1$) & \textbf{LPF, BPF} (No HPF/BSF) \\
-\textbf{Type 3} & $h[n] = -h[N-1-n]$ & Odd ($M$ Even) & Integer & $\sum_{k=1}^{(N-1)/2} c[k] \sin(\omega k)$ & $\omega = 0, \pi$ ($z = \pm 1$) & \textbf{BPF, Diff, Hilbert} (No LPF/HPF/BSF) \\
-\textbf{Type 4} & $h[n] = -h[N-1-n]$ & Even ($M$ Odd) & Half-Integer & $\sum_{k=1}^{N/2} d[k] \sin(\omega(k-1/2))$ & $\omega = 0$ ($z = 1$) & \textbf{HPF, BPF, Diff, Hilbert} (No LPF/BSF) \\
+\textbf{Type 3} & $h[n] = -h[N-1-n]$ & Odd ($M$ Even) & Integer & $\sum_{k=1}^{(N-1)/2} c[k] \sin(\omega k)$ & $\omega = 0, \pi$ ($z = \pm 1$) & \textbf{BPF only} (No LPF/HPF/BSF) \\
+\textbf{Type 4} & $h[n] = -h[N-1-n]$ & Even ($M$ Odd) & Half-Integer & $\sum_{k=1}^{N/2} d[k] \sin(\omega(k-1/2))$ & $\omega = 0$ ($z = 1$) & \textbf{HPF, BPF} (No LPF/BSF) \\
 \bottomrule
 \end{tabular}
 }
@@ -524,7 +524,7 @@ An antisymmetric filter of even length $N = 10$ is a \textbf{Type 4 FIR filter}.
     \item At $\omega = 0$: $A_4(0) = 0$ (mandatory zero, which is perfectly compatible with Highpass behavior since a Highpass filter must reject DC).
     \item At $\omega = \pi$: $A_4(\pi) \ne 0$ (no zero constraint, allowing passband transmission at Nyquist).
 \end{itemize}
-\textbf{Engineering Trade-Off:} While a Type 4 filter CAN achieve the magnitude response of a Highpass filter, it introduces a \textbf{constant $+90^\circ$ phase shift} ($\beta = \pi/2$), making $H(e^{j\omega}) = j A_4(\omega) e^{-j 4.5 \omega}$. In audio and general filtering, this $+90^\circ$ phase shift alters waveform symmetry. Hence, Type 1 with $N = 11$ is strongly preferred unless Hilbert/differential processing is specifically desired.
+\textbf{Engineering Trade-Off:} While a Type 4 filter can achieve highpass magnitude characteristics, it introduces a \textbf{constant $+90^\circ$ phase shift} ($\beta = \pi/2$), altering phase delay. Hence, a symmetric Type 1 filter with odd length $N = 11$ is the standard design choice for a linear-phase Highpass filter.
 
 \subsection{Example 21.3: Reverse Synthesis from Z-Plane Zero Constellation}
 \textbf{Problem Statement:} A linear-phase FIR filter is required to have:

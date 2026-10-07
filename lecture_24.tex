@@ -47,7 +47,7 @@
         \item \textbf{Example 24.2:} Complete synthesis of a $15$-point ($N=15$) LPF with $1$ optimized transition sample ($T_1 = 0.38$), proving $+29$ dB sidelobe suppression.
         \item \textbf{Example 24.3:} Design of an $8$-point ($N=8$) Type 2 even-length FIR filter with half-sample delay $\tau = 3.5$ and boundary zero enforcement.
     \end{itemize}
-    \item \textbf{38:00 -- 40:00 (2 mins):} Recursive Comb-Resonator Hardware Architecture, Exam Traps, Common Misconceptions, and Comprehensive Revision Cheat-Sheet.
+    \item \textbf{38:00 -- 40:00 (2 mins):} Design Comparison (Windowing vs. Frequency Sampling), Exam Traps, Common Misconceptions, and Comprehensive Revision Cheat-Sheet.
 \end{itemize}
 
 \noindent\rule{\textwidth}{0.5pt}
@@ -56,13 +56,13 @@
 By the end of this lecture, students will be able to:
 \begin{enumerate}
     \item \textbf{Formulate} the frequency sampling design problem by discretizing a desired continuous frequency response $H_d(e^{j\omega})$ at uniform frequencies $\omega_k = \frac{2\pi k}{N}$.
-    \item \textbf{Derive} the continuous interpolation formula $H(z)$ via frequency samples $H[k]$ and explain unit-circle pole-zero cancellation.
+    \item \textbf{Derive} the continuous interpolation formula $H(z)$ and $H(e^{j\omega})$ via frequency samples $H[k]$ using Dirichlet kernels.
     \item \textbf{Assign} exact linear-phase angles $\theta_k = -\left(\frac{N-1}{2}\right)\frac{2\pi k}{N}$ to ensure constant group delay $\tau = (N-1)/2$.
     \item \textbf{Apply} closed-form real-valued IDFT summation formulas for both $N$ odd (Type 1) and $N$ even (Type 2) linear-phase filters without complex arithmetic.
     \item \textbf{Analyze} the origin of inter-sample ripples and explain why naive brick-wall frequency sampling produces a severe $-16$ dB stopband floor.
     \item \textbf{Optimize} stopband rejection by introducing unconstrained transition samples ($T_1, T_2, T_3$) using the Rabiner--Gold lookup tables.
     \item \textbf{Synthesize} linear-phase FIR filters with odd and even lengths through complete step-by-step numerical calculations.
-    \item \textbf{Audit} the recursive frequency-sampling filter architecture (comb filter in cascade with second-order resonators) and evaluate stability under coefficient quantization.
+    \item \textbf{Compare} the performance trade-offs, design flexibility, and computational procedures between the Frequency Sampling Method and the Windowing Method.
 \end{enumerate}
 
 \noindent\rule{\textwidth}{0.5pt}
@@ -134,16 +134,29 @@ where $\Phi(\omega)$ is the complex **Dirichlet interpolation kernel**:
     \item \textbf{Inter-Sample Behavior:} Between the grid points, $H(e^{j\omega})$ is formed by the weighted superposition of shifted Dirichlet kernels $\frac{\sin(N(\omega - \omega_k)/2)}{N\sin((\omega - \omega_k)/2)}$. If adjacent samples differ sharply (e.g. from $1$ to $0$), large inter-sample ripples inevitably emerge!
 \end{enumerate}
 
-\subsection{2.3 Recursive Filter Architecture: Comb Filter and Resonator Bank}
-Equation \eqref{eq:interpolation_z} reveals a remarkable realization structure:
-\begin{equation}
-H(z) = H_{\text{comb}}(z) \cdot \sum_{k=0}^{N-1} H_k(z)
-\end{equation}
-\begin{itemize}
-    \item \textbf{Comb Filter $H_{\text{comb}}(z) = \frac{1 - z^{-N}}{N}$:} An all-zero FIR filter with $N$ zeros placed at the $N$ roots of unity: $z_k = e^{j 2\pi k / N}$.
-    \item \textbf{Resonator Bank $H_k(z) = \frac{H[k]}{1 - e^{j 2\pi k / N} z^{-1}}$:} A bank of parallel first-order recursive IIR sections, each with a single pole on the unit circle at $p_k = e^{j 2\pi k / N}$.
-\end{itemize}
-Because the pole of the $k$-th resonator sits at precisely the location of the $k$-th zero of the comb filter, \textbf{every pole is cancelled by a corresponding zero on the unit circle}! The overall system remains strictly an FIR filter with a finite impulse response of length $N$.
+\subsection{2.3 Comparison: Windowing Method vs. Frequency Sampling Method}
+It is pedagogically valuable to contrast the Frequency Sampling Method against the Windowing Method studied in Lectures 22 and 23 across foundational design metrics:
+
+\begin{table}[H]
+\centering
+\caption{Pedagogical Comparison: Windowing Method vs. Frequency Sampling Method}
+\label{tab:window_vs_freq_sampling}
+\vspace{2mm}
+\resizebox{\textwidth}{!}{
+\begin{tabular}{lll}
+\toprule
+\textbf{Design Metric} & \textbf{Windowing Method (Lectures 22--23)} & \textbf{Frequency Sampling Method (Lecture 24)} \\
+\midrule
+\textbf{Starting Domain} & Continuous desired frequency response $H_d(e^{j\omega})$ & Discrete frequency samples $H[k] = H_d(e^{j 2\pi k / N})$ \\
+\textbf{Mathematical Core} & Continuous inverse DTFT integral $\int_{-\pi}^{\pi}$ & Discrete inverse DFT (IDFT) summation $\frac{1}{N}\sum_{k=0}^{N-1}$ \\
+\textbf{Grid Point Accuracy} & Approximates $H_d(e^{j\omega})$ in mean-square sense & Matches $H_d(e^{j\omega})$ \textbf{exactly} at all $N$ grid points $\omega_k$ \\
+\textbf{Arbitrary Magnitude Curves} & Difficult if inverse DTFT integral is analytically intractable & Highly versatile; arbitrary sampled points are directly usable \\
+\textbf{Transition Band Control} & Dictated by window mainlobe width ($\Delta\omega \propto c/N$) & Controlled by inserting unconstrained transition samples $T_m$ \\
+\textbf{Inter-Sample Behavior} & Smooth rolloff dictated by window Fourier transform & Pronounced ringing if samples change abruptly without transition samples \\
+\bottomrule
+\end{tabular}
+}
+\end{table}
 
 \begin{figure}[H]
 \centering
@@ -531,8 +544,8 @@ Strict even symmetry about the half-sample center $\tau = 3.5$ is satisfied ($h[
     \item \textbf{Pitfall 4: Assuming Zero Ripple Between Sampling Points:}
     Because $H(e^{j\omega_k}) = H[k]$ is exact at grid frequencies, students frequently assume the filter perfectly passes or stops signals between bins. In reality, large interpolation ripples occur between grid points unless transition samples are introduced.
     
-    \item \textbf{Pitfall 5: Stability in Recursive Comb-Resonator Implementations:}
-    In hardware implementations of the recursive transfer function \eqref{eq:interpolation_z}, coefficients are stored with finite wordlength. If a resonator pole drifts outside the unit circle ($|p_k| > 1$), or if a pole fails to align exactly with a comb zero, the filter becomes unstable. The standard remedy is contraction: replace $z$ with $r z$ where $r = 1 - 2^{-12} \approx 0.99975$.
+    \item \textbf{Pitfall 5: Neglecting the Transition Bandwidth Penalty of Transition Samples:}
+    While introducing transition samples ($T_1, T_2$) dramatically improves stopband rejection (e.g., from $-16$ dB to $-45$ dB or $-75$ dB), each transition sample widens the transition region by one frequency bin spacing ($\Delta\omega = 2\pi/N$). To satisfy both a narrow transition band and deep stopband rejection, the total filter length $N$ must be increased proportionally.
 \end{itemize}
 
 \noindent\rule{\textwidth}{0.5pt}
@@ -553,7 +566,7 @@ Strict even symmetry about the half-sample center $\tau = 3.5$ is satisfied ($h[
 \textbf{Linear-Phase Assignment} & $\angle H[k] = -\left(\frac{N-1}{2}\right)\frac{2\pi k}{N}$ & Constant group delay $\tau = (N-1)/2$ \\
 \textbf{DC Bin Property} & $\angle H[0] = 0 \implies H[0] \in \mathbb{R}^+$ & Strictly real, non-negative value \\
 \textbf{Hermitian Symmetry} & $H[N-k] = H^*[k]$ & Ensures impulse response $h[n]$ is real \\
-\textbf{Interpolation Formula} & $H(z) = \frac{1 - z^{-N}}{N}\sum_{k=0}^{N-1}\frac{H[k]}{1 - z_k z^{-1}}$ & Comb filter zeros cancel resonator poles \\
+\textbf{Interpolation Formula} & $H(e^{j\omega}) = \sum_{k=0}^{N-1} H[k]\Phi\left(\omega - \frac{2\pi k}{N}\right)$ & Exact at grid points; Dirichlet interpolation between bins \\
 \textbf{Type 1 Formula ($N$ Odd)} & $h[n] = \frac{1}{N}\left[H[0] + 2\sum_{k=1}^{(N-1)/2} |H[k]|\cos\left(\frac{2\pi k}{N}(n - \tau)\right)\right]$ & Integer center delay $\tau = (N-1)/2$ \\
 \textbf{Type 2 Formula ($N$ Even)} & $h[n] = \frac{1}{N}\left[H[0] + 2\sum_{k=1}^{N/2-1} |H[k]|\cos\left(\frac{2\pi k}{N}(n - \tau)\right)\right]$ & Requires $H[N/2]=0$; half-sample delay \\
 \textbf{Naive Sidelobe Level} & Stopband peak $\approx \mathbf{-16 \text{ dB}}$ & Caused by step discontinuity \\

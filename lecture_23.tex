@@ -9,7 +9,7 @@
 \usepackage{float}
 \usepackage{xcolor}
 
-\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Lecture 23: Design of FIR Filters: Kaiser Window \& Systematic Procedures \\ \large (III B.Tech EEE)}
+\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Lecture 23: Design of FIR filter - windowing method (continued) \\ \large (III B.Tech EEE)}
 \author{Comprehensive Lecture Notes \& Faculty Textbook Reference}
 \date{}
 
@@ -37,11 +37,11 @@
 
 \section*{Lecture Plan \& Objectives (40 Minutes Breakdown)}
 \begin{itemize}
-    \item \textbf{00:00 -- 06:00 (6 mins):} The Inherent Limitation of Fixed Windows: The rigid, non-tunable trade-off between mainlobe width and sidelobe attenuation in classic windows (Hann, Hamming, Blackman). Why needing $55$ dB attenuation forces an over-engineered jump to Blackman ($74$ dB), incurring a severe $40\%$ penalty in filter length and DSP multiplier count.
+    \item \textbf{00:00 -- 06:00 (6 mins):} The Inherent Limitation of Fixed Windows: The rigid, non-tunable trade-off between mainlobe width and sidelobe attenuation in classic windows (Hann, Hamming, Blackman). Why needing $55$ dB attenuation forces an over-engineered jump to Blackman ($74$ dB), incurring a severe penalty in filter length $N$ and transition bandwidth.
     \item \textbf{06:00 -- 16:00 (10 mins):} Mathematical Foundations of the Kaiser Window: The zeroth-order modified Bessel function of the first kind $I_0(x)$ series expansion, the time-domain formulation $w_K[n]$, and the role of the shape parameter $\beta$ as a continuous dial interpolating from Rectangular ($\beta = 0$) to Hamming ($\beta \approx 5.4$) to Blackman ($\beta \approx 8.9$).
     \item \textbf{16:00 -- 24:00 (8 mins):} Empirical Kaiser Design Equations: Closed-form formulas for computing shape factor $\beta$ and required filter length $N$ directly from attenuation $A_s$ and normalized transition bandwidth $\Delta f$.
     \item \textbf{24:00 -- 30:00 (6 mins):} Systematic Multi-Band FIR Synthesis Protocol: Handling asymmetric ripple specs by enforcing $\delta = \min(\delta_p, \delta_s)$, computing cutoff frequencies, enforcing Type 1 odd parity ($N = \text{odd}$), and closed-form ideal formulations for LPF, HPF, BPF, and BSF (Notch) filters.
-    \item \textbf{30:00 -- 38:00 (8 mins):} Step-by-Step Worked Numerical Examples: Complete design of an industrial-grade Kaiser Lowpass filter ($A_s \ge 50$ dB), synthesis of a $50$ Hz biomedical power-line Notch (Bandstop) filter ($f_s = 500$ Hz, $A_s \ge 60$ dB), and an architectural hardware comparison between Kaiser and Blackman realizations.
+    \item \textbf{30:00 -- 38:00 (8 mins):} Step-by-Step Worked Numerical Examples: Complete design of an industrial-grade Kaiser Lowpass filter ($A_s \ge 50$ dB), synthesis of a $50$ Hz biomedical power-line Notch (Bandstop) filter ($f_s = 500$ Hz, $A_s \ge 60$ dB), and a comparative design evaluation between Kaiser and Blackman window designs.
     \item \textbf{38:00 -- 40:00 (2 mins):} Faculty Insights, Common Misconceptions, and University Semester Exam Traps.
 \end{itemize}
 
@@ -57,7 +57,7 @@ By the end of this lecture, students will be able to:
     \item \textbf{Estimate} the minimum required filter length $N$ from transition bandwidth $\Delta f$ and attenuation $A_s$.
     \item \textbf{Harmonize} asymmetric passband and stopband ripple tolerances ($\delta_p \ne \delta_s$) to ensure strict specification compliance.
     \item \textbf{Design} high-rejection Lowpass, Highpass, Bandpass, and Bandstop (Notch) filters meeting stringent industrial standards.
-    \item \textbf{Contrast} hardware resource consumption (multipliers, adders, registers) between optimal Kaiser designs and standard Blackman/Hamming implementations.
+    \item \textbf{Contrast} filter order, transition efficiency, and group delay between optimal Kaiser designs and standard fixed window implementations.
 \end{enumerate}
 
 \noindent\rule{\textwidth}{0.5pt}
@@ -412,23 +412,26 @@ h_{d,\text{BS}}[n] = \begin{cases}
 \end{equation}
 Multiplying by $w_K[n]$ synthesized with $\beta = 5.653$ yields the final $229$-tap notch filter.
 
-\subsection{Example 23.3: Architectural Audit: Kaiser vs. Blackman Window Design}
-\textbf{Problem Statement:} A telecommunications FIR channel-select filter requires a stopband attenuation of $A_s = 70$ dB with a transition bandwidth $\Delta f = 0.02$.
+\subsection{Example 23.3: Comparative Design Evaluation: Kaiser vs. Blackman Window Design}
+\textbf{Problem Statement:} A telecommunications FIR channel-select filter requires a stopband attenuation of $A_s = 70$ dB with a normalized transition bandwidth $\Delta f = 0.02$.
 \begin{enumerate}
     \item Determine the required filter length $N_{\text{Blck}}$ if designed using a Blackman window.
     \item Determine the required filter length $N_{\text{Kaiser}}$ and shape parameter $\beta$.
-    \item Compare the hardware implementation cost (multipliers, adders, registers) assuming a linear-phase folded direct-form realization.
+    \item Compare the design metrics (filter length $N$, group delay $\tau$, and transition width) and discuss the efficiency advantage of the Kaiser window over fixed windows.
 \end{enumerate}
 
 \vspace{1mm}
 \noindent\textbf{Solution:}
 
 \noindent\textbf{Step 1: Blackman Window Design}
-A Blackman window provides a fixed attenuation of $A_s = 74$ dB (which satisfies $70$ dB). Its transition bandwidth formula is:
+A Blackman window provides a fixed peak stopband attenuation of $A_s = 74$ dB (which satisfies the $\ge 70$ dB specification). Its normalized transition bandwidth is governed by:
 \begin{equation}
 \Delta f \approx \frac{5.5}{N_{\text{Blck}}} \implies N_{\text{Blck}} \ge \frac{5.5}{0.02} = 275
 \end{equation}
-Rounding to the nearest odd integer: $\mathbf{N_{\text{Blck}} = 275 \text{ taps}}$.
+Rounding to the nearest odd integer: $\mathbf{N_{\text{Blck}} = 275 \text{ taps}}$. The corresponding group delay is:
+\begin{equation}
+\tau_{\text{Blck}} = \frac{N_{\text{Blck}} - 1}{2} = \frac{275 - 1}{2} = \mathbf{137 \text{ samples}}
+\end{equation}
 
 \vspace{1mm}
 \noindent\textbf{Step 2: Kaiser Window Design}
@@ -437,30 +440,35 @@ For $A_s = 70$ dB:
 \beta &= 0.1102(70 - 8.7) = 0.1102(61.3) = \mathbf{6.755} \\
 N_{\text{Kaiser}} &\ge \frac{70 - 7.95}{14.36 \times 0.02} + 1 = \frac{62.05}{0.2872} + 1 = 216.05 + 1 = 217.05 \implies \mathbf{N_{\text{Kaiser}} = 219 \text{ taps}}
 \end{align}
+The corresponding group delay is:
+\begin{equation}
+\tau_{\text{Kaiser}} = \frac{N_{\text{Kaiser}} - 1}{2} = \frac{219 - 1}{2} = \mathbf{109 \text{ samples}}
+\end{equation}
 
 \vspace{1mm}
-\noindent\textbf{Step 3: Hardware Architectural Complexity Audit}
-Exploiting linear-phase coefficient symmetry ($h[n] = h[N-1-n]$), a folded FIR structure requires $(N+1)/2$ multipliers and $N-1$ delay registers:
+\noindent\textbf{Step 3: Comparative Design Evaluation}
 
 \begin{table}[H]
 \centering
-\caption{Hardware Complexity Comparison: Blackman vs. Kaiser Realization}
+\caption{Filter Design Comparison: Blackman vs. Kaiser Window Synthesis}
 \label{tab:hardware_audit_ex3}
 \vspace{2mm}
 \resizebox{\textwidth}{!}{
 \begin{tabular}{lccc}
 \toprule
-\textbf{Hardware Resource} & \textbf{Blackman ($N=275$)} & \textbf{Kaiser ($N=219$)} & \textbf{Hardware Savings with Kaiser} \\
+\textbf{Design Metric} & \textbf{Blackman Window ($N=275$)} & \textbf{Kaiser Window ($N=219$)} & \textbf{Kaiser Advantage} \\
 \midrule
-\textbf{Delay Registers ($z^{-1}$)} & $274$ & $218$ & \textbf{56 registers saved ($-20.4\%$)} \\
-\textbf{Multipliers (Folded)}       & $(275+1)/2 = 138$ & $(219+1)/2 = 110$ & \textbf{28 multipliers saved ($-20.3\%$)} \\
-\textbf{Adders}                     & $274$ & $218$ & \textbf{56 adders saved ($-20.4\%$)} \\
-\textbf{Processing Latency ($\tau$)}& $137 \text{ samples}$ & $109 \text{ samples}$ & \textbf{28 samples lower latency} \\
+\textbf{Stopband Attenuation ($A_s$)} & $74$ dB (fixed, over-designed) & $70$ dB (exact match) & Exact specification compliance \\
+\textbf{Filter Length ($N$ taps)}     & $275$ taps & $219$ taps & \textbf{56 taps saved ($-20.4\%$)} \\
+\textbf{Group Delay ($\tau$)}         & $137$ samples & $109$ samples & \textbf{28 samples lower latency} \\
+\textbf{Normalized Transition ($\Delta f$)} & $\frac{5.5}{275} = 0.020$ & $\frac{70 - 7.95}{14.36 \times 218} = 0.0198 \le 0.02$ & Fully meets bandwidth spec \\
 \bottomrule
 \end{tabular}
 }
 \end{table}
-By tuning the window precisely to the 70 dB requirement rather than the over-engineered 74 dB of Blackman, Kaiser design yields an immediate **$20\%$ reduction in silicon area, power dissipation, and latency**!
+
+\noindent\textbf{Pedagogical Takeaway:}
+Fixed windows such as Blackman have predetermined attenuation values ($74$ dB). When the user specification is $70$ dB, the fixed window forces the filter to be over-engineered, requiring $N=275$ taps. The Kaiser window, by allowing independent and continuous adjustment of $\beta$ to match $70$ dB exactly, reduces the required filter order from $274$ to $218$, saving over **$20\%$ in tap length and processing latency** while strictly satisfying the transition bandwidth requirement.
 
 \noindent\rule{\textwidth}{0.5pt}
 
@@ -504,7 +512,7 @@ By tuning the window precisely to the 70 dB requirement rather than the over-eng
 \textbf{Required Filter Length $N$} & $N \ge \frac{A_s - 7.95}{14.36 \cdot \Delta f} + 1, \quad \Delta f = \frac{|\omega_s - \omega_p|}{2\pi}$ (Round UP to next ODD integer) \\
 \textbf{Tuning Extremes} & $\beta = 0 \to \text{Rectangular}; \quad \beta \approx 5.4 \to \text{Hamming}; \quad \beta \approx 8.9 \to \text{Blackman}$ \\
 \textbf{Notch Filter Ideal Tap} & $h_{d,\text{BS}}[n] = 1 - \frac{\omega_{c2} - \omega_{c1}}{\pi}$ for $n=\tau$; $\; \frac{\sin(\omega_{c1}(n-\tau)) - \sin(\omega_{c2}(n-\tau))}{\pi(n-\tau)}$ for $n \ne \tau$ \\
-\textbf{Hardware Folding Savings} & Exactly $(N+1)/2$ multipliers required for symmetric Type 1 linear-phase implementation \\
+\textbf{Kaiser Window Advantage} & Continuous parameter tuning ($\beta, N$) avoids over-design, saving $20\text{--}40\%$ in filter order compared to fixed windows \\
 \bottomrule
 \end{tabular}
 }
