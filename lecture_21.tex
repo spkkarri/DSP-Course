@@ -9,7 +9,7 @@
 \usepackage{float}
 \usepackage{xcolor}
 
-\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Lecture 21: Linear phase FIR filter, characteristic response, location of zeros \\ \large (III B.Tech EEE)}
+\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Lecture 21: Linear phase FIR filter, characteristic response, location of zeros \& moving average filters \\ \large (III B.Tech EEE)}
 \author{Comprehensive Lecture Notes \& Faculty Textbook Reference}
 \date{}
 
@@ -38,10 +38,11 @@
 \section*{Lecture Plan \& Objectives (40 Minutes Breakdown)}
 \begin{itemize}
     \item \textbf{00:00 -- 05:00 (5 mins):} Motivation for Linear Phase: The distortionless transmission condition. Definitions of Phase Delay $\tau_p(\omega)$ and Group Delay $\tau_g(\omega)$ and the origin of waveform dispersion.
-    \item \textbf{05:00 -- 14:00 (9 mins):} Mathematical Conditions for Linear Phase: Derivation of Strict Linear Phase ($\theta(\omega) = -\alpha \omega$) and Generalized Linear Phase ($\theta(\omega) = \beta - \alpha \omega$). Rigorous proof that linear phase requires impulse response symmetry ($h[n] = h[N-1-n]$) or antisymmetry ($h[n] = -h[N-1-n]$) with fixed delay $\alpha = (N-1)/2$.
-    \item \textbf{14:00 -- 24:00 (10 mins):} The Four Types of Linear-Phase FIR Filters: Mathematical derivations of the characteristic amplitude response $A(\omega)$ for Types 1, 2, 3, and 4. Formal proofs for mandatory boundary zeros at $\omega = 0$ ($z = 1$) and $\omega = \pi$ ($z = -1$), and filter selection suitability.
-    \item \textbf{24:00 -- 30:00 (6 mins):} Location of Zeros in the Complex Z-Plane: Reciprocal polynomial symmetry $H(z) = \pm z^{-(N-1)} H(z^{-1})$ and the reciprocal zero quadruplet theorem ($z_0, 1/z_0, z_0^*, 1/z_0^*$). Real axis pairs, unit-circle conjugate pairs, and boundary zero constraints.
-    \item \textbf{30:00 -- 38:00 (8 mins):} Step-by-Step Worked Numerical Examples: Complete analytical analysis of a 5-tap Type 1 FIR filter, proof of why Type 2 cannot be Highpass, and zero-location analysis of a linear-phase filter.
+    \item \textbf{05:00 -- 13:00 (8 mins):} Mathematical Conditions for Linear Phase: Derivation of Strict Linear Phase ($\theta(\omega) = -\alpha \omega$) and Generalized Linear Phase ($\theta(\omega) = \beta - \alpha \omega$). Rigorous proof that linear phase requires impulse response symmetry ($h[n] = h[N-1-n]$) or antisymmetry ($h[n] = -h[N-1-n]$) with fixed delay $\alpha = (N-1)/2$.
+    \item \textbf{13:00 -- 22:00 (9 mins):} The Four Types of Linear-Phase FIR Filters: Mathematical derivations of the characteristic amplitude response $A(\omega)$ for Types 1, 2, 3, and 4. Formal proofs for mandatory boundary zeros at $\omega = 0$ ($z = 1$) and $\omega = \pi$ ($z = -1$), and filter selection suitability.
+    \item \textbf{22:00 -- 28:00 (6 mins):} Location of Zeros in the Complex Z-Plane: Reciprocal polynomial symmetry $H(z) = \pm z^{-(N-1)} H(z^{-1})$ and the reciprocal zero quadruplet theorem ($z_0, 1/z_0, z_0^*, 1/z_0^*$).
+    \item \textbf{28:00 -- 34:00 (6 mins):} Moving Average (MA) Filters: Definition, impulse response, proof of linear phase (Type 1 or Type 2), Dirichlet sinc frequency response, pole-zero cancellation, and transmission nulls on the unit circle.
+    \item \textbf{34:00 -- 38:00 (4 mins):} Step-by-Step Worked Numerical Examples: Complete analytical analysis of a 5-tap Type 1 FIR filter and zero constellation verification.
     \item \textbf{38:00 -- 40:00 (2 mins):} Faculty Insights, Common Misconceptions, and University Semester Exam Traps.
 \end{itemize}
 
@@ -597,7 +598,64 @@ The impulse response sequence is:
 
 \noindent\rule{\textwidth}{0.5pt}
 
-\section{6. FACULTY INSIGHTS, COMMON PITFALLS \& EXAM TRAPS}
+\section{6. MOVING AVERAGE (MA) FILTERS: AN ELEMENTARY LINEAR-PHASE FIR FILTER}
+
+\subsection{6.1 Definition and Time-Domain Representation}
+An $M$-point Moving Average (MA) filter is one of the most widely utilized elementary digital filters in signal smoothing and baseline estimation. It computes the local arithmetic mean of the current input sample and the preceding $M-1$ samples:
+\begin{equation}
+y[n] = \frac{1}{M} \sum_{k=0}^{M-1} x[n-k] = \frac{1}{M}\big(x[n] + x[n-1] + \dots + x[n-M+1]\big)
+\label{eq:ma_def}
+\end{equation}
+Comparing \eqref{eq:ma_def} with the standard convolution sum $y[n] = \sum_{k=0}^{M-1} h[k]x[n-k]$, the impulse response $h[n]$ is a rectangular pulse of length $M$:
+\begin{equation}
+h[n] = \begin{cases} \frac{1}{M}, & 0 \le n \le M-1 \\ 0, & \text{otherwise} \end{cases}
+\end{equation}
+
+\subsection{6.2 Linear-Phase Verification}
+For all indices $0 \le n \le M-1$:
+\begin{equation}
+h[n] = h[M-1-n] = \frac{1}{M}
+\end{equation}
+Because the impulse response possesses perfect even symmetry about its center $\alpha = \frac{M-1}{2}$:
+\begin{itemize}
+    \item When $M$ is odd, the Moving Average filter is a **Type 1 Linear-Phase FIR Filter** with integer group delay $\tau = \frac{M-1}{2}$ samples.
+    \item When $M$ is even, the Moving Average filter is a **Type 2 Linear-Phase FIR Filter** with half-integer group delay $\tau = \frac{M-1}{2}$ samples.
+\end{itemize}
+Thus, the moving average filter is fundamentally a **distortionless linear-phase FIR filter**.
+
+\subsection{6.3 Frequency Response and Dirichlet Sinc Spectrum}
+Taking the DTFT of $h[n]$:
+\begin{equation}
+H(e^{j\omega}) = \frac{1}{M} \sum_{n=0}^{M-1} e^{-j\omega n} = \frac{1}{M} \frac{1 - e^{-j M \omega}}{1 - e^{-j\omega}}
+\end{equation}
+Factoring out the half-angle phase factors:
+\begin{equation}
+H(e^{j\omega}) = \frac{1}{M} \frac{e^{-j M \omega / 2}\big(e^{j M \omega / 2} - e^{-j M \omega / 2}\big)}{e^{-j\omega/2}\big(e^{j\omega/2} - e^{-j\omega/2}\big)} = \left[ \frac{\sin(M\omega/2)}{M\sin(\omega/2)} \right] e^{-j \left(\frac{M-1}{2}\right)\omega}
+\end{equation}
+The amplitude response $A(\omega)$ is the periodic discrete Dirichlet sinc function:
+\begin{equation}
+\mathbf{A(\omega) = \frac{\sin(M\omega/2)}{M\sin(\omega/2)}}, \quad \mathbf{\theta(\omega) = -\left(\frac{M-1}{2}\right)\omega}
+\end{equation}
+At DC ($\omega = 0$), by L'Hôpital's rule, $A(0) = 1$. As frequency increases, $|A(\omega)|$ rolls off, exhibiting a lowpass filtering characteristic.
+
+\subsection{6.4 Z-Plane Analysis and Transmission Nulls}
+The system function in the $z$-domain is:
+\begin{equation}
+H(z) = \frac{1}{M} \sum_{n=0}^{M-1} z^{-n} = \frac{1}{M} \frac{1 - z^{-M}}{1 - z^{-1}} = \frac{1}{M} \frac{z^M - 1}{z^{M-1}(z - 1)}
+\end{equation}
+\begin{itemize}
+    \item The roots of the numerator $z^M - 1 = 0$ are the $M$ roots of unity: $z_k = e^{j \frac{2\pi k}{M}}$, for $k = 0, 1, \dots, M-1$.
+    \item The denominator has a pole at $z = 1$ ($k=0$) and $M-1$ poles at the origin $z=0$.
+    \item The pole at $z=1$ cancels the root at $z=1$, leaving exactly $M-1$ transmission zeros uniformly spaced on the unit circle:
+    \begin{equation}
+    \mathbf{z_k = e^{j \frac{2\pi k}{M}}}, \quad k = 1, 2, \dots, M-1
+    \end{equation}
+\end{itemize}
+These $M-1$ unit-circle zeros produce exact transmission nulls (notches) at harmonic frequencies $\omega_k = \frac{2\pi k}{M}$.
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{7. FACULTY INSIGHTS, COMMON PITFALLS \& EXAM TRAPS}
 
 \begin{itemize}
     \item \textbf{Pitfall 1: Confusing Order $M$ with Length $N$ in Formulas:}
@@ -618,11 +676,11 @@ The impulse response sequence is:
 
 \noindent\rule{\textwidth}{0.5pt}
 
-\section{7. QUICK REVISION \& SUMMARY CHEAT-SHEET}
+\section{8. QUICK REVISION \& SUMMARY CHEAT-SHEET}
 
 \begin{table}[H]
 \centering
-\caption{Linear-Phase FIR Filters Quick Reference Reference Sheet}
+\caption{Linear-Phase FIR Filters Quick Reference Sheet}
 \label{tab:quick_reference}
 \vspace{2mm}
 \resizebox{\textwidth}{!}{
@@ -641,6 +699,7 @@ The impulse response sequence is:
 \textbf{Polynomial Symmetry} & $H(z) = \pm z^{-(N-1)} H(z^{-1})$ \\
 \textbf{Reciprocal Quadruplet} & If $z_0 = r e^{j\theta}$ is a zero, $\{r e^{j\theta}, r e^{-j\theta}, \frac{1}{r} e^{-j\theta}, \frac{1}{r} e^{j\theta}\}$ are all zeros \\
 \textbf{Unit Circle Zeros} & Self-reciprocal pairs $e^{\pm j\phi}$ (provide stopband transmission nulls) \\
+\textbf{Moving Average Filter} & $h[n] = \frac{1}{M}$; $A(\omega) = \frac{\sin(M\omega/2)}{M\sin(\omega/2)}$; Linear phase with zeros at $e^{j 2\pi k / M}$ ($k \ne 0$) \\
 \bottomrule
 \end{tabular}
 }

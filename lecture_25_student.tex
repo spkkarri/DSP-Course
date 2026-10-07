@@ -1,0 +1,179 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amsfonts,amssymb}
+\usepackage{graphicx}
+\usepackage{geometry}
+\geometry{margin=1in}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{float}
+\usepackage{xcolor}
+
+\definecolor{darkbg}{HTML}{0d121f}
+\definecolor{lighttext}{HTML}{e2e8f0}
+\definecolor{primary}{HTML}{8b5cf6}
+\definecolor{secondary}{HTML}{0dd5c5}
+\definecolor{accent}{HTML}{10b981}
+
+\pagecolor{darkbg}
+\color{lighttext}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=secondary,
+    urlcolor=secondary,
+    citecolor=accent
+}
+
+\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Student Lecture Notes — Lecture 25 \\ \large Design of IIR Filters — Bilinear Transformation \& Matched Z-Transform}
+\author{III B.Tech EEE — Core Exam Preparation Guide}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{Core Concept of the Bilinear Transformation (BLT)}
+
+\subsection{Definition \& Conformal Mapping}
+The \textbf{Bilinear Transformation} is an algebraic conformal mapping derived from the trapezoidal numerical integration rule. It converts an analog filter $H_a(s)$ directly into a digital filter $H(z)$ by algebraic substitution:
+\begin{equation}
+\mathbf{s = \frac{2}{T} \left( \frac{1 - z^{-1}}{1 + z^{-1}} \right) = \frac{2}{T} \left( \frac{z - 1}{z + 1} \right)}
+\label{eq:blt_formula}
+\end{equation}
+where $T$ is the sampling interval (often chosen as $T = 1$ s or $T = 2$ s if unspecified).
+
+\subsection{Stability \& The Elimination of Aliasing}
+\begin{itemize}
+    \item \textbf{Guaranteed Stability:} The entire open left-half of the $s$-plane ($\text{Re}(s) < 0$) maps strictly to the interior of the unit circle ($|z| < 1$). Stable analog filters \textbf{always produce stable digital filters}.
+    \item \textbf{Zero Aliasing:} The entire continuous imaginary axis $s = j\Omega$ from $-\infty$ to $+\infty$ maps **one-to-one** onto the discrete unit circle $z = e^{j\omega}$ from $-\pi$ to $+\pi$.
+    \item \textbf{Universal Applicability:} Because there is no aliasing, BLT can design **Lowpass, Highpass, Bandpass, and Bandstop filters**!
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.72\textwidth]{images/iir_bilinear_transform_warping.png}
+\caption{Left: One-to-one mapping from $s$-plane to $z$-plane. Right: Non-linear frequency warping curve showing compression into the digital interval $[0, \pi]$.}
+\label{fig:blt_summary}
+\end{figure}
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{Frequency Warping \& Mandatory Pre-Warping}
+
+\subsection{The Frequency Warping Equation}
+Evaluating $s = \frac{2}{T}\left(\frac{1 - e^{-j\omega}}{1 + e^{-j\omega}}\right)$ yields the non-linear relationship between analog frequency $\Omega$ and digital frequency $\omega$:
+\begin{equation}
+\mathbf{\Omega = \frac{2}{T} \tan\left(\frac{\omega}{2}\right)} \iff \mathbf{\omega = 2 \arctan\left(\frac{\Omega T}{2}\right)}
+\end{equation}
+The infinite analog axis $[0, \infty)$ is non-linearly compressed into the finite digital interval $[0, \pi)$.
+
+\subsection{The Pre-Warping Rule}
+To ensure that the digital filter has its critical cutoff frequencies at the exact desired positions $\omega_p$ and $\omega_s$, the designer \textbf{must pre-warp} the digital frequencies into analog prototype frequencies:
+\begin{equation}
+\mathbf{\Omega_p = \frac{2}{T} \tan\left(\frac{\omega_p}{2}\right)}, \qquad \mathbf{\Omega_s = \frac{2}{T} \tan\left(\frac{\omega_s}{2}\right)}
+\end{equation}
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{The Matched Z-Transform (MZT) Method}
+
+The \textbf{Matched Z-Transform} maps poles and zeros individually via direct exponential substitution:
+\begin{equation}
+\mathbf{(s - s_k) \quad \longrightarrow \quad (1 - e^{s_k T} z^{-1})}
+\end{equation}
+\begin{itemize}
+    \item \textbf{Poles:} $s = p_k \implies z_k = e^{p_k T}$.
+    \item \textbf{Zeros at Infinity:} For an all-pole analog filter with $N$ poles and no finite zeros, add $(1 + z^{-1})$ factors in the numerator to ensure transmission nulls at Nyquist ($\omega = \pi$, $z = -1$):
+    \begin{equation}
+    H(z) = K_d \frac{(1 + z^{-1})^M}{\prod_{k=1}^N (1 - e^{p_k T} z^{-1})}
+    \end{equation}
+    \item \textbf{Gain Constant $K_d$:} Evaluated to match DC gain: $H(1) = H_a(0)$.
+\end{itemize}
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{Master Comparison Table of IIR Design Methods}
+
+\begin{table}[H]
+\centering
+\caption{Comparison of Impulse Invariance, Bilinear Transformation, and Matched Z-Transform}
+\label{tab:comp}
+\vspace{2mm}
+\resizebox{\textwidth}{!}{
+\begin{tabular}{lccc}
+\toprule
+\textbf{Feature} & \textbf{Impulse Invariance} & \textbf{Bilinear Transformation (BLT)} & \textbf{Matched Z-Transform (MZT)} \\
+\midrule
+\textbf{Substitution Rule} & Partial fractions: $\frac{A}{s-s_k} \to \frac{T A}{1 - e^{s_k T} z^{-1}}$ & $s = \frac{2}{T}\left(\frac{1 - z^{-1}}{1 + z^{-1}}\right)$ into $H_a(s)$ & $(s - a) \to (1 - e^{a T} z^{-1})$ \\
+\textbf{Aliasing} & **Severe aliasing** & **Zero aliasing** & Mild aliasing \\
+\textbf{Pre-Warping} & Not applicable & **Mandatory** ($\Omega = \frac{2}{T}\tan(\omega/2)$) & Not applicable \\
+\textbf{Filter Types} & LPF and BPF only (No HPF/BSF) & **Universal (LPF, HPF, BPF, BSF)** & LPF and BPF primarily \\
+\textbf{Stability} & Strictly preserved & Strictly preserved & Strictly preserved \\
+\bottomrule
+\end{tabular}
+}
+\end{table}
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{Standard Solved Exam Example}
+
+\textbf{Problem:} Design a 2nd-order digital Butterworth lowpass filter with a 3-dB cutoff frequency $\omega_c = 0.2\pi$ rad/sample using the Bilinear Transformation with $T = 1$ second.
+
+\vspace{1mm}
+\noindent\textbf{Solution:}
+
+\noindent\textbf{Step 1: Pre-Warp the Digital Cutoff Frequency}
+\begin{equation}
+\Omega_c = \frac{2}{T} \tan\left(\frac{\omega_c}{2}\right) = 2 \tan\left(\frac{0.2\pi}{2}\right) = 2 \tan(0.1\pi) = 2 \tan(18^\circ)
+\end{equation}
+Since $\tan(18^\circ) \approx 0.32492$:
+\begin{equation}
+\mathbf{\Omega_c = 2 \times 0.32492 = 0.6498 \text{ rad/s}}
+\end{equation}
+
+\noindent\textbf{Step 2: Normalized 2nd-Order Butterworth Analog Prototype}
+A 2nd-order Butterworth lowpass prototype has the transfer function:
+\begin{equation}
+H_a(s) = \frac{\Omega_c^2}{s^2 + \sqrt{2}\Omega_c s + \Omega_c^2}
+\end{equation}
+Substituting $\Omega_c = 0.6498$:
+\begin{equation}
+\Omega_c^2 = (0.6498)^2 \approx \mathbf{0.4223}, \qquad \sqrt{2}\Omega_c = \sqrt{2}(0.6498) \approx \mathbf{0.9190}
+\end{equation}
+\begin{equation}
+H_a(s) = \frac{0.4223}{s^2 + 0.9190 s + 0.4223}
+\end{equation}
+
+\noindent\textbf{Step 3: Apply the Bilinear Transformation ($T = 1$ s)}
+Substitute $s = 2\left(\frac{1 - z^{-1}}{1 + z^{-1}}\right)$:
+\begin{equation}
+H(z) = \frac{0.4223}{\left[2\left(\frac{1 - z^{-1}}{1 + z^{-1}}\right)\right]^2 + 0.9190\left[2\left(\frac{1 - z^{-1}}{1 + z^{-1}}\right)\right] + 0.4223}
+\end{equation}
+Multiply numerator and denominator by $(1 + z^{-1})^2$:
+\begin{align}
+\text{Numerator} &= 0.4223(1 + 2z^{-1} + z^{-2}) \\
+\text{Denominator} &= 4(1 - 2z^{-1} + z^{-2}) + 1.8380(1 - z^{-2}) + 0.4223(1 + 2z^{-1} + z^{-2}) \nonumber \\
+&= (4 + 1.8380 + 0.4223) + (-8 + 0.8446)z^{-1} + (4 - 1.8380 + 0.4223)z^{-2} \nonumber \\
+&= 6.2603 - 7.1554 z^{-1} + 2.5843 z^{-2}
+\end{align}
+Dividing throughout by $6.2603$:
+\begin{equation}
+\mathbf{H(z) = \frac{0.0675(1 + 2z^{-1} + z^{-2})}{1 - 1.1430 z^{-1} + 0.4128 z^{-2}}}
+\end{equation}
+Check: At $z=1$ (DC), $H(1) = \frac{0.0675(4)}{1 - 1.1430 + 0.4128} = \frac{0.2698}{0.2698} = 1.0$.
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{Essential Exam Checklist \& Traps}
+\begin{itemize}
+    \item[$\square$] \textbf{Pre-Warping First:} Never use $\Omega_c = \omega_c/T$ in BLT. Always pre-warp: $\Omega_c = \frac{2}{T}\tan(\omega_c/2)$.
+    \item[$\square$] \textbf{Cross-Term in Denominator:} $(1 - z^{-1})(1 + z^{-1}) = 1 - z^{-2}$. Do not introduce an erroneous $z^{-1}$ cross-term!
+    \item[$\square$] \textbf{Stability Check:} The constant term in the monic denominator ($a_2 = 0.4128$) represents $|z_1 z_2| = r^2$. Since $r = \sqrt{0.4128} \approx 0.64 < 1$, poles are stable.
+    \item[$\square$] \textbf{Zero at Nyquist:} All lowpass filters designed by BLT possess transmission zeros at $z = -1$ ($\omega = \pi$).
+\end{itemize}
+
+\end{document}

@@ -9,10 +9,6 @@
 \usepackage{float}
 \usepackage{xcolor}
 
-\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Lecture 24: Design of FIR filter - frequency sampling \\ \large (III B.Tech EEE)}
-\author{Comprehensive Lecture Notes \& Faculty Textbook Reference}
-\date{}
-
 \definecolor{darkbg}{HTML}{0d121f}
 \definecolor{lighttext}{HTML}{e2e8f0}
 \definecolor{primary}{HTML}{8b5cf6}
@@ -29,6 +25,10 @@
     citecolor=accent
 }
 
+\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Lecture 24: Design of IIR filters from analog filters - Impulse invariance \\ \large (III B.Tech EEE)}
+\author{Comprehensive Lecture Notes \& Faculty Textbook Reference}
+\date{}
+
 \begin{document}
 
 \maketitle
@@ -37,17 +37,12 @@
 
 \section*{Lecture Plan \& Objectives (40 Minutes Breakdown)}
 \begin{itemize}
-    \item \textbf{00:00 -- 05:00 (5 mins):} The Frequency Sampling Paradigm: Moving from time-domain window truncation to direct frequency-domain specification. Sampling the continuous desired frequency response $H_d(e^{j\omega})$ at $N$ uniformly spaced points $\omega_k = \frac{2\pi k}{N}$ on the unit circle.
-    \item \textbf{05:00 -- 14:00 (9 mins):} Mathematical Foundations \& The Continuous Interpolation Formula: Expressing $H(z)$ via the discrete frequency samples $H[k]$. Derivation of the interpolation Dirichlet kernel $P(\omega) = \frac{\sin(N\omega/2)}{N\sin(\omega/2)}$, pole-zero cancellation on the unit circle, and linear-phase constraint assignment $\theta_k = -\tau \omega_k$.
-    \item \textbf{14:00 -- 22:00 (8 mins):} Closed-Form Real-Valued IDFT Synthesis Formulas: Exploiting Hermitian symmetry ($H[N-k] = H^*[k]$) to eliminate complex exponentials. Explicit, computationally efficient formulas for Type 1 ($N$ odd) and Type 2 ($N$ even) linear-phase filters.
-    \item \textbf{22:00 -- 28:00 (6 mins):} Inter-Sample Ringing \& Transition Sample Optimization: Why naive brick-wall sampling yields disastrous stopband rejection (only $-16$ dB). The Rabiner--Gold--McGonegal optimization technique: inserting $1$, $2$, or $3$ unconstrained transition samples ($T_1, T_2, T_3$) to boost attenuation to $-45$ dB, $-75$ dB, and $-95$ dB.
-    \item \textbf{28:00 -- 38:00 (10 mins):} Step-by-Step Worked Numerical Examples:
-    \begin{itemize}
-        \item \textbf{Example 24.1:} Manual calculation of a $7$-point ($N=7$) Type 1 linear-phase LPF with symmetry verification.
-        \item \textbf{Example 24.2:} Complete synthesis of a $15$-point ($N=15$) LPF with $1$ optimized transition sample ($T_1 = 0.38$), proving $+29$ dB sidelobe suppression.
-        \item \textbf{Example 24.3:} Design of an $8$-point ($N=8$) Type 2 even-length FIR filter with half-sample delay $\tau = 3.5$ and boundary zero enforcement.
-    \end{itemize}
-    \item \textbf{38:00 -- 40:00 (2 mins):} Design Comparison (Windowing vs. Frequency Sampling), Exam Traps, Common Misconceptions, and Comprehensive Revision Cheat-Sheet.
+    \item \textbf{00:00 -- 06:00 (6 mins):} Foundations of IIR Filter Design: Comparison between FIR and IIR filters. Why digital IIR filters are synthesized by transforming continuous-time analog prototypes ($H_a(s) \to H(z)$).
+    \item \textbf{06:00 -- 16:00 (10 mins):} The Principle of Impulse Invariance: Sampling the continuous-time impulse response $h_a(t)$ at $t = n T_s$. Derivation of the discrete impulse response $h[n] = T_s h_a(n T_s)$ and the fundamental pole mapping rule $s_k \to z_k = e^{s_k T_s}$.
+    \item \textbf{16:00 -- 24:00 (8 mins):} Partial Fraction Expansion Synthesis: Expressing $H_a(s) = \sum_{k=1}^N \frac{A_k}{s - s_k}$ and transforming directly into causal digital poles $H(z) = \sum_{k=1}^N \frac{A_k}{1 - e^{s_k T_s} z^{-1}}$. Proof of stability preservation ($\text{Re}(s_k) < 0 \implies |z_k| < 1$).
+    \item \textbf{24:00 -- 30:00 (6 mins):} The Aliasing Dilemma: Analysis of frequency relationship $\omega = \Omega T_s$. The periodic spectral superposition $H(e^{j\omega}) = \sum_{k=-\infty}^\infty H_a\left(j\frac{\omega - 2\pi k}{T_s}\right)$. Why impulse invariance is strictly limited to band-limited Lowpass/Bandpass filters and fails for Highpass and Bandstop filters.
+    \item \textbf{30:00 -- 38:00 (8 mins):} Step-by-Step Worked Numerical Examples: Complete manual transformation of a 1st-order and 2nd-order analog Butterworth lowpass prototype into causal digital IIR filters with real biquad coefficients.
+    \item \textbf{38:00 -- 40:00 (2 mins):} Faculty Insights, Common Misconceptions, and University Semester Exam Traps.
 \end{itemize}
 
 \noindent\rule{\textwidth}{0.5pt}
@@ -55,523 +50,347 @@
 \section{1. LEARNING OBJECTIVES}
 By the end of this lecture, students will be able to:
 \begin{enumerate}
-    \item \textbf{Formulate} the frequency sampling design problem by discretizing a desired continuous frequency response $H_d(e^{j\omega})$ at uniform frequencies $\omega_k = \frac{2\pi k}{N}$.
-    \item \textbf{Derive} the continuous interpolation formula $H(z)$ and $H(e^{j\omega})$ via frequency samples $H[k]$ using Dirichlet kernels.
-    \item \textbf{Assign} exact linear-phase angles $\theta_k = -\left(\frac{N-1}{2}\right)\frac{2\pi k}{N}$ to ensure constant group delay $\tau = (N-1)/2$.
-    \item \textbf{Apply} closed-form real-valued IDFT summation formulas for both $N$ odd (Type 1) and $N$ even (Type 2) linear-phase filters without complex arithmetic.
-    \item \textbf{Analyze} the origin of inter-sample ripples and explain why naive brick-wall frequency sampling produces a severe $-16$ dB stopband floor.
-    \item \textbf{Optimize} stopband rejection by introducing unconstrained transition samples ($T_1, T_2, T_3$) using the Rabiner--Gold lookup tables.
-    \item \textbf{Synthesize} linear-phase FIR filters with odd and even lengths through complete step-by-step numerical calculations.
-    \item \textbf{Compare} the performance trade-offs, design flexibility, and computational procedures between the Frequency Sampling Method and the Windowing Method.
+    \item \textbf{Explain} why IIR digital filters are designed via transformation from continuous-time analog filter prototypes.
+    \item \textbf{Formulate} the impulse invariance criterion: $h[n] = T_s h_a(n T_s)$.
+    \item \textbf{Prove} that every simple pole in the $s$-plane at $s = s_k$ maps directly to a discrete pole in the $z$-plane at $z = e^{s_k T_s}$.
+    \item \textbf{Demonstrate} that the left-half of the $s$-plane ($\text{Re}(s) < 0$) maps strictly to the interior of the unit circle ($|z| < 1$), guaranteeing stability.
+    \item \textbf{Apply} the partial fraction expansion method to synthesize digital transfer functions $H(z)$ without computing convolution integrals.
+    \item \textbf{Analyze} the origin and severity of aliasing distortion in impulse invariance design.
+    \item \textbf{Deduce} why impulse invariance is entirely inappropriate for Highpass and Bandstop filter design.
+    \item \textbf{Synthesize} 1st-order and 2nd-order digital Butterworth filters from analog prototypes through complete numerical calculations.
 \end{enumerate}
 
 \noindent\rule{\textwidth}{0.5pt}
 
-\section{2. THE FREQUENCY SAMPLING PARADIGM: MATHEMATICAL FOUNDATIONS}
+\section{2. MOTIVATION: DESIGNING IIR FILTERS FROM ANALOG PROTOTYPES}
 
-\subsection{2.1 Motivation: Direct Frequency-Domain Filter Specification}
-In Lectures 22 and 23, we designed FIR filters using the **windowing method**, which begins in the continuous frequency domain ($H_d(e^{j\omega})$), transforms via inverse DTFT to the continuous infinite impulse response ($h_d[n]$), and truncates using a window sequence $w[n]$. However, the windowing method exhibits key limitations:
+\subsection{2.1 FIR vs. IIR Filtering Paradigms}
+In Lectures 21--23, we designed Finite Impulse Response (FIR) filters. FIR filters possess exact linear phase and guaranteed stability. However, achieving sharp transition roll-offs requires very high filter orders ($N = 50$ to $500$), incurring substantial memory and arithmetic latency.
+
+\textbf{Infinite Impulse Response (IIR) filters}, governed by the rational transfer function:
+\begin{equation}
+H(z) = \frac{\sum_{k=0}^M b_k z^{-k}}{1 + \sum_{k=1}^N a_k z^{-k}}
+\end{equation}
+exploit recursive feedback (poles). Consequently, an IIR filter can meet extremely stringent magnitude specifications with a fraction of the filter order ($N = 2$ to $8$) compared to an FIR filter.
+
+\subsection{2.2 Why Start from Continuous-Time Analog Filters?}
+Continuous-time analog filter theory (Butterworth, Chebyshev, Elliptic) is a mature, mathematically closed engineering discipline developed over a century. Closed-form polynomials exist that yield optimal, mathematically proven approximations to ideal brick-wall responses.
+
+Therefore, the standard strategy for designing a digital IIR filter is:
+\begin{enumerate}
+    \item Translate digital frequency specifications ($\omega_p, \omega_s, \delta_p, \delta_s$) into equivalent analog specifications ($\Omega_p, \Omega_s$).
+    \item Design an analog prototype filter $H_a(s)$ meeting those specifications.
+    \item Transform the continuous-time system function $H_a(s)$ into a causal discrete-time system function $H(z)$ via an algebraic or time-domain mapping.
+\end{enumerate}
+
+\noindent\textbf{Core Requirements for the Mapping Technique:}
 \begin{itemize}
-    \item Inverse DTFT integrals $\int_{-\pi}^{\pi} H_d(e^{j\omega}) e^{j\omega n} d\omega$ can rarely be evaluated analytically for non-standard, arbitrary, or experimentally measured frequency responses.
-    \item The designer has no direct control over the exact values of the frequency response at specific discrete frequency bins of interest.
+    \item \textbf{Preservation of Stability:} Poles in the stable left-half $s$-plane ($\text{Re}(s) < 0$) \textbf{MUST} map inside the unit circle of the $z$-plane ($|z| < 1$).
+    \item \textbf{Preservation of Frequency Characteristics:} The imaginary axis of the $s$-plane ($s = j\Omega$) must map onto the unit circle ($z = e^{j\omega}$) so that analog passbands and stopbands translate to digital passbands and stopbands.
 \end{itemize}
-The \textbf{Frequency Sampling Method} provides an elegant, highly flexible alternative: rather than approximating an infinite time-domain sinc function, we **directly specify the desired filter response at $N$ uniformly spaced frequency points on the unit circle**:
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{3. THE IMPULSE INVARIANCE METHOD: MATHEMATICAL FOUNDATIONS}
+
+\subsection{3.1 The Time-Domain Invariance Criterion}
+The philosophy of the \textbf{Impulse Invariance Method} is to produce a digital filter whose discrete impulse response $h[n]$ is an exact sampled replica of the continuous-time analog impulse response $h_a(t)$:
 \begin{equation}
-\omega_k = \frac{2\pi k}{N}, \quad k = 0, 1, \dots, N-1
-\label{eq:grid_frequencies}
+\mathbf{h[n] = T_s \, h_a(n T_s)}, \quad n = 0, 1, 2, \dots
+\label{eq:impulse_def}
 \end{equation}
-The discrete frequency samples $H[k]$ are defined simply by sampling $H_d(e^{j\omega})$:
+where $T_s$ is the sampling interval (seconds). The scaling factor $T_s$ is introduced to ensure that the digital filter's DC gain matches the analog filter's DC gain:
 \begin{equation}
-H[k] = \left. H_d(e^{j\omega}) \right|_{\omega = \frac{2\pi k}{N}} = H_d\left( e^{j \frac{2\pi k}{N}} \right)
-\label{eq:sample_definition}
+H(e^{j0}) = \sum_{n=0}^\infty h[n] = T_s \sum_{n=0}^\infty h_a(n T_s) \approx \int_0^\infty h_a(t) dt = H_a(0)
 \end{equation}
-The finite-length impulse response $h[n]$ ($0 \le n \le N-1$) is then obtained directly via the $N$-point **Inverse Discrete Fourier Transform (IDFT)**:
+
+\subsection{3.2 Mapping of Poles from s-Plane to z-Plane}
+Let the analog filter transfer function $H_a(s)$ be described by distinct poles $s_k$:
 \begin{equation}
-\mathbf{h[n] = \frac{1}{N} \sum_{k=0}^{N-1} H[k] \, e^{j \frac{2\pi k n}{N}}, \quad 0 \le n \le N-1}
-\label{eq:idft_basic}
+H_a(s) = \sum_{k=1}^N \frac{A_k}{s - s_k}
+\label{eq:ha_pfe}
+\end{equation}
+Taking the inverse Laplace transform of each simple pole term yields the causal analog impulse response:
+\begin{equation}
+h_a(t) = \sum_{k=1}^N A_k e^{s_k t} u(t)
+\end{equation}
+Sampling this response at $t = n T_s$ and multiplying by $T_s$ as per \eqref{eq:impulse_def}:
+\begin{equation}
+h[n] = T_s \sum_{k=1}^N A_k e^{s_k n T_s} u[n] = \sum_{k=1}^N \big(T_s A_k\big) \left(e^{s_k T_s}\right)^n u[n]
+\end{equation}
+Now, taking the unilateral $z$-transform of $h[n]$:
+\begin{align}
+H(z) &= \sum_{n=0}^\infty h[n] z^{-n} = \sum_{n=0}^\infty \left[ \sum_{k=1}^N T_s A_k \big(e^{s_k T_s}\big)^n \right] z^{-n} \nonumber \\
+     &= \sum_{k=1}^N T_s A_k \sum_{n=0}^\infty \left( e^{s_k T_s} z^{-1} \right)^n
+\end{align}
+Applying the standard geometric series summation $\sum_{n=0}^\infty a^n = \frac{1}{1 - a}$ (convergent for $|e^{s_k T_s} z^{-1}| < 1$):
+\begin{equation}
+\mathbf{H(z) = \sum_{k=1}^N \frac{T_s A_k}{1 - e^{s_k T_s} z^{-1}}}
+\label{eq:hz_pfe}
+\end{equation}
+
+\noindent\textbf{Fundamental Operational Rule of Impulse Invariance:}
+\begin{equation}
+\mathbf{\frac{A_k}{s - s_k} \quad \xrightarrow{\quad \text{Impulse Invariance} \quad} \quad \frac{T_s A_k}{1 - e^{s_k T_s} z^{-1}}}
+\end{equation}
+Every analog pole at $s = s_k$ maps directly to a discrete digital pole at:
+\begin{equation}
+\mathbf{z_k = e^{s_k T_s}}
 \end{equation}
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.92\textwidth]{images/fir_freq_sampling_principle.png}
-\caption{The frequency sampling paradigm. Left: $N=16$ uniform DFT frequency bins $z_k = e^{j 2\pi k / N}$ on the unit circle in the $z$-plane, distinguishing passband samples ($|H[k]|=1$) from stopband samples ($|H[k]|=0$). Right: Continuous reconstructed filter spectrum $|H(e^{j\omega})|$ matching the desired specification exactly at every sampling grid point $\omega_k = 2\pi k / N$.}
-\label{fig:freq_sampling_principle}
+\includegraphics[width=0.92\textwidth]{images/iir_impulse_invariance_mapping.png}
+\caption{Impulse Invariance transformation. Left: Periodic horizontal strips of width $\Omega_s = 2\pi/T_s$ in the $s$-plane mapping into the unit circle in the $z$-plane. Right: Frequency aliasing caused by the periodic superposition of shifted analog spectra $\sum H_a(j(\omega - 2\pi k)/T_s)$.}
+\label{fig:ii_mapping}
 \end{figure}
 
-\subsection{2.2 The Continuous Interpolation Formula}
-Because $h[n]$ is uniquely defined by the IDFT in \eqref{eq:idft_basic}, its continuous $z$-transform $H(z) = \sum_{n=0}^{N-1} h[n] z^{-n}$ can be expressed directly in terms of the frequency samples $H[k]$:
-\begin{align}
-H(z) &= \sum_{n=0}^{N-1} \left( \frac{1}{N} \sum_{k=0}^{N-1} H[k] \, e^{j \frac{2\pi k n}{N}} \right) z^{-n} \nonumber \\
-     &= \frac{1}{N} \sum_{k=0}^{N-1} H[k] \sum_{n=0}^{N-1} \left( e^{j \frac{2\pi k}{N}} z^{-1} \right)^n
-\end{align}
-Applying the finite geometric series identity $\sum_{n=0}^{N-1} a^n = \frac{1 - a^N}{1 - a}$ with $a = e^{j \frac{2\pi k}{N}} z^{-1}$:
+\subsection{3.3 Stability Mapping Analysis}
+Let an analog pole be written in rectangular form: $s_k = \sigma_k + j\Omega_k$.
+The corresponding digital pole is:
 \begin{equation}
-a^N = \left( e^{j \frac{2\pi k}{N}} z^{-1} \right)^N = e^{j 2\pi k} z^{-N} = 1 \cdot z^{-N} = z^{-N}
+z_k = e^{(\sigma_k + j\Omega_k)T_s} = e^{\sigma_k T_s} \cdot e^{j \Omega_k T_s} \implies |z_k| = e^{\sigma_k T_s}
 \end{equation}
-Substituting this yields the fundamental **Frequency Sampling Interpolation Formula**:
+\begin{enumerate}
+    \item \textbf{Stable Analog Poles ($\sigma_k < 0$):} If the analog pole lies in the left-half of the $s$-plane, then $\sigma_k < 0 \implies |z_k| = e^{\sigma_k T_s} < 1$. The pole maps \textbf{strictly inside the unit circle}!
+    \item \textbf{Marginally Stable Poles ($\sigma_k = 0$):} If the analog pole lies on the $j\Omega$-axis, $|z_k| = e^0 = 1$. The pole maps \textbf{on the unit circle}.
+    \item \textbf{Unstable Poles ($\sigma_k > 0$):} If the analog pole lies in the right-half plane, $|z_k| = e^{\sigma_k T_s} > 1$. The pole maps \textbf{outside the unit circle}.
+\end{enumerate}
+\textbf{Theorem:} The Impulse Invariance method \textbf{unconditionally preserves system stability}. A stable continuous-time filter always yields a strictly stable discrete-time digital filter.
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{4. THE FREQUENCY ALIASING PHENOMENON}
+
+\subsection{4.1 Frequency-Domain Mathematical Relationship}
+Because $h[n]$ is obtained by sampling $h_a(t)$ at uniform intervals $T_s$, the continuous-time Fourier transform $H_a(j\Omega)$ and the discrete-time Fourier transform $H(e^{j\omega})$ are related by the standard Poisson Summation formula:
 \begin{equation}
-\mathbf{H(z) = \frac{1 - z^{-N}}{N} \sum_{k=0}^{N-1} \frac{H[k]}{1 - e^{j \frac{2\pi k}{N}} z^{-1}}}
-\label{eq:interpolation_z}
+\mathbf{H(e^{j\omega}) = \sum_{k=-\infty}^\infty H_a\left( j \frac{\omega - 2\pi k}{T_s} \right)}
+\label{eq:aliasing_sum}
 \end{equation}
-Evaluating $H(z)$ on the unit circle ($z = e^{j\omega}$) yields the continuous frequency response:
+where normalized digital frequency $\omega$ is related to analog angular frequency $\Omega$ by:
 \begin{equation}
-\mathbf{H(e^{j\omega}) = \sum_{k=0}^{N-1} H[k] \, \Phi\left( \omega - \frac{2\pi k}{N} \right)}
-\label{eq:interpolation_freq}
-\end{equation}
-where $\Phi(\omega)$ is the complex **Dirichlet interpolation kernel**:
-\begin{equation}
-\Phi(\omega) = \frac{1}{N} \frac{1 - e^{-j N \omega}}{1 - e^{-j\omega}} = \frac{1}{N} e^{-j \left(\frac{N-1}{2}\right)\omega} \frac{\sin(N\omega/2)}{\sin(\omega/2)}
-\label{eq:dirichlet_kernel}
+\omega = \Omega T_s
 \end{equation}
 
-\noindent\textbf{Key Insights from the Interpolation Formula:}
+\subsection{4.2 Origin of Severe Aliasing Distortion}
+Equation \eqref{eq:aliasing_sum} shows that $H(e^{j\omega})$ is an infinite periodic superposition of replicas of $H_a(j\Omega)$ shifted by integer multiples of the sampling frequency $\Omega_s = \frac{2\pi}{T_s}$.
+
+Unlike discrete signals which can be passed through continuous anti-aliasing lowpass filters before digitization, \textbf{an analog filter transfer function $H_a(s)$ is a continuous mathematical rational function whose frequency response extends to $\Omega \to \pm\infty$}. 
+\begin{itemize}
+    \item Because $H_a(j\Omega)$ cannot be strictly band-limited to $|\Omega| \le \frac{\pi}{T_s}$, the high-frequency tails fold back into the baseband $[-\pi, \pi]$!
+    \item This spectral foldover causes **irreversible aliasing distortion** in the passband and transition band.
+\end{itemize}
+
+\subsection{4.3 Why Impulse Invariance Fails for Highpass and Bandstop Filters}
+For an analog Highpass filter, $|H_a(j\Omega)| \to 1$ as $\Omega \to \infty$. 
+When transformed via impulse invariance:
+\begin{itemize}
+    \item The non-zero high-frequency response aliases across all periodic copies $k = \pm 1, \pm 2, \dots$.
+    \item These infinite overlapping tails superimpose at DC ($\omega = 0$), causing the digital filter's response to be non-zero at DC!
+    \item \textbf{Fatal Consequence:} The designed filter completely fails to attenuate low frequencies.
+\end{itemize}
+\textbf{Golden Rule:} The Impulse Invariance method \textbf{CANNOT be used to design Highpass, Bandstop, or Differentiator filters}. It is strictly suitable only for **band-limited Lowpass and Bandpass filters** where the stopband attenuation at Nyquist ($\Omega = \pi/T_s$) is already sufficiently deep ($> 30\text{--}40$ dB).
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{5. SYSTEMATIC STEP-BY-STEP DESIGN PROTOCOL}
+
+To design a digital IIR lowpass filter from continuous specifications:
 \begin{enumerate}
-    \item \textbf{Exact Pointwise Matching:} At $\omega = \omega_m = \frac{2\pi m}{N}$, the kernel satisfies:
+    \item \textbf{Map Digital Frequencies to Analog:} Using $\Omega = \omega / T_s$, compute:
     \begin{equation}
-    \Phi\left( \frac{2\pi (m - k)}{N} \right) = \begin{cases} 1, & m = k \\ 0, & m \ne k \end{cases}
+    \Omega_p = \frac{\omega_p}{T_s}, \quad \Omega_s = \frac{\omega_s}{T_s}
     \end{equation}
-    Consequently, $H(e^{j 2\pi m / N}) \equiv H[m]$ exactly. There is zero approximation error at the sampling grid points!
-    \item \textbf{Inter-Sample Behavior:} Between the grid points, $H(e^{j\omega})$ is formed by the weighted superposition of shifted Dirichlet kernels $\frac{\sin(N(\omega - \omega_k)/2)}{N\sin((\omega - \omega_k)/2)}$. If adjacent samples differ sharply (e.g. from $1$ to $0$), large inter-sample ripples inevitably emerge!
+    \item \textbf{Determine Analog Filter Order $N$ and Cutoff $\Omega_c$:} For a Butterworth prototype with passband ripple $A_p$ (dB) and stopband attenuation $A_s$ (dB):
+    \begin{equation}
+    N \ge \frac{\log_{10}\left( \frac{10^{0.1 A_s} - 1}{10^{0.1 A_p} - 1} \right)}{2\log_{10}(\Omega_s / \Omega_p)}, \quad \Omega_c = \frac{\Omega_p}{\left(10^{0.1 A_p} - 1\right)^{1/(2N)}}
+    \end{equation}
+    \item \textbf{Formulate Analog Transfer Function $H_a(s)$:} Place $N$ poles symmetrically on the left-half circle of radius $\Omega_c$:
+    \begin{equation}
+    s_k = \Omega_c e^{j \frac{\pi}{2N}(2k + N - 1)}, \quad k = 1, 2, \dots, N
+    \end{equation}
+    \item \textbf{Perform Partial Fraction Expansion:} Express $H_a(s)$ as a sum of simple 1st-order terms:
+    \begin{equation}
+    H_a(s) = \sum_{k=1}^N \frac{A_k}{s - s_k}, \quad \text{where } A_k = \lim_{s \to s_k} (s - s_k) H_a(s)
+    \end{equation}
+    \item \textbf{Transform to Digital $H(z)$:} Replace each analog partial fraction using the mapping rule:
+    \begin{equation}
+    H(z) = \sum_{k=1}^N \frac{T_s A_k}{1 - e^{s_k T_s} z^{-1}}
+    \end{equation}
+    \item \textbf{Combine Conjugate Pairs into Real Biquads:} Combine complex conjugate terms to obtain strictly real denominator polynomials.
 \end{enumerate}
 
-\subsection{2.3 Comparison: Windowing Method vs. Frequency Sampling Method}
-It is pedagogically valuable to contrast the Frequency Sampling Method against the Windowing Method studied in Lectures 22 and 23 across foundational design metrics:
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{6. STEP-BY-STEP WORKED NUMERICAL EXAMPLES}
+
+\subsection{Example 24.1: First-Order Analog to Digital IIR Transformation}
+\textbf{Problem Statement:} An analog lowpass filter is described by the transfer function:
+\begin{equation}
+H_a(s) = \frac{2}{s + 2}
+\end{equation}
+Determine the digital filter transfer function $H(z)$ using the Impulse Invariance method with a sampling period of $T_s = 0.5$ seconds.
+
+\vspace{1mm}
+\noindent\textbf{Solution:}
+
+\noindent\textbf{Step 1: Identify Pole and Residue}
+$H_a(s)$ has a single real pole at $s_1 = -2$ with residue $A_1 = 2$.
+
+\noindent\textbf{Step 2: Apply the Impulse Invariance Mapping Rule}
+Using \eqref{eq:hz_pfe} with $T_s = 0.5$ s:
+\begin{equation}
+H(z) = \frac{T_s A_1}{1 - e^{s_1 T_s} z^{-1}}
+\end{equation}
+Substituting $A_1 = 2$, $s_1 = -2$, and $T_s = 0.5$:
+\begin{equation}
+s_1 T_s = (-2)(0.5) = -1.0
+\end{equation}
+\begin{equation}
+T_s A_1 = (0.5)(2) = 1.0
+\end{equation}
+\begin{equation}
+e^{s_1 T_s} = e^{-1} \approx 0.367879
+\end{equation}
+
+\noindent\textbf{Step 3: Formulate Digital Transfer Function}
+\begin{equation}
+\mathbf{H(z) = \frac{1}{1 - 0.3679 z^{-1}}}
+\end{equation}
+
+\noindent\textbf{Step 4: DC Gain Verification}
+\begin{itemize}
+    \item Analog DC Gain: $H_a(0) = \frac{2}{0 + 2} = 1.0$.
+    \item Digital DC Gain: At $z = 1$:
+    \begin{equation}
+    H(1) = \frac{1}{1 - 0.3679} = \frac{1}{0.6321} \approx \mathbf{1.5819}
+    \end{equation}
+    Notice that $H(1) \ne 1.0$ due to the discrete approximation of continuous integration by rectangular summation! If exact DC matching is desired, the gain is scaled by $(1 - e^{-1}) \approx 0.6321$.
+\end{itemize}
+
+\vspace{2mm}
+\subsection{Example 24.2: Second-Order Butterworth Filter Design with Complex Poles}
+\textbf{Problem Statement:} An analog second-order Butterworth lowpass filter with cutoff $\Omega_c = 1$ rad/s has the transfer function:
+\begin{equation}
+H_a(s) = \frac{1}{s^2 + \sqrt{2} s + 1}
+\end{equation}
+Design the corresponding digital IIR filter using impulse invariance with $T_s = 1$ second.
+
+\vspace{1mm}
+\noindent\textbf{Solution:}
+
+\noindent\textbf{Step 1: Factor the Denominator to Find Analog Poles}
+\begin{equation}
+s^2 + \sqrt{2} s + 1 = 0 \implies s_{1,2} = \frac{-\sqrt{2} \pm \sqrt{2 - 4}}{2} = -\frac{1}{\sqrt{2}} \pm j \frac{1}{\sqrt{2}} \approx -0.7071 \pm j 0.7071
+\end{equation}
+
+\noindent\textbf{Step 2: Partial Fraction Expansion}
+\begin{equation}
+H_a(s) = \frac{1}{(s - s_1)(s - s_2)} = \frac{A_1}{s - s_1} + \frac{A_2}{s - s_2}
+\end{equation}
+where:
+\begin{equation}
+A_1 = \left. \frac{1}{s - s_2} \right|_{s = s_1} = \frac{1}{s_1 - s_2} = \frac{1}{j 2(0.7071)} = \frac{1}{j \sqrt{2}} = -j \frac{1}{\sqrt{2}} \approx -j 0.7071
+\end{equation}
+By complex conjugate symmetry, $A_2 = A_1^* = j \frac{1}{\sqrt{2}} \approx +j 0.7071$.
+
+\noindent\textbf{Step 3: Map Poles to the Z-Domain}
+With $T_s = 1$ s:
+\begin{equation}
+z_1 = e^{s_1 T_s} = e^{-0.7071 + j 0.7071} = e^{-0.7071} \big[\cos(0.7071 \text{ rad}) + j \sin(0.7071 \text{ rad})\big]
+\end{equation}
+Noting that $0.7071 \text{ rad} = 0.7071 \times \frac{180^\circ}{\pi} \approx 40.51^\circ$:
+\begin{equation}
+e^{-0.7071} \approx 0.49307
+\end{equation}
+\begin{equation}
+\cos(40.51^\circ) \approx 0.76024, \quad \sin(40.51^\circ) \approx 0.64964
+\end{equation}
+\begin{equation}
+z_1 = 0.49307(0.76024 + j 0.64964) \approx \mathbf{0.3748 + j 0.3203}
+\end{equation}
+and $z_2 = z_1^* = \mathbf{0.3748 - j 0.3203}$.
+Magnitude: $|z_1| = e^{-0.7071} = 0.4931 < 1$ ($\implies$ strictly stable!).
+
+\noindent\textbf{Step 4: Formulate Digital Partial Fractions}
+\begin{equation}
+H(z) = \frac{T_s A_1}{1 - z_1 z^{-1}} + \frac{T_s A_2}{1 - z_2 z^{-1}}
+\end{equation}
+Substituting $T_s = 1$, $A_1 = -j/\sqrt{2}$, $A_2 = +j/\sqrt{2}$:
+\begin{equation}
+H(z) = \frac{-j \frac{1}{\sqrt{2}}}{1 - z_1 z^{-1}} + \frac{j \frac{1}{\sqrt{2}}}{1 - z_1^* z^{-1}}
+\end{equation}
+Putting over a common denominator:
+\begin{align}
+H(z) &= \frac{-j \frac{1}{\sqrt{2}}(1 - z_1^* z^{-1}) + j \frac{1}{\sqrt{2}}(1 - z_1 z^{-1})}{(1 - z_1 z^{-1})(1 - z_1^* z^{-1})} \nonumber \\
+     &= \frac{j \frac{1}{\sqrt{2}}(z_1^* - z_1) z^{-1}}{1 - 2\text{Re}(z_1) z^{-1} + |z_1|^2 z^{-2}}
+\end{align}
+Evaluating the numerator:
+\begin{equation}
+z_1^* - z_1 = -j 2\text{Im}(z_1) = -j 2(0.3203) = -j 0.6406
+\end{equation}
+\begin{equation}
+j \frac{1}{\sqrt{2}}(z_1^* - z_1) = j \frac{1}{\sqrt{2}}(-j 0.6406) = \frac{0.6406}{\sqrt{2}} \approx \mathbf{0.4530}
+\end{equation}
+Evaluating the denominator:
+\begin{equation}
+2\text{Re}(z_1) = 2(0.3748) = \mathbf{0.7496}
+\end{equation}
+\begin{equation}
+|z_1|^2 = (0.49307)^2 \approx \mathbf{0.2431}
+\end{equation}
+
+\noindent\textbf{Step 5: Final Real Digital Biquad Transfer Function}
+\begin{equation}
+\mathbf{H(z) = \frac{0.4530 z^{-1}}{1 - 0.7496 z^{-1} + 0.2431 z^{-2}}}
+\end{equation}
+Notice that all coefficients are strictly real, and the poles lie comfortably inside the unit circle at radius $r = 0.4931$.
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{7. FACULTY INSIGHTS, COMMON PITFALLS \& EXAM TRAPS}
+
+\begin{itemize}
+    \item \textbf{Pitfall 1: Applying Impulse Invariance to the Whole Function Instead of Partial Fractions:}
+    Students frequently try to substitute $s = \frac{1}{T_s}\ln(z)$ directly into $H_a(s)$. This produces a transcendental function, not a rational polynomial! Impulse invariance \textbf{must always be performed on partial fraction expansions}: $\frac{A}{s - s_k} \to \frac{T A}{1 - e^{s_k T} z^{-1}}$.
+    
+    \item \textbf{Pitfall 2: Forgetting the Scaling Factor $T_s$:}
+    Omitting $T_s$ in the numerator produces a filter whose gain is magnified by $1/T_s$. For $T_s = 0.001$ s, the gain will be $1000\times$ too high!
+    
+    \item \textbf{Pitfall 3: Believing Zero Locations Map via $z = e^{s T_s}$:}
+    \textbf{Only poles map via $z_k = e^{s_k T_s}$. ZEROS DO NOT MAP via $z = e^{s T_s}$!} In Example 24.2, $H_a(s)$ had no finite zeros, yet $H(z)$ developed a zero at $z = 0$.
+    
+    \item \textbf{Pitfall 4: Attempting to Design a Highpass Filter via Impulse Invariance:}
+    In semester exams, questions sometimes ask students to design a Highpass filter via Impulse Invariance. The astute student must state immediately that Impulse Invariance is fundamentally invalid for Highpass design due to catastrophic aliasing at DC.
+    
+    \item \textbf{Pitfall 5: Angle Unit Confusion in Handheld Calculators:}
+    When computing $e^{s_k T_s} = e^{\sigma T_s} e^{j \Omega T_s}$, $\Omega T_s$ is in **radians**, not degrees! Plugging radians into a calculator set to degree mode causes massive coefficient errors.
+\end{itemize}
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{8. QUICK REVISION \& SUMMARY CHEAT-SHEET}
 
 \begin{table}[H]
 \centering
-\caption{Pedagogical Comparison: Windowing Method vs. Frequency Sampling Method}
-\label{tab:window_vs_freq_sampling}
+\caption{Impulse Invariance IIR Filter Design Quick Reference Sheet}
+\label{tab:quick_reference}
 \vspace{2mm}
 \resizebox{\textwidth}{!}{
 \begin{tabular}{lll}
 \toprule
-\textbf{Design Metric} & \textbf{Windowing Method (Lectures 22--23)} & \textbf{Frequency Sampling Method (Lecture 24)} \\
+\textbf{Concept / Parameter} & \textbf{Mathematical Definition / Formula} & \textbf{Key Pedagogical Note} \\
 \midrule
-\textbf{Starting Domain} & Continuous desired frequency response $H_d(e^{j\omega})$ & Discrete frequency samples $H[k] = H_d(e^{j 2\pi k / N})$ \\
-\textbf{Mathematical Core} & Continuous inverse DTFT integral $\int_{-\pi}^{\pi}$ & Discrete inverse DFT (IDFT) summation $\frac{1}{N}\sum_{k=0}^{N-1}$ \\
-\textbf{Grid Point Accuracy} & Approximates $H_d(e^{j\omega})$ in mean-square sense & Matches $H_d(e^{j\omega})$ \textbf{exactly} at all $N$ grid points $\omega_k$ \\
-\textbf{Arbitrary Magnitude Curves} & Difficult if inverse DTFT integral is analytically intractable & Highly versatile; arbitrary sampled points are directly usable \\
-\textbf{Transition Band Control} & Dictated by window mainlobe width ($\Delta\omega \propto c/N$) & Controlled by inserting unconstrained transition samples $T_m$ \\
-\textbf{Inter-Sample Behavior} & Smooth rolloff dictated by window Fourier transform & Pronounced ringing if samples change abruptly without transition samples \\
-\bottomrule
-\end{tabular}
-}
-\end{table}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.92\textwidth]{images/fir_freq_sampling_interpolation_ripple.png}
-\caption{Interpolation mechanics and inter-sample rippling. Left: The periodic Dirichlet kernel $P(\omega) = \frac{\sin(N\omega/2)}{N\sin(\omega/2)}$ with zeros at all adjacent DFT bins $\frac{2\pi m}{N}$. Right: Reconstructed continuous magnitude spectrum in dB for a naive brick-wall lowpass filter ($N=33$), illustrating the severe $-16$ dB stopband ripple caused by the abrupt sample transition between $H[5]=1$ and $H[6]=0$.}
-\label{fig:interpolation_ripple}
-\end{figure}
-
-\noindent\rule{\textwidth}{0.5pt}
-
-\section{3. LINEAR-PHASE CONSTRAINTS AND REAL IDFT SYNTHESIS}
-
-For the designed FIR filter to possess a strictly linear phase and constant group delay $\tau = (N-1)/2$, the frequency samples $H[k]$ must satisfy specific magnitude and phase symmetry constraints.
-
-\subsection{3.1 Linear-Phase Sample Constraints}
-Let the complex frequency samples be written in polar form:
-\begin{equation}
-H[k] = |H[k]| \, e^{j \angle H[k]} = |H[k]| \, e^{j \theta_k}
-\end{equation}
-For a real-valued, symmetric impulse response $h[n] = h[N-1-n]$:
-\begin{enumerate}
-    \item \textbf{Magnitude Symmetry (Even Symmetry):}
-    \begin{equation}
-    \mathbf{|H[N-k]| = |H[k]|}, \quad k = 1, 2, \dots, N-1
-    \label{eq:mag_symmetry}
-    \end{equation}
-    \item \textbf{Phase Angle Assignment (Linear Phase):}
-    The phase must be a strictly linear function of frequency:
-    \begin{equation}
-    \mathbf{\theta_k = \angle H[k] = -\left( \frac{N-1}{2} \right) \omega_k = -\left( \frac{N-1}{2} \right) \frac{2\pi k}{N}}
-    \label{eq:phase_assignment}
-    \end{equation}
-    Notice that at DC ($k=0$):
-    \begin{equation}
-    \theta_0 = 0 \implies H[0] \text{ is strictly real and positive.}
-    \end{equation}
-    \item \textbf{Hermitian Conjugate Symmetry:}
-    Combining \eqref{eq:mag_symmetry} and \eqref{eq:phase_assignment} verifies that:
-    \begin{equation}
-    H[N-k] = H^*[k]
-    \label{eq:hermitian_sym}
-    \end{equation}
-    which guarantees that the synthesized impulse response $h[n]$ is strictly real-valued.
-\end{enumerate}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.92\textwidth]{images/fir_freq_sampling_linear_phase.png}
-\caption{Linear-phase constraints for frequency sampling ($N=15$). Left: Even symmetry of magnitude samples $|H[N-k]| = |H[k]|$ about the center index $k = (N-1)/2 = 7$. Right: Phase angle assignment $\angle H[k] = -\tau \frac{2\pi k}{N}$ enforcing a constant group delay of $\tau = 7$ samples.}
-\label{fig:linear_phase_constraints}
-\end{figure}
-
-\subsection{3.2 Derivation of Closed-Form Real IDFT Formulas}
-Evaluating the general IDFT equation \eqref{eq:idft_basic} directly involves complex exponentials. By pairing complex conjugate terms $k$ and $N-k$, we can derive a purely real trigonometric summation formula.
-
-For any $k \ge 1$, consider the pair of terms in the IDFT:
-\begin{align}
-T_k &= H[k] e^{j \frac{2\pi k n}{N}} + H[N-k] e^{j \frac{2\pi(N-k)n}{N}} \nonumber \\
-    &= |H[k]| e^{j \left( \theta_k + \frac{2\pi k n}{N} \right)} + |H[k]| e^{-j \left( \theta_k + \frac{2\pi k n}{N} \right)} \nonumber \\
-    &= 2 |H[k]| \cos\left( \theta_k + \frac{2\pi k n}{N} \right)
-\end{align}
-Substituting the linear-phase definition $\theta_k = -\left(\frac{N-1}{2}\right)\frac{2\pi k}{N}$:
-\begin{equation}
-\theta_k + \frac{2\pi k n}{N} = \frac{2\pi k}{N} \left( n - \frac{N-1}{2} \right)
-\end{equation}
-Thus, the conjugate pair reduces to:
-\begin{equation}
-T_k = 2 |H[k]| \cos\left[ \frac{2\pi k}{N} \left( n - \frac{N-1}{2} \right) \right]
-\label{eq:cos_pair}
-\end{equation}
-
-\subsection{3.3 Explicit Formulas for Type 1 (Odd Length \texorpdfstring{$N$}{N}) Filters}
-When $N$ is odd, $(N-1)/2$ is an integer. The DFT bins consist of the DC bin ($k=0$) and $(N-1)/2$ conjugate pairs ($k = 1, 2, \dots, (N-1)/2$). Summing all contributions yields the standard \textbf{Type 1 Frequency Sampling Formula}:
-\begin{equation}
-\mathbf{h[n] = \frac{1}{N} \left\{ H[0] + 2 \sum_{k=1}^{(N-1)/2} |H[k]| \cos\left[ \frac{2\pi k}{N} \left( n - \frac{N-1}{2} \right) \right] \right\}}, \quad 0 \le n \le N-1
-\label{eq:type1_formula}
-\end{equation}
-
-\subsection{3.4 Explicit Formulas for Type 2 (Even Length \texorpdfstring{$N$}{N}) Filters}
-When $N$ is even, $N/2$ is an integer. The DFT bins consist of $k=0$ (DC), $N/2 - 1$ conjugate pairs ($k = 1, \dots, N/2-1$), and a single unpaired bin at the Nyquist frequency $k = N/2$ ($\omega = \pi$).
-For $k = N/2$, the phase is $\theta_{N/2} = -\left(\frac{N-1}{2}\right)\pi$. The Nyquist term in the IDFT evaluates to:
-\begin{equation}
-\frac{1}{N} H[N/2] \, e^{j \pi \left( n - \frac{N-1}{2} \right)}
-\end{equation}
-However, as proven in Lecture 21, **all Type 2 linear-phase filters possess an obligatory zero at $\omega = \pi$ ($z = -1$)**! Therefore, for any standard lowpass or bandpass design:
-\begin{equation}
-\mathbf{H[N/2] = 0}
-\end{equation}
-With $H[N/2] = 0$, the \textbf{Type 2 Frequency Sampling Formula} simplifies to:
-\begin{equation}
-\mathbf{h[n] = \frac{1}{N} \left\{ H[0] + 2 \sum_{k=1}^{N/2 - 1} |H[k]| \cos\left[ \frac{2\pi k}{N} \left( n - \frac{N-1}{2} \right) \right] \right\}}, \quad 0 \le n \le N-1
-\label{eq:type2_formula}
-\end{equation}
-where $\tau = (N-1)/2$ is a half-integer.
-
-\noindent\rule{\textwidth}{0.5pt}
-
-\section{4. TRANSITION SAMPLE OPTIMIZATION (RABINER--GOLD TECHNIQUE)}
-
-\subsection{4.1 The Severe Sidelobe Ringing of Naive Brickwall Sampling}
-If a designer samples an ideal brick-wall lowpass filter directly ($H[k] = 1$ in the passband and $H[k] = 0$ in the stopband), a sharp step discontinuity occurs between the last passband sample and the first stopband sample.
-As established by Rabiner and Gold (1970), the continuous reconstructed response between grid points exhibits massive Gibbs-like ringing (Figure \ref{fig:interpolation_ripple}):
-\begin{itemize}
-    \item Passband ripple: $\approx \pm 0.75$ dB.
-    \item Peak stopband ripple: $\mathbf{-16 \text{ dB}}$!
-\end{itemize}
-An attenuation of $-16$ dB is completely intolerable in communication systems, audio codecs, and instrumentation.
-
-\subsection{4.2 Optimization via Unconstrained Transition Samples}
-To dramatically eliminate this ringing, we introduce **one, two, or three intermediate samples in the transition band** between the passband and stopband:
-\begin{equation}
-H[k] \in (0, 1), \quad k \in \text{Transition Band}
-\end{equation}
-Rather than being fixed to $0$ or $1$, the value $T_1$ (and $T_2, T_3$) is treated as a free optimization parameter and selected via computer search (e.g. minimax linear programming) to minimize the peak sidelobe ripple across the entire stopband.
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.92\textwidth]{images/fir_freq_sampling_transition_opt.png}
-\caption{Transition sample optimization for $N=33$. Left: Full frequency response comparison in dB for $0$ transition samples ($-16$ dB, red), $1$ transition sample $T_1 = 0.38$ ($-45$ dB, amber), and $2$ transition samples $T_1 = 0.59, T_2 = 0.11$ ($-75$ dB, green). Right: Zoomed stopband floor proving $+29$ dB and $+59$ dB of extra attenuation rejection.}
-\label{fig:transition_opt}
-\end{figure}
-
-\subsection{4.3 Standard Rabiner--Gold Design Lookup Table}
-Table \ref{tab:rabiner_gold} summarizes the universally accepted optimal transition sample values for FIR lowpass filter design across various filter lengths $N$:
-
-\begin{table}[H]
-\centering
-\caption{Optimal Transition Sample Values and Resulting Stopband Attenuation}
-\label{tab:rabiner_gold}
-\vspace{2mm}
-\resizebox{\textwidth}{!}{
-\begin{tabular}{ccccc}
-\toprule
-\textbf{Number of Transition Samples} & \textbf{Transition Width $\Delta f$} & \textbf{Optimal Sample Values} & \textbf{Stopband Attenuation $A_s$} & \textbf{Typical Applications} \\
-\midrule
-\textbf{0 (Unoptimized)} & $\approx 1/N$ & None ($H[k] \in \{0, 1\}$) & $\mathbf{16 \text{ dB}}$ & Not suitable for filtering \\
-\textbf{1 Transition Sample} & $\approx 2/N$ & $T_1 \approx \mathbf{0.37897} \approx 0.38$ & $\mathbf{45 \text{ dB}}$ & Voice, Speech, Basic Telephony \\
-\textbf{2 Transition Samples} & $\approx 3/N$ & $T_1 \approx \mathbf{0.5937}, \; T_2 \approx \mathbf{0.1090}$ & $\mathbf{75 \text{ dB}}$ & High-Fidelity Audio, Modems \\
-\textbf{3 Transition Samples} & $\approx 4/N$ & $T_1 \approx \mathbf{0.70}, \; T_2 \approx \mathbf{0.25}, \; T_3 \approx \mathbf{0.02}$ & $\mathbf{95 \text{ dB}}$ & Biomedical, Seismic, Radar DSP \\
-\bottomrule
-\end{tabular}
-}
-\end{table}
-
-\noindent\textbf{The Engineering Trade-Off:}
-Introducing transition samples slightly widens the transition bandwidth $\Delta f$ by a factor of $2\times$ or $3\times$. However, in return, the stopband rejection increases by a stupendous \textbf{$+29$ dB to $+59$ dB}!
-
-\noindent\rule{\textwidth}{0.5pt}
-
-\section{5. STEP-BY-STEP WORKED NUMERICAL EXAMPLES}
-
-\subsection{Example 24.1: Manual Design of a 7-Point Type 1 Linear-Phase LPF}
-\textbf{Problem Statement:} Design a 7-point ($N=7$) linear-phase FIR lowpass filter using the frequency sampling technique. The desired frequency samples are specified as:
-\begin{equation}
-|H[k]| = \begin{cases} 1, & k = 0, 1, 6 \\ 0, & k = 2, 3, 4, 5 \end{cases}
-\end{equation}
-Determine the linear-phase delay $\tau$, calculate all seven filter coefficients $h[0]$ through $h[6]$ using the real-valued IDFT formula, and verify coefficient symmetry.
-
-\vspace{2mm}
-\noindent\textbf{Solution:}
-
-\noindent\textbf{Step 1: Identify Filter Parameters and Symmetry Properties}
-\begin{itemize}
-    \item Length $N = 7$ (Odd $\implies$ Type 1 Linear-Phase FIR filter).
-    \item Group delay: $\tau = \frac{N-1}{2} = \frac{7-1}{2} = 3$ samples.
-    \item Center frequency index: $\frac{N-1}{2} = 3$.
-    \item Symmetrical magnitude check: $|H[6]| = |H[7-1]| = |H[1]| = 1$, $|H[5]| = |H[2]| = 0$, $|H[4]| = |H[3]| = 0$. (Even symmetry is strictly satisfied).
-\end{itemize}
-
-\noindent\textbf{Step 2: Apply the Real-Valued IDFT Formula for $N$ Odd}
-Using \eqref{eq:type1_formula} with $N=7$ and $\tau = 3$:
-\begin{equation}
-h[n] = \frac{1}{7} \left\{ H[0] + 2 \sum_{k=1}^{3} |H[k]| \cos\left[ \frac{2\pi k}{7} (n - 3) \right] \right\}
-\end{equation}
-Substituting $|H[0]| = 1$, $|H[1]| = 1$, and $|H[2]| = |H[3]| = 0$:
-\begin{equation}
-\mathbf{h[n] = \frac{1}{7} \left\{ 1 + 2 \cos\left[ \frac{2\pi}{7} (n - 3) \right] \right\}}, \quad n = 0, 1, \dots, 6
-\end{equation}
-
-\noindent\textbf{Step 3: Point-by-Point Numerical Coefficient Calculation}
-\begin{itemize}
-    \item \textbf{Center tap ($n = 3$):}
-    \begin{equation}
-    h[3] = \frac{1}{7} [1 + 2 \cos(0)] = \frac{1 + 2(1)}{7} = \frac{3}{7} \approx \mathbf{0.4286}
-    \end{equation}
-    \item \textbf{Taps adjacent to center ($n = 2$ and $n = 4$):}
-    Argument: $\frac{2\pi}{7} (2 - 3) = -\frac{2\pi}{7} = -51.4286^\circ$. Since $\cos(-\theta) = \cos\theta$:
-    \begin{equation}
-    \cos\left(\frac{2\pi}{7}\right) \approx 0.623490
-    \end{equation}
-    \begin{equation}
-    h[2] = h[4] = \frac{1 + 2(0.623490)}{7} = \frac{1 + 1.24698}{7} = \frac{2.24698}{7} \approx \mathbf{0.3210}
-    \end{equation}
-    \item \textbf{Taps at distance 2 ($n = 1$ and $n = 5$):}
-    Argument: $\frac{2\pi}{7} (1 - 3) = -\frac{4\pi}{7} = -102.8571^\circ$:
-    \begin{equation}
-    \cos\left(\frac{4\pi}{7}\right) \approx -0.222521
-    \end{equation}
-    \begin{equation}
-    h[1] = h[5] = \frac{1 + 2(-0.222521)}{7} = \frac{1 - 0.445042}{7} = \frac{0.554958}{7} \approx \mathbf{0.0793}
-    \end{equation}
-    \item \textbf{Boundary taps ($n = 0$ and $n = 6$):}
-    Argument: $\frac{2\pi}{7} (0 - 3) = -\frac{6\pi}{7} = -154.2857^\circ$:
-    \begin{equation}
-    \cos\left(\frac{6\pi}{7}\right) \approx -0.900969
-    \end{equation}
-    \begin{equation}
-    h[0] = h[6] = \frac{1 + 2(-0.900969)}{7} = \frac{1 - 1.801938}{7} = \frac{-0.801938}{7} \approx \mathbf{-0.1146}
-    \end{equation}
-\end{itemize}
-
-\noindent\textbf{Step 4: Summary of Designed Impulse Response}
-\begin{equation}
-\mathbf{h[n] = \{ \underset{\uparrow}{-0.1146}, \; 0.0793, \; 0.3210, \; 0.4286, \; 0.3210, \; 0.0793, \; -0.1146 \}}
-\end{equation}
-Symmetry check: $h[0] = h[6]$, $h[1] = h[5]$, $h[2] = h[4]$. Even symmetry is confirmed.
-
-\vspace{3mm}
-\noindent\rule{\textwidth}{0.5pt}
-
-\subsection{Example 24.2: Design of a 15-Point LPF with 1 Optimized Transition Sample}
-\textbf{Problem Statement:} Design a 15-point ($N=15$) linear-phase FIR lowpass filter using frequency sampling. To achieve high stopband rejection ($A_s \ge 45$ dB), introduce one transition sample $T_1 = 0.38$ at the band edge. The frequency samples are specified as:
-\begin{equation}
-|H[k]| = \begin{cases} 
-1.0, & k = 0, 1, 2, 13, 14 \\ 
-0.38, & k = 3, 12 \\ 
-0.0, & k = 4, 5, 6, 7, 8, 9, 10, 11 
-\end{cases}
-\end{equation}
-Calculate the filter delay $\tau$, formulate the explicit expression for $h[n]$, and compute all 15 impulse response coefficients.
-
-\vspace{2mm}
-\noindent\textbf{Solution:}
-
-\noindent\textbf{Step 1: Filter Classification and Symmetries}
-\begin{itemize}
-    \item Length $N = 15$ (Odd $\implies$ Type 1 linear-phase filter).
-    \item Linear-phase delay: $\tau = \frac{15-1}{2} = 7$ samples.
-    \item Center index: $n = 7$.
-    \item Maximum index in summation: $\frac{N-1}{2} = 7$.
-\end{itemize}
-
-\noindent\textbf{Step 2: Formulate Real IDFT Summation}
-Substituting $N=15$, $\tau=7$, and the non-zero magnitude samples into \eqref{eq:type1_formula}:
-\begin{align}
-h[n] = \frac{1}{15} \bigg\{ 1.0 &+ 2(1.0) \cos\left[\frac{2\pi (1)}{15}(n - 7)\right] + 2(1.0) \cos\left[\frac{2\pi (2)}{15}(n - 7)\right] \nonumber \\
-&+ 2(0.38) \cos\left[\frac{2\pi (3)}{15}(n - 7)\right] \bigg\}
-\end{align}
-Simplifying the numerical coefficients:
-\begin{equation}
-\mathbf{h[n] = \frac{1}{15} \left\{ 1 + 2\cos\left[\frac{2\pi}{15}(n - 7)\right] + 2\cos\left[\frac{4\pi}{15}(n - 7)\right] + 0.76\cos\left[\frac{2\pi}{5}(n - 7)\right] \right\}}
-\end{equation}
-
-\noindent\textbf{Step 3: Pointwise Evaluation Exploiting Symmetry ($h[n] = h[14-n]$)}
-\begin{itemize}
-    \item \textbf{Center Tap ($n = 7$):}
-    \begin{equation}
-    h[7] = \frac{1 + 2(1) + 2(1) + 0.76(1)}{15} = \frac{5.76}{15} = \mathbf{0.3840}
-    \end{equation}
-    \item \textbf{Taps $n = 6$ and $n = 8$ ($n - 7 = \pm 1$):}
-    \begin{align}
-    \cos(2\pi/15) &= \cos(24^\circ) \approx 0.9135 \nonumber \\
-    \cos(4\pi/15) &= \cos(48^\circ) \approx 0.6691 \nonumber \\
-    \cos(2\pi/5)  &= \cos(72^\circ) \approx 0.3090 \nonumber \\
-    h[6] = h[8] &= \frac{1 + 2(0.9135) + 2(0.6691) + 0.76(0.3090)}{15} = \frac{4.4001}{15} \approx \mathbf{0.2933}
-    \end{align}
-    \item \textbf{Taps $n = 5$ and $n = 9$ ($n - 7 = \pm 2$):}
-    \begin{align}
-    \cos(48^\circ) &\approx 0.6691, \quad \cos(96^\circ) \approx -0.1045, \quad \cos(144^\circ) \approx -0.8090 \nonumber \\
-    h[5] = h[9] &= \frac{1 + 2(0.6691) + 2(-0.1045) + 0.76(-0.8090)}{15} = \frac{1.5144}{15} \approx \mathbf{0.1010}
-    \end{align}
-    \item \textbf{Taps $n = 4$ and $n = 10$ ($n - 7 = \pm 3$):}
-    \begin{align}
-    \cos(72^\circ) &\approx 0.3090, \quad \cos(144^\circ) \approx -0.8090, \quad \cos(216^\circ) \approx -0.8090 \nonumber \\
-    h[4] = h[10] &= \frac{1 + 2(0.3090) + 2(-0.8090) + 0.76(-0.8090)}{15} = \frac{-0.6148}{15} \approx \mathbf{-0.0410}
-    \end{align}
-    \item \textbf{Taps $n = 3$ and $n = 11$ ($n - 7 = \pm 4$):}
-    \begin{equation}
-    h[3] = h[11] \approx \mathbf{-0.0620}
-    \end{equation}
-    \item \textbf{Taps $n = 2$ and $n = 12$ ($n - 7 = \pm 5$):}
-    \begin{equation}
-    h[2] = h[12] \approx \mathbf{-0.0160}
-    \end{equation}
-    \item \textbf{Taps $n = 1$ and $n = 13$ ($n - 7 = \pm 6$):}
-    \begin{equation}
-    h[1] = h[13] \approx \mathbf{0.0157}
-    \end{equation}
-    \item \textbf{Boundary Taps $n = 0$ and $n = 14$ ($n - 7 = \pm 7$):}
-    \begin{equation}
-    h[0] = h[14] \approx \mathbf{0.0171}
-    \end{equation}
-\end{itemize}
-
-\noindent\textbf{Impact of Transition Sample $T_1 = 0.38$:}
-By inserting $T_1 = 0.38$, the stopband attenuation improves from $-16$ dB to \textbf{$-45$ dB}, completely quenching Gibbs ringing without increasing filter length $N$!
-
-\vspace{3mm}
-\noindent\rule{\textwidth}{0.5pt}
-
-\subsection{Example 24.3: Design of an 8-Point Type 2 Even-Length LPF}
-\textbf{Problem Statement:} Design an 8-point ($N=8$) linear-phase FIR lowpass filter using frequency sampling with samples:
-\begin{equation}
-|H[k]| = \begin{cases} 1, & k = 0, 1, 7 \\ 0, & k = 2, 3, 4, 5, 6 \end{cases}
-\end{equation}
-Determine the half-sample delay $\tau$, formulate the Type 2 IDFT equation, compute all 8 impulse response coefficients, and verify even symmetry about the half-sample center.
-
-\vspace{2mm}
-\noindent\textbf{Solution:}
-
-\noindent\textbf{Step 1: Filter Classification and Nyquist Bin Enforcement}
-\begin{itemize}
-    \item Length $N = 8$ (Even $\implies$ Type 2 Linear-Phase FIR filter).
-    \item Linear-phase delay: $\tau = \frac{N-1}{2} = \frac{8-1}{2} = \mathbf{3.5 \text{ samples}}$ (Half-integer delay).
-    \item The Nyquist bin is $k = N/2 = 4$. By Type 2 linear-phase theory, $H[4] = 0$ is mandatory (guaranteeing a transmission zero at $\omega = \pi$).
-    \item Summation upper limit: $N/2 - 1 = 8/2 - 1 = 3$.
-\end{itemize}
-
-\noindent\textbf{Step 2: Formulate Real IDFT Summation for $N$ Even}
-Using \eqref{eq:type2_formula} with $N=8$ and $\tau = 3.5$:
-\begin{equation}
-h[n] = \frac{1}{8} \left\{ H[0] + 2 \sum_{k=1}^{3} |H[k]| \cos\left[ \frac{2\pi k}{8} (n - 3.5) \right] \right\}
-\end{equation}
-Since $|H[0]| = 1$, $|H[1]| = 1$, and $|H[2]| = |H[3]| = 0$:
-\begin{equation}
-\mathbf{h[n] = \frac{1}{8} \left\{ 1 + 2 \cos\left[ \frac{\pi}{4} (n - 3.5) \right] \right\}}, \quad n = 0, 1, \dots, 7
-\end{equation}
-
-\noindent\textbf{Step 3: Point-by-Point Numerical Coefficient Calculation}
-\begin{itemize}
-    \item \textbf{Inner Taps ($n = 3$ and $n = 4$):}
-    For $n=3$, $n - 3.5 = -0.5$. Argument: $\frac{\pi}{4}(-0.5) = -\frac{\pi}{8} = -22.5^\circ$:
-    \begin{equation}
-    \cos\left(\frac{\pi}{8}\right) = \cos(22.5^\circ) = \frac{\sqrt{2 + \sqrt{2}}}{2} \approx 0.923880
-    \end{equation}
-    \begin{equation}
-    h[3] = h[4] = \frac{1 + 2(0.923880)}{8} = \frac{1 + 1.84776}{8} = \frac{2.84776}{8} \approx \mathbf{0.3560}
-    \end{equation}
-    \item \textbf{Taps at distance 1 ($n = 2$ and $n = 5$):}
-    For $n=2$, $n - 3.5 = -1.5$. Argument: $\frac{\pi}{4}(-1.5) = -\frac{3\pi}{8} = -67.5^\circ$:
-    \begin{equation}
-    \cos\left(\frac{3\pi}{8}\right) = \cos(67.5^\circ) = \frac{\sqrt{2 - \sqrt{2}}}{2} \approx 0.382683
-    \end{equation}
-    \begin{equation}
-    h[2] = h[5] = \frac{1 + 2(0.382683)}{8} = \frac{1 + 0.765367}{8} = \frac{1.765367}{8} \approx \mathbf{0.2207}
-    \end{equation}
-    \item \textbf{Taps at distance 2 ($n = 1$ and $n = 6$):}
-    For $n=1$, $n - 3.5 = -2.5$. Argument: $\frac{\pi}{4}(-2.5) = -\frac{5\pi}{8} = -112.5^\circ$:
-    \begin{equation}
-    \cos\left(\frac{5\pi}{8}\right) = -\cos(67.5^\circ) \approx -0.382683
-    \end{equation}
-    \begin{equation}
-    h[1] = h[6] = \frac{1 + 2(-0.382683)}{8} = \frac{1 - 0.765367}{8} = \frac{0.234633}{8} \approx \mathbf{0.0293}
-    \end{equation}
-    \item \textbf{Outer Boundary Taps ($n = 0$ and $n = 7$):}
-    For $n=0$, $n - 3.5 = -3.5$. Argument: $\frac{\pi}{4}(-3.5) = -\frac{7\pi}{8} = -157.5^\circ$:
-    \begin{equation}
-    \cos\left(\frac{7\pi}{8}\right) = -\cos(22.5^\circ) \approx -0.923880
-    \end{equation}
-    \begin{equation}
-    h[0] = h[7] = \frac{1 + 2(-0.923880)}{8} = \frac{1 - 1.84776}{8} = \frac{-0.84776}{8} \approx \mathbf{-0.1060}
-    \end{equation}
-\end{itemize}
-
-\noindent\textbf{Step 4: Summary and Symmetry Verification}
-\begin{equation}
-\mathbf{h[n] = \{ \underset{\uparrow}{-0.1060}, \; 0.0293, \; 0.2207, \; 0.3560, \; 0.3560, \; 0.2207, \; 0.0293, \; -0.1060 \}}
-\end{equation}
-Strict even symmetry about the half-sample center $\tau = 3.5$ is satisfied ($h[n] = h[7-n]$).
-
-\noindent\rule{\textwidth}{0.5pt}
-
-\section{6. FACULTY INSIGHTS, COMMON PITFALLS \& EXAM TRAPS}
-
-\begin{itemize}
-    \item \textbf{Pitfall 1: Forgetting the Factor of $2$ in the Real IDFT Summation:}
-    A common student error in university semester exams is writing $h[n] = \frac{1}{N}[H[0] + \sum |H[k]|\cos(\dots)]$, forgetting the factor of \textbf{$2$} arising from pairing conjugate bins $H[k]$ and $H[N-k]$. This cuts the passband gain in half.
-    
-    \item \textbf{Pitfall 2: Confusing DFT Index $k$ with Continuous Frequency $\omega$:}
-    Remember that sample index $k$ represents frequency $\omega_k = \frac{2\pi k}{N}$ rad/sample. For instance, for $N=16$, $k=2$ corresponds to $\omega = \frac{2\pi(2)}{16} = \frac{\pi}{4} = 0.25\pi$ rad/sample.
-    
-    \item \textbf{Pitfall 3: Failing to Enforce $H[N/2] = 0$ for Even-Length Type 2 Filters:}
-    When $N$ is even, setting $H[N/2] \ne 0$ contradicts the inherent zero at $\omega = \pi$ of Type 2 filters, causing severe distortion and complex coefficients if the phase is not handled with extreme care.
-    
-    \item \textbf{Pitfall 4: Assuming Zero Ripple Between Sampling Points:}
-    Because $H(e^{j\omega_k}) = H[k]$ is exact at grid frequencies, students frequently assume the filter perfectly passes or stops signals between bins. In reality, large interpolation ripples occur between grid points unless transition samples are introduced.
-    
-    \item \textbf{Pitfall 5: Neglecting the Transition Bandwidth Penalty of Transition Samples:}
-    While introducing transition samples ($T_1, T_2$) dramatically improves stopband rejection (e.g., from $-16$ dB to $-45$ dB or $-75$ dB), each transition sample widens the transition region by one frequency bin spacing ($\Delta\omega = 2\pi/N$). To satisfy both a narrow transition band and deep stopband rejection, the total filter length $N$ must be increased proportionally.
-\end{itemize}
-
-\noindent\rule{\textwidth}{0.5pt}
-
-\section{7. QUICK REVISION CHEAT-SHEET}
-
-\begin{table}[H]
-\centering
-\caption{Comprehensive Frequency Sampling Summary and Design Rules}
-\label{tab:quick_revision}
-\vspace{2mm}
-\resizebox{\textwidth}{!}{
-\begin{tabular}{lll}
-\toprule
-\textbf{Concept / Parameter} & \textbf{Mathematical Formula / Condition} & \textbf{Key Pedagogical Note} \\
-\midrule
-\textbf{DFT Grid Frequencies} & $\omega_k = \frac{2\pi k}{N}, \quad k = 0, 1, \dots, N-1$ & Uniform sampling around unit circle \\
-\textbf{Linear-Phase Assignment} & $\angle H[k] = -\left(\frac{N-1}{2}\right)\frac{2\pi k}{N}$ & Constant group delay $\tau = (N-1)/2$ \\
-\textbf{DC Bin Property} & $\angle H[0] = 0 \implies H[0] \in \mathbb{R}^+$ & Strictly real, non-negative value \\
-\textbf{Hermitian Symmetry} & $H[N-k] = H^*[k]$ & Ensures impulse response $h[n]$ is real \\
-\textbf{Interpolation Formula} & $H(e^{j\omega}) = \sum_{k=0}^{N-1} H[k]\Phi\left(\omega - \frac{2\pi k}{N}\right)$ & Exact at grid points; Dirichlet interpolation between bins \\
-\textbf{Type 1 Formula ($N$ Odd)} & $h[n] = \frac{1}{N}\left[H[0] + 2\sum_{k=1}^{(N-1)/2} |H[k]|\cos\left(\frac{2\pi k}{N}(n - \tau)\right)\right]$ & Integer center delay $\tau = (N-1)/2$ \\
-\textbf{Type 2 Formula ($N$ Even)} & $h[n] = \frac{1}{N}\left[H[0] + 2\sum_{k=1}^{N/2-1} |H[k]|\cos\left(\frac{2\pi k}{N}(n - \tau)\right)\right]$ & Requires $H[N/2]=0$; half-sample delay \\
-\textbf{Naive Sidelobe Level} & Stopband peak $\approx \mathbf{-16 \text{ dB}}$ & Caused by step discontinuity \\
-\textbf{1 Transition Sample ($T_1$)} & $T_1 \approx 0.38 \implies \mathbf{A_s \approx 45 \text{ dB}}$ & $+29$ dB stopband attenuation boost \\
-\textbf{2 Transition Samples ($T_1, T_2$)} & $T_1 \approx 0.59, \; T_2 \approx 0.11 \implies \mathbf{A_s \approx 75 \text{ dB}}$ & $+59$ dB stopband attenuation boost \\
+\textbf{Invariance Criterion} & $h[n] = T_s \, h_a(n T_s)$ & Exact sampled analog impulse response \\
+\textbf{Pole Mapping Rule} & $s_k \longrightarrow z_k = e^{s_k T_s}$ & Single pole mapping \\
+\textbf{Partial Fraction Rule} & $\frac{A_k}{s - s_k} \longrightarrow \frac{T_s A_k}{1 - e^{s_k T_s} z^{-1}}$ & Operational transformation recipe \\
+\textbf{Stability Condition} & $\text{Re}(s_k) < 0 \implies |z_k| = e^{\text{Re}(s_k)T_s} < 1$ & Stable analog filter $\implies$ Stable digital filter \\
+\textbf{Frequency Relation} & $\omega = \Omega T_s$ & Linear frequency mapping (before aliasing) \\
+\textbf{Digital Spectrum} & $H(e^{j\omega}) = \sum_{k=-\infty}^\infty H_a\left(j\frac{\omega - 2\pi k}{T_s}\right)$ & Aliasing due to infinite frequency tails \\
+\textbf{Permissible Filters} & Band-limited Lowpass and Bandpass & Stopband must attenuate sufficiently at $\pi/T_s$ \\
+\textbf{Forbidden Filters} & Highpass, Bandstop, Differentiator & Suffer severe aliasing distortion at DC \\
+\textbf{Mapping of Zeros} & Zeros \textbf{DO NOT} map via $z = e^{s T_s}$ & Only poles obey the exponential mapping \\
 \bottomrule
 \end{tabular}
 }

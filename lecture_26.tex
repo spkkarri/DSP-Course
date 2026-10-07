@@ -13,6 +13,7 @@
 \definecolor{lighttext}{HTML}{e2e8f0}
 \definecolor{primary}{HTML}{8b5cf6}
 \definecolor{secondary}{HTML}{0dd5c5}
+\definecolor{accent}{HTML}{10b981}
 
 \pagecolor{darkbg}
 \color{lighttext}
@@ -20,91 +21,388 @@
 \hypersetup{
     colorlinks=true,
     linkcolor=secondary,
-    urlcolor=secondary
+    urlcolor=secondary,
+    citecolor=accent
 }
 
+\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Lecture 26: Applications of Digital Filters: Equalization, noise cancellation and adaptive FIR filter \\ \large (III B.Tech EEE)}
+\author{Comprehensive Lecture Notes \& Faculty Textbook Reference}
+\date{}
+
 \begin{document}
-\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Lecture 26: Design of IIR filters from analog filters \\ \large (III B.Tech EEE)}\maketitle
+
+\maketitle
 
 \noindent\rule{\textwidth}{0.5pt}
-\section*{1. LEARNING OBJECTIVES}
+
+\section*{Lecture Plan \& Objectives (40 Minutes Breakdown)}
+\begin{itemize}
+    \item \textbf{00:00 -- 05:00 (5 mins):} Digital Filtering Applications Landscape: Beyond static frequency-selective filtering. The challenges of unknown, dispersive communication channels and time-varying non-stationary acoustic environments.
+    \item \textbf{05:00 -- 14:00 (9 mins):} Channel Equalization: The Inter-Symbol Interference (ISI) phenomenon in band-limited channels. The Zero-Forcing Equalizer (ZFE) principle: designing an inverse filter $H_{\text{eq}}(z) \approx 1/H_c(z)$. Truncated FIR equalizer synthesis and the noise enhancement trade-off.
+    \item \textbf{14:00 -- 22:00 (8 mins):} Digital Noise Cancellation: The dual-input adaptive noise canceller architecture. Primary input $d[n] = s[n] + v_0[n]$ and reference input $x[n] = v_1[n]$. Mathematical proof that minimizing the total output power $E[e^2[n]]$ drives the filter output $y[n] \to v_0[n]$, extracting the clean signal $e[n] \to s[n]$.
+    \item \textbf{22:00 -- 30:00 (8 mins):} The Adaptive FIR Filter \& The LMS Algorithm: Limitations of fixed-coefficient filters. The tapped delay-line transversal structure with time-varying weights $\mathbf{w}[n]$. Mathematical derivation of the Widrow--Hoff Least Mean Squares (LMS) stochastic gradient descent update: $\mathbf{w}[n+1] = \mathbf{w}[n] + 2\mu e[n] \mathbf{x}[n]$. Convergence stability bounds ($0 < \mu < 1/\text{Tr}(\mathbf{R})$) and steady-state misadjustment.
+    \item \textbf{30:00 -- 38:00 (8 mins):} Step-by-Step Worked Numerical Examples:
+    \begin{itemize}
+        \item \textbf{Example 26.1:} Algebraic synthesis of a 3-tap Zero-Forcing FIR equalizer for a multipath communication channel.
+        \item \textbf{Example 26.2:} Numerical tracking of a 2-tap LMS adaptive filter over consecutive iterations.
+    \end{itemize}
+    \item \textbf{38:00 -- 40:00 (2 mins):} Faculty Insights, Common Misconceptions, and University Semester Exam Traps.
+\end{itemize}
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{1. LEARNING OBJECTIVES}
 By the end of this lecture, students will be able to:
 \begin{enumerate}
-\item \textbf{Calculate} required filter order $N$ and cutoff $\Omega_c$ for Butterworth and Chebyshev analog lowpass prototypes.
-\item \textbf{Determine} stable left-half $s$-plane pole locations for Butterworth and Chebyshev filters.
-\item \textbf{Synthesize} continuous-time transfer functions $H_a(s)$ from given attenuation specifications.
+    \item \textbf{Explain} the physical mechanism of Inter-Symbol Interference (ISI) in band-limited communication channels.
+    \item \textbf{Formulate} the Zero-Forcing Equalizer (ZFE) condition: $H_{\text{eq}}(z) \cdot H_c(z) = z^{-\Delta}$.
+    \item \textbf{Synthesize} finite-length FIR equalizers by solving linear toeplitz system matrices.
+    \item \textbf{Diagram} the dual-input adaptive noise cancellation architecture, identifying the primary and reference signals.
+    \item \textbf{Prove} mathematically that minimizing mean squared error $E[e^2[n]]$ produces a clean estimate of the desired signal $s[n]$.
+    \item \textbf{Derive} the Widrow--Hoff Least Mean Squares (LMS) weight update recursion from the method of steepest descent.
+    \item \textbf{Determine} the stable bounds for the convergence step-size parameter $\mu$ based on signal power.
+    \item \textbf{Execute} manual step-by-step numerical iterations of the LMS adaptive algorithm.
 \end{enumerate}
 
 \noindent\rule{\textwidth}{0.5pt}
-\section*{2. MATHEMATICAL FOUNDATIONS}
 
-\subsection*{2.1 Butterworth Filter Approximation}
+\section{2. CHANNEL EQUALIZATION}
+
+\subsection{2.1 The Inter-Symbol Interference (ISI) Problem}
+When a discrete data sequence $s[n]$ (e.g., binary PAM or QAM symbols) is transmitted through a physical communication channel (coaxial cable, twisted pair, or wireless multipath channel), the channel's non-ideal frequency response and finite bandwidth spread out each transmitted pulse in time.
+
+The channel is modeled as a causal discrete-time LTI filter with impulse response $h_c[n]$ corrupted by additive noise $v[n]$:
+\begin{equation}
+x[n] = s[n] \circledast h_c[n] + v[n] = h_c[0]s[n] + \sum_{k \ne 0} h_c[k]s[n-k] + v[n]
+\end{equation}
 \begin{itemize}
-\item \textbf{Magnitude Squared Function:}
-  $$ |H_a(j\Omega)|^2 = \frac{1}{1 + \epsilon^2 (\Omega / \Omega_p)^{2N}} = \frac{1}{1 + (\Omega / \Omega_c)^{2N}} $$
-\item \textbf{Order Formula:}
-  $$ N \ge \frac{\log_{10} \sqrt{\frac{10^{0.1 A_s} - 1}{10^{0.1 A_p} - 1}}}{\log_{10}(\Omega_s / \Omega_p)} = \frac{\log_{10}(\lambda / \epsilon)}{\log_{10}(\Omega_s / \Omega_p)} $$
-\item \textbf{3-dB Cutoff Frequency $\Omega_c$:}
-  $$ \Omega_c = \frac{\Omega_p}{(10^{0.1 A_p} - 1)^{1/(2N)}} $$
-\item \textbf{Pole Locations in $s$-Plane:}
-  $2N$ poles uniformly spaced on circle of radius $\Omega_c$. The $N$ stable left-half plane poles are:
-  $$ s_k = \Omega_c e^{j \frac{\pi}{2} [1 + (2k-1)/N]}, \quad k = 1, 2, \dots, N $$
+    \item The term $h_c[0]s[n]$ is the desired current symbol.
+    \item The summation $\sum_{k \ne 0} h_c[k]s[n-k]$ represents \textbf{Inter-Symbol Interference (ISI)}, where preceding and succeeding symbols spill energy into the current symbol interval.
+    \item If ISI is severe, it closes the eye diagram and causes catastrophic bit errors at the receiver.
 \end{itemize}
 
-\subsection*{2.2 Chebyshev Type I Filter Approximation}
-\begin{itemize}
-\item \textbf{Magnitude Squared Function:}
-  $$ |H_a(j\Omega)|^2 = \frac{1}{1 + \epsilon^2 C_N^2(\Omega / \Omega_p)}, \quad \epsilon = \sqrt{10^{0.1 A_p} - 1} $$
-\item \textbf{Chebyshev Polynomials:}
-  $$ C_N(x) = \begin{cases} \cos(N \arccos x), & |x| \le 1 \\ \cosh(N \text{arcosh } x), & |x| > 1 \end{cases} $$
-  Recursion: $C_{N+1}(x) = 2x C_N(x) - C_{N-1}(x)$ with $C_0(x) = 1, C_1(x) = x$.
-\item \textbf{Order Formula:}
-  $$ N \ge \frac{\text{arcosh}(\lambda / \epsilon)}{\text{arcosh}(\Omega_s / \Omega_p)} = \frac{\ln\left[ \frac{\lambda}{\epsilon} + \sqrt{\left(\frac{\lambda}{\epsilon}\right)^2 - 1} \right]}{\ln\left[ \frac{\Omega_s}{\Omega_p} + \sqrt{\left(\frac{\Omega_s}{\Omega_p}\right)^2 - 1} \right]} $$
-\end{itemize}
+\subsection{2.2 The Zero-Forcing Equalizer (ZFE)}
+To eliminate ISI, the receiver cascades an **equalizing digital filter** $h_{\text{eq}}[n]$ with transfer function $H_{\text{eq}}(z)$. Ideally, the cascade of the channel and the equalizer should act as a pure delay of $\Delta$ samples:
+\begin{equation}
+H_{\text{eq}}(z) \cdot H_c(z) = z^{-\Delta} \iff H_{\text{eq}}(z) = \frac{z^{-\Delta}}{H_c(z)}
+\label{eq:ideal_eq}
+\end{equation}
+\textbf{The Zero-Forcing Criterion:} In the time domain, the combined impulse response $q[n] = h_c[n] * h_{\text{eq}}[n]$ must satisfy the Nyquist criterion for zero ISI:
+\begin{equation}
+\mathbf{q[n] = h_c[n] \circledast h_{\text{eq}}[n] = \begin{cases} 1, & n = \Delta \\ 0, & n \ne \Delta \end{cases}}
+\end{equation}
 
+\subsection{2.3 Practical FIR Equalizer Design}
+Since $1/H_c(z)$ is generally an IIR filter that may be unstable if $H_c(z)$ has non-minimum phase zeros outside the unit circle, we approximate the inverse filter using an $N$-tap FIR equalizer:
+\begin{equation}
+H_{\text{eq}}(z) = \sum_{k=0}^{N-1} w_k z^{-k}
+\end{equation}
+Setting $q[n] = \sum_{k=0}^{N-1} w_k h_c[n-k]$ and forcing $q[n] = 0$ at $N-1$ points around the main peak $q[\Delta] = 1$ leads to an $N \times N$ system of linear equations:
+\begin{equation}
+\mathbf{H_c \, w = \delta_{\Delta}}
+\end{equation}
+Solving $\mathbf{w} = \mathbf{H_c}^{-1} \boldsymbol{\delta}_{\Delta}$ yields the optimal zero-forcing FIR tap weights.
 
-\subsection*{Pictorial Representations}
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.85\textwidth]{images/analog_poles.png}
-\caption{Analog Poles}
-\end{figure}
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.85\textwidth]{images/analog_responses.png}
-\caption{Analog Responses}
+\includegraphics[width=0.95\textwidth]{images/dsp_equalization_noise_cancellation_lms.png}
+\caption{Left: Channel Equalization architecture inverting channel dispersion $H_c(z)$ to eliminate Inter-Symbol Interference. Right: Adaptive Noise Canceller architecture using the LMS algorithm to drive $y[n] \to v_0[n]$ and recover the clean signal $e[n] \approx s[n]$.}
+\label{fig:dsp_apps}
 \end{figure}
 
 \noindent\rule{\textwidth}{0.5pt}
-\section*{3. WORKED NUMERICAL EXAMPLES}
 
-\subsection*{Example 26.1: Analog Butterworth Lowpass Filter Design}
-\textbf{Problem:} Design an analog Butterworth lowpass filter to satisfy:
-\begin{itemize}
-\item Passband loss $\le 1\text{ dB}$ at $\Omega_p = 100\text{ rad/s}$ ($A_p = 1\text{ dB}$)
-\item Stopband attenuation $\ge 20\text{ dB}$ at $\Omega_s = 200\text{ rad/s}$ ($A_s = 20\text{ dB}$)
+\section{3. DIGITAL NOISE CANCELLATION}
 
-\end{itemize}
-\textbf{Solution:}
+\subsection{3.1 The Classical Noise Problem vs. Adaptive Cancellation}
+In conventional filtering, a signal $s[n]$ corrupted by additive noise $v_0[n]$ is passed through a fixed bandpass or lowpass filter. However, if the frequency spectrum of the noise overlaps with the signal spectrum, conventional linear filtering inevitably attenuates the desired signal along with the noise.
+
+\textbf{Adaptive Noise Cancellation (ANC)} overcomes this limitation by using two separate sensor inputs:
 \begin{enumerate}
-\item \textbf{Calculate Order $N$:}
-   \begin{itemize}
-   \item $\epsilon = \sqrt{10^{0.1(1)} - 1} = \sqrt{1.2589 - 1} = \sqrt{0.2589} = 0.5088$
-   \item $\lambda = \sqrt{10^{0.1(20)} - 1} = \sqrt{100 - 1} = \sqrt{99} = 9.9499$
-   \item Ratio $\frac{\lambda}{\epsilon} = \frac{9.9499}{0.5088} = 19.555$
-   \item Frequency ratio $\frac{\Omega_s}{\Omega_p} = \frac{200}{100} = 2.0$
-   \end{itemize}
-   $$ N \ge \frac{\log_{10}(19.555)}{\log_{10}(2.0)} = \frac{1.2913}{0.3010} = 4.29 \implies \mathbf{N = 5} $$
-\item \textbf{Calculate Cutoff Frequency $\Omega_c$:}
-   $$ \Omega_c = \frac{\Omega_p}{\epsilon^{1/N}} = \frac{100}{(0.5088)^{1/5}} = \frac{100}{0.8735} = \mathbf{114.48 \text{ rad/s}} $$
-\item \textbf{Poles ($N=5$):}
-   \begin{itemize}
-   \item $s_1, s_5 = 114.48 e^{j (180^\circ \pm 72^\circ)} = 114.48 (-0.3090 \pm j 0.9511) = -35.37 \pm j 108.88$
-   \item $s_2, s_4 = 114.48 e^{j (180^\circ \pm 36^\circ)} = 114.48 (-0.8090 \pm j 0.5878) = -92.62 \pm j 67.29$
-   \item $s_3 = 114.48 e^{j 180^\circ} = -114.48$
-   \end{itemize}
-\item \textbf{Transfer Function $H_a(s)$:}
-   $$ H_a(s) = \frac{\Omega_c^5}{(s + 114.48)(s^2 + 185.24s + 13106)(s^2 + 70.74s + 13106)} $$
+    \item \textbf{Primary Input ($d[n]$):} Contains the desired information signal $s[n]$ corrupted by an additive noise $v_0[n]$:
+    \begin{equation}
+    d[n] = s[n] + v_0[n]
+    \end{equation}
+    \item \textbf{Reference Input ($x[n]$):} Senses an ambient noise field $v_1[n]$ that is correlated with the contaminating noise $v_0[n]$, but \textbf{completely uncorrelated with the signal $s[n]$}:
+    \begin{equation}
+    E[s[n] \cdot v_1[n-k]] = 0, \quad \forall k
+    \end{equation}
 \end{enumerate}
+
+\subsection{3.2 Mathematical Proof of Noise Cancellation}
+The reference input $x[n]$ is passed through an adaptive digital filter to produce an estimate $y[n]$ of the primary noise $v_0[n]$. The filter output is subtracted from the primary input to generate the system error output $e[n]$:
+\begin{equation}
+e[n] = d[n] - y[n] = s[n] + v_0[n] - y[n] = s[n] + \big(v_0[n] - y[n]\big)
+\label{eq:anc_error}
+\end{equation}
+Squaring both sides of \eqref{eq:anc_error}:
+\begin{equation}
+e^2[n] = s^2[n] + \big(v_0[n] - y[n]\big)^2 + 2 s[n]\big(v_0[n] - y[n]\big)
+\end{equation}
+Taking the statistical expectation (ensemble average) $E[\cdot]$:
+\begin{equation}
+E[e^2[n]] = E[s^2[n]] + E\big[(v_0[n] - y[n])^2\big] + 2 E\big[s[n](v_0[n] - y[n])\big]
+\end{equation}
+Because the signal $s[n]$ is completely uncorrelated with both $v_0[n]$ and $y[n]$ (which is derived entirely from $x[n] = v_1[n]$), the cross-term vanishes identically:
+\begin{equation}
+E\big[s[n](v_0[n] - y[n])\big] = 0
+\end{equation}
+Thus, the total output power is:
+\begin{equation}
+\mathbf{E[e^2[n]] = E[s^2[n]] + E\big[(v_0[n] - y[n])^2\big]}
+\label{eq:power_split}
+\end{equation}
+
+\noindent\textbf{The Fundamental Insight:}
+\begin{itemize}
+    \item The signal power $E[s^2[n]]$ is an inherent property of the source and is unaffected by adjusting the filter weights.
+    \item Therefore, minimizing the total measurable system output power $E[e^2[n]]$ is mathematically equivalent to:
+    \begin{equation}
+    \min E[e^2[n]] \iff \min E\big[(v_0[n] - y[n])^2\big]
+    \end{equation}
+    \item When the filter is adapted to minimize output power, $y[n]$ becomes the optimal minimum mean-squared error estimate of the noise: $\mathbf{y[n] \approx v_0[n]}$.
+    \item Substituting $y[n] \to v_0[n]$ back into \eqref{eq:anc_error}:
+    \begin{equation}
+    \mathbf{e[n] = s[n] + \big(v_0[n] - y[n]\big) \longrightarrow s[n]}
+    \end{equation}
+    The error signal $e[n]$ is the **cleaned, noise-free desired signal**!
+\end{itemize}
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{4. THE ADAPTIVE FIR FILTER \& THE LMS ALGORITHM}
+
+\subsection{4.1 Transversal Filter Structure}
+An adaptive FIR filter consists of a tapped delay line of length $M$ whose tap weights are updated at every sample time $n$:
+\begin{equation}
+\mathbf{w}[n] = \big[ w_0[n], \; w_1[n], \; \dots, \; w_{M-1}[n] \big]^T
+\end{equation}
+The input signal vector at time $n$ is:
+\begin{equation}
+\mathbf{x}[n] = \big[ x[n], \; x[n-1], \; \dots, \; x[n-M+1] \big]^T
+\end{equation}
+The filter output $y[n]$ is the inner product:
+\begin{equation}
+\mathbf{y[n] = \mathbf{w}^T[n] \mathbf{x}[n] = \sum_{k=0}^{M-1} w_k[n] x[n-k]}
+\label{eq:lms_y}
+\end{equation}
+The estimation error is:
+\begin{equation}
+\mathbf{e[n] = d[n] - y[n]}
+\label{eq:lms_e}
+\end{equation}
+
+\subsection{4.2 Derivation of the Widrow--Hoff LMS Weight Update}
+The optimal weight vector (Wiener solution) minimizes the Mean Squared Error (MSE) performance surface:
+\begin{equation}
+\xi = E[e^2[n]] = E\big[(d[n] - \mathbf{w}^T \mathbf{x}[n])^2\big]
+\end{equation}
+The steepest descent algorithm updates weights in the direction opposite to the gradient $\nabla \xi$:
+\begin{equation}
+\mathbf{w}[n+1] = \mathbf{w}[n] - \mu \nabla \xi[n]
+\end{equation}
+where $\mu > 0$ is the adaptation step-size parameter.
+
+Evaluating the true gradient requires computing statistical expectations $E[d[n]\mathbf{x}[n]]$ and $E[\mathbf{x}[n]\mathbf{x}^T[n]]$, which are unavailable in real time. 
+Bernard Widrow and Ted Hoff (1960) introduced the ingenious approximation of replacing the true MSE gradient $\nabla E[e^2[n]]$ by the **instantaneous squared error gradient** $\nabla (e^2[n])$:
+\begin{equation}
+\nabla \hat{\xi}[n] = \frac{\partial e^2[n]}{\partial \mathbf{w}[n]} = 2 e[n] \frac{\partial e[n]}{\partial \mathbf{w}[n]}
+\end{equation}
+From \eqref{eq:lms_e}, since $e[n] = d[n] - \mathbf{w}^T[n]\mathbf{x}[n]$:
+\begin{equation}
+\frac{\partial e[n]}{\partial \mathbf{w}[n]} = -\mathbf{x}[n] \implies \nabla \hat{\xi}[n] = -2 e[n] \mathbf{x}[n]
+\end{equation}
+Substituting this estimate into the steepest descent equation yields the celebrated **Widrow--Hoff LMS Algorithm**:
+\begin{equation}
+\mathbf{w}[n+1] = \mathbf{w}[n] - \mu \big( -2 e[n] \mathbf{x}[n] \big)
+\end{equation}
+\begin{equation}
+\mathbf{\mathbf{w}[n+1] = \mathbf{w}[n] + 2\mu \, e[n] \, \mathbf{x}[n]}
+\label{eq:lms_update}
+\end{equation}
+In scalar form for each individual tap $k \in [0, M-1]$:
+\begin{equation}
+\mathbf{w_k[n+1] = w_k[n] + 2\mu \, e[n] \, x[n-k]}
+\end{equation}
+
+\subsection{4.3 Stability and Selection of Step-Size \texorpdfstring{$\mu$}{mu}}
+For the LMS algorithm to converge to the Wiener solution in the mean, the step-size parameter $\mu$ must satisfy:
+\begin{equation}
+\mathbf{0 < \mu < \frac{1}{\lambda_{\max}}}
+\end{equation}
+where $\lambda_{\max}$ is the largest eigenvalue of the input autocorrelation matrix $\mathbf{R} = E[\mathbf{x}[n]\mathbf{x}^T[n]]$.
+Since $\lambda_{\max} < \text{Tr}(\mathbf{R}) = \sum_{k=0}^{M-1} E[x^2[n-k]] = M \cdot P_x$ (where $P_x$ is the input signal power), a practical, easily verified sufficient condition for stability is:
+\begin{equation}
+\mathbf{0 < \mu < \frac{1}{M \cdot P_x}}
+\label{eq:mu_bound}
+\end{equation}
+\begin{itemize}
+    \item \textbf{Large $\mu$:} Fast convergence speed, but large steady-state weight fluctuations (high misadjustment / excess MSE). If $\mu$ exceeds the upper bound, the filter diverges catastrophically.
+    \item \textbf{Small $\mu$:} Slow tracking and adaptation, but exceptionally clean, low-noise steady-state performance.
+\end{itemize}
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{5. STEP-BY-STEP WORKED NUMERICAL EXAMPLES}
+
+\subsection{Example 26.1: Zero-Forcing Equalizer Synthesis}
+\textbf{Problem Statement:} A communication channel has the discrete impulse response:
+\begin{equation}
+h_c[n] = \{ \underset{\uparrow}{1.0}, \; 0.5 \}, \quad n = 0, 1
+\end{equation}
+Design a 3-tap Zero-Forcing FIR equalizer $\mathbf{w} = [w_0, w_1, w_2]^T$ to eliminate ISI with an overall system delay of $\Delta = 1$ sample, such that:
+\begin{equation}
+q[n] = h_c[n] \circledast h_{\text{eq}}[n] = \{0, \; \underset{\uparrow}{1.0}, \; 0, \; 0\}
+\end{equation}
+
+\vspace{1mm}
+\noindent\textbf{Solution:}
+
+\noindent\textbf{Step 1: Set Up Convolution Equations}
+The convolution $q[n] = \sum_{k=0}^2 w_k h_c[n-k]$ for $n = 0, 1, 2, 3$ yields:
+\begin{align}
+q[0] &= w_0 h_c[0] = 1.0 w_0 \\
+q[1] &= w_0 h_c[1] + w_1 h_c[0] = 0.5 w_0 + 1.0 w_1 \\
+q[2] &= w_1 h_c[1] + w_2 h_c[0] = 0.5 w_1 + 1.0 w_2 \\
+q[3] &= w_2 h_c[1] = 0.5 w_2
+\end{align}
+
+\noindent\textbf{Step 2: Impose the Zero-Forcing Target Constraints}
+Setting $q[0] = 0$, $q[1] = 1.0$, and $q[2] = 0$:
+\begin{enumerate}
+    \item From $q[0] = 0$:
+    \begin{equation}
+    1.0 w_0 = 0 \implies \mathbf{w_0 = 0}
+    \end{equation}
+    \item From $q[1] = 1.0$:
+    \begin{equation}
+    0.5 w_0 + 1.0 w_1 = 1.0 \implies 0.5(0) + 1.0 w_1 = 1.0 \implies \mathbf{w_1 = 1.0}
+    \end{equation}
+    \item From $q[2] = 0$:
+    \begin{equation}
+    0.5 w_1 + 1.0 w_2 = 0 \implies 0.5(1.0) + 1.0 w_2 = 0 \implies \mathbf{w_2 = -0.5}
+    \end{equation}
+\end{enumerate}
+
+\noindent\textbf{Step 3: Verification of Equalized Output}
+The 3-tap FIR equalizer is:
+\begin{equation}
+\mathbf{h_{\text{eq}}[n] = \{0, \; 1.0, \; -0.5\}} \iff H_{\text{eq}}(z) = z^{-1} - 0.5 z^{-2}
+\end{equation}
+Check the total cascaded response:
+\begin{equation}
+Q(z) = H_c(z) \cdot H_{\text{eq}}(z) = (1 + 0.5 z^{-1})(z^{-1} - 0.5 z^{-2}) = z^{-1} - 0.25 z^{-3}
+\end{equation}
+In the time domain:
+\begin{equation}
+q[n] = \{0, \; \underset{\uparrow}{1.0}, \; 0, \; -0.25\}
+\end{equation}
+Notice that $q[0] = 0$, $q[1] = 1.0$, and $q[2] = 0$! The ISI is completely zero-forced for the first 3 samples, leaving a minor residual tail of $-0.25$ at $n=3$ due to the finite length of the FIR equalizer.
+
+\vspace{2mm}
+\subsection{Example 26.2: Numerical Tracking of a 2-Tap LMS Adaptive Filter}
+\textbf{Problem Statement:} An adaptive 2-tap FIR filter has initial weights $\mathbf{w}[0] = [0.0, \; 0.0]^T$ and adaptation step size $\mu = 0.1$. The input sequences for the first two iterations are:
+\begin{itemize}
+    \item At $n = 0$: Reference vector $\mathbf{x}[0] = [1.0, \; 0.5]^T$, Primary target $d[0] = 2.0$.
+    \item At $n = 1$: Reference vector $\mathbf{x}[1] = [0.5, \; 1.0]^T$, Primary target $d[1] = 1.5$.
+\end{itemize}
+Calculate the filter output $y[n]$, error $e[n]$, and updated weight vector $\mathbf{w}[n+1]$ for iterations $n = 0$ and $n = 1$.
+
+\vspace{1mm}
+\noindent\textbf{Solution:}
+
+\noindent\textbf{Iteration 1 ($n = 0$):}
+\begin{enumerate}
+    \item \textbf{Filter Output $y[0]$:}
+    \begin{equation}
+    y[0] = \mathbf{w}^T[0] \mathbf{x}[0] = w_0[0] x[0] + w_1[0] x[-1] = (0.0)(1.0) + (0.0)(0.5) = \mathbf{0.0}
+    \end{equation}
+    \item \textbf{Estimation Error $e[0]$:}
+    \begin{equation}
+    e[0] = d[0] - y[0] = 2.0 - 0.0 = \mathbf{2.0}
+    \end{equation}
+    \item \textbf{Weight Vector Update $\mathbf{w}[1]$:}
+    Using the LMS equation $\mathbf{w}[1] = \mathbf{w}[0] + 2\mu e[0] \mathbf{x}[0]$ with $\mu = 0.1$:
+    \begin{equation}
+    2\mu e[0] = 2(0.1)(2.0) = 0.4
+    \end{equation}
+    \begin{equation}
+    w_0[1] = w_0[0] + 0.4 x[0] = 0.0 + 0.4(1.0) = \mathbf{0.40}
+    \end{equation}
+    \begin{equation}
+    w_1[1] = w_1[0] + 0.4 x[-1] = 0.0 + 0.4(0.5) = \mathbf{0.20}
+    \end{equation}
+    Updated weight vector: $\mathbf{w}[1] = [0.40, \; 0.20]^T$.
+\end{enumerate}
+
+\noindent\textbf{Iteration 2 ($n = 1$):}
+\begin{enumerate}
+    \item \textbf{Filter Output $y[1]$:}
+    \begin{equation}
+    y[1] = \mathbf{w}^T[1] \mathbf{x}[1] = (0.40)(0.5) + (0.20)(1.0) = 0.20 + 0.20 = \mathbf{0.40}
+    \end{equation}
+    \item \textbf{Estimation Error $e[1]$:}
+    \begin{equation}
+    e[1] = d[1] - y[1] = 1.5 - 0.40 = \mathbf{1.10}
+    \end{equation}
+    Notice that the error has decreased from $2.0$ to $1.10$, proving rapid convergence!
+    \item \textbf{Weight Vector Update $\mathbf{w}[2]$:}
+    \begin{equation}
+    2\mu e[1] = 2(0.1)(1.10) = 0.22
+    \end{equation}
+    \begin{equation}
+    w_0[2] = w_0[1] + 0.22 x[1] = 0.40 + 0.22(0.5) = 0.40 + 0.11 = \mathbf{0.51}
+    \end{equation}
+    \begin{equation}
+    w_1[2] = w_1[1] + 0.22 x[0] = 0.20 + 0.22(1.0) = 0.20 + 0.22 = \mathbf{0.42}
+    \end{equation}
+    Final weight vector after 2 iterations: $\mathbf{w}[2] = [0.51, \; 0.42]^T$.
+\end{enumerate}
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{6. FACULTY INSIGHTS, COMMON PITFALLS \& EXAM TRAPS}
+
+\begin{itemize}
+    \item \textbf{Pitfall 1: Forgetting the Factor of 2 in the LMS Update:}
+    Depending on whether the cost function is defined as $\frac{1}{2}E[e^2]$ or $E[e^2]$, the factor of $2$ appears or disappears. In university exams, if the update is given as $w[n+1] = w[n] + 2\mu e[n] x[n]$, remember the factor of $2$. If using $\mu' = 2\mu$, clearly state the convention!
+    
+    \item \textbf{Pitfall 2: Confusing the Role of Primary vs. Reference Inputs in ANC:}
+    Students often mistakenly assume the clean signal $s[n]$ is fed to the reference input. In reality, **$s[n]$ must NEVER enter the reference input**. If $s[n]$ leaks into $x[n]$, the adaptive filter will cancel the desired signal along with the noise!
+    
+    \item \textbf{Pitfall 3: Choosing Step-Size $\mu$ Too Large:}
+    If $\mu > 1/(M P_x)$, the weight updates will overshoot the minimum of the error bowl, leading to explosive exponential divergence of the filter weights ($w_k \to \pm\infty$).
+    
+    \item \textbf{Pitfall 4: Channel Inversion Noise Amplification:}
+    In Zero-Forcing equalizers, if the channel has a spectral null ($H_c(e^{j\omega}) \approx 0$), the equalizer gain $1/H_c(e^{j\omega})$ becomes gigantic at that frequency. This massively amplifies additive channel noise $v[n]$! (This motivates MMSE equalizers in advanced communications).
+\end{itemize}
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{7. QUICK REVISION \& SUMMARY CHEAT-SHEET}
+
+\begin{table}[H]
+\centering
+\caption{Equalization, Noise Cancellation, and LMS Adaptive Filter Quick Reference Sheet}
+\label{tab:quick_reference}
+\vspace{2mm}
+\resizebox{\textwidth}{!}{
+\begin{tabular}{lll}
+\toprule
+\textbf{Concept / Topic} & \textbf{Mathematical Definition / Operational Formula} & \textbf{Key Pedagogical Note} \\
+\midrule
+\textbf{Channel Model} & $x[n] = s[n] * h_c[n] + v[n]$ & Dispersive channel inducing ISI \\
+\textbf{Zero-Forcing Criterion} & $H_{\text{eq}}(z) \cdot H_c(z) = z^{-\Delta}$ & Eliminates ISI at sampling instants \\
+\textbf{ANC Primary Input} & $d[n] = s[n] + v_0[n]$ & Desired signal + corrupting noise \\
+\textbf{ANC Reference Input} & $x[n] = v_1[n]$ & Correlated with $v_0[n]$, uncorrelated with $s[n]$ \\
+\textbf{ANC Output Error} & $e[n] = d[n] - y[n] \longrightarrow s[n]$ & Error signal is the extracted clean signal \\
+\textbf{LMS Filter Output} & $y[n] = \mathbf{w}^T[n]\mathbf{x}[n] = \sum_{k=0}^{M-1} w_k[n]x[n-k]$ & Transversal tapped-delay inner product \\
+\textbf{LMS Error Signal} & $e[n] = d[n] - y[n]$ & Instantaneous difference \\
+\textbf{LMS Weight Update} & $\mathbf{w}[n+1] = \mathbf{w}[n] + 2\mu \, e[n] \, \mathbf{x}[n]$ & Stochastic gradient descent recursion \\
+\textbf{Stability Bound on $\mu$} & $0 < \mu < \frac{1}{\sum_{k=0}^{M-1} E[x^2[n-k]]} = \frac{1}{M \cdot P_x}$ & Guaranteed convergence condition \\
+\bottomrule
+\end{tabular}
+}
+\end{table}
 
 \end{document}

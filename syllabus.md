@@ -1,6 +1,6 @@
 # EE3621 — Digital Signal Processing
 
-## 30-Lecture Plan (III B.Tech EEE)
+## 26-Lecture Plan (III B.Tech EEE)
 
 ### Unit I — Basic Elements of DSP (L1–L7) &rarr; CO1, CO2
 * **L1**: Course intro, DSP vs analog processing; review of DT signals, classification, elementary sequences
@@ -34,14 +34,10 @@
 
 ---
 
-### Unit IV — Digital Filter Design (L21–L30) &rarr; CO5
-* **L21**: Linear phase FIR filter, characteristic response, location of zeros
+### Unit IV — Digital Filter Design (L21–L26) &rarr; CO5
+* **L21**: Linear phase FIR filter, characteristic response, location of zeros & moving average filters
 * **L22**: Design of FIR filter - windowing method
-* **L23**: Design of FIR filter - windowing method (continued)
-* **L24**: Design of FIR filter - frequency sampling
-* **L25**: FIR Filters - moving average filters
-* **L26**: Design of IIR filters from analog filters
-* **L27**: IIR filter design - Impulse invariance
-* **L28**: IIR filter design - bilinear transformation
-* **L29**: IIR filter design - matched z-transform; simple design example
-* **L30**: Equalization and noise cancellation and adaptive FIR filter
+* **L23**: Design of FIR filter - frequency sampling
+* **L24**: Design of IIR filters from analog filters - Impulse invariance
+* **L25**: Design of IIR filters - Bilinear transformation, matched z-transform & simple design example
+* **L26**: Equalization, noise cancellation and adaptive FIR filter

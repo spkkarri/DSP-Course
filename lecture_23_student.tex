@@ -1,0 +1,196 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amsfonts,amssymb}
+\usepackage{graphicx}
+\usepackage{geometry}
+\geometry{margin=1in}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{float}
+\usepackage{xcolor}
+
+\definecolor{darkbg}{HTML}{0d121f}
+\definecolor{lighttext}{HTML}{e2e8f0}
+\definecolor{primary}{HTML}{8b5cf6}
+\definecolor{secondary}{HTML}{0dd5c5}
+\definecolor{accent}{HTML}{10b981}
+
+\pagecolor{darkbg}
+\color{lighttext}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=secondary,
+    urlcolor=secondary,
+    citecolor=accent
+}
+
+\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Student Lecture Notes — Lecture 23 \\ \large Design of FIR Filters Using Frequency Sampling}
+\author{III B.Tech EEE — Core Exam Preparation Guide}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{Core Concept of Frequency Sampling}
+
+\subsection{Basic Principle}
+Instead of truncating an infinite impulse response in the time domain (windowing), the \textbf{Frequency Sampling Method} directly discretizes the desired continuous frequency response $H_d(e^{j\omega})$ at $N$ uniformly spaced points on the unit circle:
+\begin{equation}
+\omega_k = \frac{2\pi k}{N}, \quad k = 0, 1, \dots, N-1
+\end{equation}
+The discrete frequency samples are:
+\begin{equation}
+H[k] = \left. H_d(e^{j\omega}) \right|_{\omega = \frac{2\pi k}{N}} = |H[k]| e^{j \theta_k}
+\end{equation}
+The causal FIR impulse response $h[n]$ ($0 \le n \le N-1$) is computed via the $N$-point \textbf{Inverse Discrete Fourier Transform (IDFT)}:
+\begin{equation}
+h[n] = \frac{1}{N} \sum_{k=0}^{N-1} H[k] \, e^{j \frac{2\pi k n}{N}}, \quad 0 \le n \le N-1
+\end{equation}
+By definition, the reconstructed filter response $H(e^{j\omega})$ passes \textbf{exactly} through $H[k]$ at all $N$ grid frequencies:
+\begin{equation}
+H\left(e^{j \frac{2\pi k}{N}}\right) \equiv H[k], \quad \forall k \in [0, N-1]
+\end{equation}
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{Linear-Phase Constraints on Samples $H[k]$}
+
+For the synthesized impulse response $h[n]$ to be real-valued and satisfy linear phase ($h[n] = h[N-1-n]$), the frequency samples must satisfy:
+\begin{enumerate}
+    \item \textbf{Magnitude Symmetry (Even Symmetry):}
+    \begin{equation}
+    \mathbf{|H[N-k]| = |H[k]|}, \quad k = 1, 2, \dots, N-1
+    \end{equation}
+    \item \textbf{Phase Angle Assignment (Strict Linear Phase):}
+    \begin{equation}
+    \mathbf{\theta_k = \angle H[k] = -\tau \omega_k = -\left(\frac{N-1}{2}\right)\frac{2\pi k}{N}}
+    \end{equation}
+    \item \textbf{DC Bin Property:}
+    \begin{equation}
+    \theta_0 = 0 \implies H[0] \in \mathbb{R}^+ \quad \text{(Strictly real and non-negative)}
+    \end{equation}
+    \item \textbf{Nyquist Bin Property (for $N$ even):}
+    At $k = N/2$ ($\omega = \pi$), Type 2 filters possess an obligatory zero:
+    \begin{equation}
+    \mathbf{H[N/2] = 0}
+    \end{equation}
+\end{enumerate}
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{Real-Valued IDFT Synthesis Formulas (Master Formulas)}
+
+By combining complex conjugate pairs $H[k]$ and $H[N-k]$, all complex exponentials collapse into real trigonometric cosines:
+
+\begin{table}[H]
+\centering
+\caption{Operational Closed-Form Frequency Sampling Formulas}
+\label{tab:formulas}
+\vspace{2mm}
+\resizebox{\textwidth}{!}{
+\begin{tabular}{lll}
+\toprule
+\textbf{Filter Type} & \textbf{Formula for Impulse Response $h[n]$ ($0 \le n \le N-1$)} & \textbf{Center Delay $\tau$} \\
+\midrule
+\textbf{Type 1 ($N$ Odd)} & $\mathbf{h[n] = \frac{1}{N} \left\{ H[0] + 2 \sum_{k=1}^{(N-1)/2} |H[k]| \cos\left[ \frac{2\pi k}{N}\left(n - \frac{N-1}{2}\right) \right] \right\}}$ & $\tau = \frac{N-1}{2}$ (Integer) \\
+\midrule
+\textbf{Type 2 ($N$ Even)} & $\mathbf{h[n] = \frac{1}{N} \left\{ H[0] + 2 \sum_{k=1}^{N/2 - 1} |H[k]| \cos\left[ \frac{2\pi k}{N}\left(n - \frac{N-1}{2}\right) \right] \right\}}$ & $\tau = \frac{N-1}{2}$ (Half-Integer, $H[N/2]=0$) \\
+\bottomrule
+\end{tabular}
+}
+\end{table}
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{Transition Sample Optimization (Sidelobe Control)}
+
+\begin{itemize}
+    \item \textbf{The Ringing Problem:} Naive brick-wall frequency sampling (setting passband samples to $1$ and stopband to $0$) causes severe inter-sample ringing between bins, resulting in poor peak stopband attenuation of only **$-16$ dB**!
+    \item \textbf{The Solution (Rabiner--Gold Technique):} Make the samples in the transition band unconstrained design variables ($T_1, T_2 \in (0, 1)$).
+    \begin{itemize}
+        \item With \textbf{1 transition sample ($T_1 \approx 0.38$)}: Peak stopband attenuation jumps to **$-45$ dB** ($+29$ dB improvement!).
+        \item With \textbf{2 transition samples ($T_1 \approx 0.59, T_2 \approx 0.11$)}: Stopband attenuation reaches **$-75$ dB**.
+    \end{itemize}
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\textwidth]{images/fir_freq_sampling_transition_opt.png}
+\caption{Dramatic sidelobe suppression achieved by introducing transition sample $T_1 = 0.38$ between passband and stopband.}
+\label{fig:transition_opt}
+\end{figure}
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{Standard Solved Exam Example}
+
+\textbf{Problem:} Design a 7-point ($N = 7$) linear-phase FIR lowpass filter having the following desired frequency response:
+\begin{equation}
+H_d(e^{j\omega}) = \begin{cases} 1, & 0 \le |\omega| \le \frac{2\pi}{7} \\ 0, & \frac{4\pi}{7} \le |\omega| \le \pi \end{cases}
+\end{equation}
+using the frequency sampling method. Determine the impulse response $h[n]$ for $n = 0, 1, 2, 3, 4, 5, 6$.
+
+\vspace{1mm}
+\noindent\textbf{Solution:}
+
+\noindent\textbf{Step 1: Determine Sampling Frequencies and Samples}
+For $N = 7$, grid frequencies are $\omega_k = \frac{2\pi k}{7}$:
+\begin{itemize}
+    \item $k = 0$: $\omega_0 = 0 \implies |H[0]| = 1$
+    \item $k = 1$: $\omega_1 = \frac{2\pi}{7} \le \frac{2\pi}{7} \implies |H[1]| = 1$
+    \item $k = 2$: $\omega_2 = \frac{4\pi}{7} \ge \frac{4\pi}{7} \implies |H[2]| = 0$
+    \item $k = 3$: $\omega_3 = \frac{6\pi}{7} \ge \frac{4\pi}{7} \implies |H[3]| = 0$
+\end{itemize}
+By Hermitian symmetry: $|H[6]| = |H[1]| = 1$, $|H[5]| = |H[2]| = 0$, $|H[4]| = |H[3]| = 0$.
+
+\noindent\textbf{Step 2: Apply the Type 1 Real IDFT Formula}
+Since $N = 7$ is odd, $(N-1)/2 = 3$, and the center delay is $\tau = 3$:
+\begin{equation}
+h[n] = \frac{1}{7} \left\{ H[0] + 2 \sum_{k=1}^{3} |H[k]| \cos\left[ \frac{2\pi k}{7}(n - 3) \right] \right\}
+\end{equation}
+Since $|H[2]| = |H[3]| = 0$, only the $k = 1$ term survives!
+\begin{equation}
+\mathbf{h[n] = \frac{1}{7} \left\{ 1 + 2 \cos\left[ \frac{2\pi}{7}(n - 3) \right] \right\}}, \quad 0 \le n \le 6
+\end{equation}
+
+\noindent\textbf{Step 3: Pointwise Tap Evaluation}
+\begin{itemize}
+    \item \textbf{Center Tap ($n = 3$):}
+    \begin{equation}
+    h[3] = \frac{1 + 2\cos(0)}{7} = \frac{1 + 2(1)}{7} = \frac{3}{7} \approx \mathbf{0.4286}
+    \end{equation}
+    \item \textbf{Adjacent Taps ($n = 2$ and $n = 4$):} For $n=2$, $n-3 = -1$:
+    \begin{equation}
+    h[2] = h[4] = \frac{1 + 2\cos(2\pi/7)}{7} = \frac{1 + 2\cos(51.43^\circ)}{7} \approx \frac{1 + 2(0.6235)}{7} = \frac{2.2470}{7} \approx \mathbf{0.3210}
+    \end{equation}
+    \item \textbf{Next Taps ($n = 1$ and $n = 5$):} For $n=1$, $n-3 = -2$:
+    \begin{equation}
+    h[1] = h[5] = \frac{1 + 2\cos(4\pi/7)}{7} = \frac{1 + 2\cos(102.86^\circ)}{7} \approx \frac{1 + 2(-0.2225)}{7} = \frac{0.5549}{7} \approx \mathbf{0.0793}
+    \end{equation}
+    \item \textbf{Outer Taps ($n = 0$ and $n = 6$):} For $n=0$, $n-3 = -3$:
+    \begin{equation}
+    h[0] = h[6] = \frac{1 + 2\cos(6\pi/7)}{7} = \frac{1 + 2\cos(154.29^\circ)}{7} \approx \frac{1 + 2(-0.9010)}{7} = \frac{-0.8019}{7} \approx \mathbf{-0.1146}
+    \end{equation}
+\end{itemize}
+
+\noindent\textbf{Step 4: Final Sequence and Symmetry Verification}
+\begin{equation}
+\mathbf{h[n] = \{-0.1146, \; 0.0793, \; 0.3210, \; \underset{\uparrow}{0.4286}, \; 0.3210, \; 0.0793, \; -0.1146\}}
+\end{equation}
+Symmetry check: $h[n] = h[6-n]$ holds exactly. Constant group delay $\tau = 3$ samples.
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{Essential Exam Checklist \& Traps}
+\begin{itemize}
+    \item[$\square$] \textbf{The Missing Factor of 2:} Always write $2\sum |H[k]|\cos(\dots)$. Forgetting the factor of $2$ is the most common exam error!
+    \item[$\square$] \textbf{Argument of Cosine:} The argument is $\frac{2\pi k}{N}(n - \tau)$, where $\tau = (N-1)/2$.
+    \item[$\square$] \textbf{Even Length $N$ Boundary Condition:} When $N$ is even, you \textbf{must set $H[N/2] = 0$} because Type 2 filters have an obligatory zero at $\omega = \pi$.
+    \item[$\square$] \textbf{Exact Values at Grid Points:} At $\omega = \omega_k = \frac{2\pi k}{N}$, the filter response is strictly equal to $H[k]$ with zero approximation error.
+\end{itemize}
+
+\end{document}

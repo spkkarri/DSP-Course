@@ -13,6 +13,7 @@
 \definecolor{lighttext}{HTML}{e2e8f0}
 \definecolor{primary}{HTML}{8b5cf6}
 \definecolor{secondary}{HTML}{0dd5c5}
+\definecolor{accent}{HTML}{10b981}
 
 \pagecolor{darkbg}
 \color{lighttext}
@@ -20,41 +21,417 @@
 \hypersetup{
     colorlinks=true,
     linkcolor=secondary,
-    urlcolor=secondary
+    urlcolor=secondary,
+    citecolor=accent
 }
 
+\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Lecture 25: Design of IIR filters - Bilinear transformation, matched z-transform \& simple design example \\ \large (III B.Tech EEE)}
+\author{Comprehensive Lecture Notes \& Faculty Textbook Reference}
+\date{}
+
 \begin{document}
-\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Lecture 25: FIR Filters - moving average filters \\ \large (III B.Tech EEE)}\maketitle
+
+\maketitle
 
 \noindent\rule{\textwidth}{0.5pt}
-\section*{1. LEARNING OBJECTIVES}
+
+\section*{Lecture Plan \& Objectives (40 Minutes Breakdown)}
+\begin{itemize}
+    \item \textbf{00:00 -- 06:00 (6 mins):} Motivation for Bilinear Transformation: Overcoming the severe aliasing limitation of the Impulse Invariance method. Derivation of the Bilinear Transformation via trapezoidal numerical integration of continuous differential equations.
+    \item \textbf{06:00 -- 15:00 (9 mins):} Conformal Mapping Properties: The algebraic transformation $s = \frac{2}{T}\left(\frac{1 - z^{-1}}{1 + z^{-1}}\right)$. Proof of unconditional stability preservation: mapping the entire left-half $s$-plane ($\sigma < 0$) into the interior of the unit circle ($|z| < 1$). Mapping the entire imaginary axis $j\Omega \in (-\infty, \infty)$ one-to-one onto the unit circle $\omega \in (-\pi, \pi)$ with \textbf{zero aliasing}.
+    \item \textbf{15:00 -- 22:00 (7 mins):} Frequency Warping \& The Pre-Warping Principle: Derivation of the non-linear tangent compression $\Omega = \frac{2}{T}\tan(\omega/2)$. Why digital frequencies must be pre-warped into analog prototype frequencies before filter synthesis.
+    \item \textbf{22:00 -- 28:00 (6 mins):} The Matched Z-Transform (MZT): Heuristic mapping of poles and zeros: $(s - s_k) \to (1 - e^{s_k T} z^{-1})$. Adding zeros at $z = -1$ to match infinite frequency attenuation. Comparative evaluation of Impulse Invariance, Bilinear Transformation, and Matched Z-Transform.
+    \item \textbf{28:00 -- 38:00 (10 mins):} Step-by-Step Worked Numerical Examples:
+    \begin{itemize}
+        \item \textbf{Example 25.1:} BLT transformation of a 1st-order analog lowpass filter.
+        \item \textbf{Example 25.2:} Complete design of a 2nd-order digital Butterworth lowpass filter with pre-warping.
+        \item \textbf{Example 25.3:} Application of the Matched Z-Transform to a 2nd-order analog prototype.
+    \end{itemize}
+    \item \textbf{38:00 -- 40:00 (2 mins):} Faculty Insights, Common Misconceptions, and University Semester Exam Traps.
+\end{itemize}
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{1. LEARNING OBJECTIVES}
 By the end of this lecture, students will be able to:
 \begin{enumerate}
-\item \textbf{Analyze} the frequency selectivity and pole-zero placement of Moving Average filters.
+    \item \textbf{Derive} the Bilinear Transformation (BLT) operator from the trapezoidal numerical approximation of integration.
+    \item \textbf{Prove} that BLT maps the stable left-half $s$-plane strictly into the interior of the unit circle in the $z$-plane, guaranteeing filter stability.
+    \item \textbf{Explain} why the Bilinear Transformation completely eliminates the aliasing distortion inherent to Impulse Invariance.
+    \item \textbf{Analyze} the origin and physical consequences of non-linear frequency warping: $\Omega = \frac{2}{T}\tan(\omega/2)$.
+    \item \textbf{Perform} frequency pre-warping on digital specifications ($\omega_p, \omega_s$) to establish precise analog prototype cutoff frequencies.
+    \item \textbf{Apply} the Matched Z-Transform (MZT) rule to map analog poles and zeros into discrete polynomials.
+    \item \textbf{Contrast} the operational trade-offs between Impulse Invariance, Bilinear Transformation, and Matched Z-Transform.
+    \item \textbf{Synthesize} digital Butterworth lowpass filters meeting strict attenuation specifications through step-by-step calculations.
 \end{enumerate}
 
 \noindent\rule{\textwidth}{0.5pt}
-\section*{2. MATHEMATICAL FOUNDATIONS}
 
-\subsection*{2.1 Moving Average Filter}
+\section{2. DERIVATION OF THE BILINEAR TRANSFORMATION}
 
-$$ y[n] = \frac{1}{M} \sum_{k=0}^{M-1} x[n-k] \implies H(z) = \frac{1 - z^{-M}}{M(1 - z^{-1})} $$
-$$ H(e^{j\omega}) = \frac{1}{M} \frac{\sin(\omega M / 2)}{\sin(\omega / 2)} e^{-j\omega(M-1)/2} $$
+\subsection{2.1 Trapezoidal Numerical Integration}
+Consider a simple continuous-time first-order differential system:
+\begin{equation}
+\frac{dy(t)}{dt} = x(t) \iff s Y(s) = X(s) \implies Y(s) = \frac{1}{s} X(s)
+\label{eq:diff_eq}
+\end{equation}
+Integrating both sides from $t = (n-1)T$ to $t = n T$:
+\begin{equation}
+y(nT) - y((n-1)T) = \int_{(n-1)T}^{nT} x(t) \, dt
+\end{equation}
+Approximating the definite integral by the **trapezoidal rule** (the area under the curve is approximated by the average height times the width $T$):
+\begin{equation}
+\int_{(n-1)T}^{nT} x(t) \, dt \approx \frac{T}{2}\big[ x(nT) + x((n-1)T) \big]
+\end{equation}
+Letting $y[n] = y(nT)$ and $x[n] = x(nT)$ yields the discrete difference equation:
+\begin{equation}
+y[n] - y[n-1] = \frac{T}{2}\big(x[n] + x[n-1]\big)
+\label{eq:trap_diff}
+\end{equation}
+
+\subsection{2.2 The Algebraic Mapping Operator}
+Taking the unilateral $Z$-transform of \eqref{eq:trap_diff}:
+\begin{equation}
+Y(z)\big(1 - z^{-1}\big) = \frac{T}{2} X(z)\big(1 + z^{-1}\big) \implies \frac{Y(z)}{X(z)} = \frac{T}{2} \frac{1 + z^{-1}}{1 - z^{-1}}
+\end{equation}
+Comparing this discrete integrator transfer function with the continuous integrator $1/s$ in \eqref{eq:diff_eq}:
+\begin{equation}
+\frac{1}{s} \approx \frac{T}{2} \frac{1 + z^{-1}}{1 - z^{-1}}
+\end{equation}
+Inverting both sides yields the fundamental **Bilinear Transformation**:
+\begin{equation}
+\mathbf{s = \frac{2}{T} \left( \frac{1 - z^{-1}}{1 + z^{-1}} \right) = \frac{2}{T} \left( \frac{z - 1}{z + 1} \right)}
+\label{eq:blt_s}
+\end{equation}
+Solving for $z$ gives the inverse mapping:
+\begin{equation}
+\mathbf{z = \frac{1 + \frac{T}{2}s}{1 - \frac{T}{2}s}}
+\label{eq:blt_z}
+\end{equation}
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{3. CONFORMAL MAPPING PROPERTIES \& STABILITY}
+
+\subsection{3.1 Mapping of the s-Plane to the z-Plane}
+Let $s = \sigma + j\Omega$ in \eqref{eq:blt_z}:
+\begin{equation}
+z = \frac{1 + \frac{T}{2}(\sigma + j\Omega)}{1 - \frac{T}{2}(\sigma + j\Omega)} = \frac{\left(1 + \frac{\sigma T}{2}\right) + j \frac{\Omega T}{2}}{\left(1 - \frac{\sigma T}{2}\right) - j \frac{\Omega T}{2}}
+\end{equation}
+Evaluating the magnitude squared $|z|^2$:
+\begin{equation}
+|z|^2 = \frac{\left(1 + \frac{\sigma T}{2}\right)^2 + \left(\frac{\Omega T}{2}\right)^2}{\left(1 - \frac{\sigma T}{2}\right)^2 + \left(\frac{\Omega T}{2}\right)^2}
+\end{equation}
+We observe three decisive geometric properties:
+\begin{enumerate}
+    \item \textbf{Left-Half Plane ($\sigma < 0$):} If $\sigma < 0$, then $\left(1 + \frac{\sigma T}{2}\right)^2 < \left(1 - \frac{\sigma T}{2}\right)^2$. Therefore, the numerator is strictly smaller than the denominator:
+    \begin{equation}
+    \mathbf{|z| < 1 \quad (\text{Strictly inside the unit circle})}
+    \end{equation}
+    \textbf{Stability Proof:} Every stable analog pole in the left-half $s$-plane maps strictly inside the unit circle. The digital filter is \textbf{unconditionally stable}!
+    
+    \item \textbf{Imaginary Axis ($\sigma = 0$):} If $\sigma = 0$, the numerator equals the denominator:
+    \begin{equation}
+    \mathbf{|z| = 1 \quad (\text{Exactly on the unit circle})}
+    \end{equation}
+    The entire imaginary axis $s = j\Omega$ from $\Omega = -\infty$ to $\Omega = +\infty$ maps onto the unit circle $z = e^{j\omega}$ from $\omega = -\pi$ to $\omega = +\pi$.
+    
+    \item \textbf{Right-Half Plane ($\sigma > 0$):} If $\sigma > 0$, $|z| > 1$, mapping outside the unit circle.
+\end{enumerate}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.92\textwidth]{images/iir_bilinear_transform_warping.png}
+\caption{Bilinear Transformation characteristics. Left: One-to-one conformal mapping of the entire continuous $s$-plane into the discrete $z$-plane without spectral overlap. Right: The non-linear frequency warping curve $\omega = 2\arctan(\Omega T / 2)$, illustrating the compression of infinite analog frequencies into the finite digital interval $[0, \pi]$.}
+\label{fig:blt_warping}
+\end{figure}
+
+\subsection{3.2 Total Elimination of Aliasing}
+Because the mapping between the continuous $j\Omega$-axis and the discrete unit circle is **one-to-one and onto**:
 \begin{itemize}
-\item $M-1$ zeros are located on the unit circle at $z = e^{j 2\pi k / M}$ for $k = 1, 2, \dots, M-1$.
-\item The pole at $z=1$ exactly cancels the zero at $z=1$.
+    \item No point on the unit circle corresponds to more than one point on the analog frequency axis.
+    \item \textbf{Zero Aliasing occurs!}
+    \item Unlike Impulse Invariance, the Bilinear Transformation can be applied to design **any filter type**, including **Highpass, Bandpass, and Bandstop filters**!
 \end{itemize}
 
-\subsection*{Pictorial Representations}
-\begin{figure}[H]
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{4. FREQUENCY WARPING \& THE PRE-WARPING PROTOCOL}
+
+\subsection{4.1 Derivation of the Warping Equation}
+To find the relationship between digital frequency $\omega$ and analog frequency $\Omega$, evaluate \eqref{eq:blt_s} on the unit circle ($z = e^{j\omega}$):
+\begin{align}
+s = j\Omega &= \frac{2}{T}\left(\frac{1 - e^{-j\omega}}{1 + e^{-j\omega}}\right) = \frac{2}{T}\left(\frac{e^{-j\omega/2}(e^{j\omega/2} - e^{-j\omega/2})}{e^{-j\omega/2}(e^{j\omega/2} + e^{-j\omega/2})}\right) \nonumber \\
+            &= \frac{2}{T}\left(\frac{2j\sin(\omega/2)}{2\cos(\omega/2)}\right) = j \frac{2}{T} \tan\left(\frac{\omega}{2}\right)
+\end{align}
+Equating imaginary parts yields the fundamental **Frequency Warping Formula**:
+\begin{equation}
+\mathbf{\Omega = \frac{2}{T} \tan\left(\frac{\omega}{2}\right)}
+\label{eq:warping_forward}
+\end{equation}
+Inverting \eqref{eq:warping_forward} gives digital frequency as a function of analog frequency:
+\begin{equation}
+\mathbf{\omega = 2 \arctan\left(\frac{\Omega T}{2}\right)}
+\label{eq:warping_inverse}
+\end{equation}
+
+\noindent\textbf{Consequences of Frequency Warping:}
+\begin{itemize}
+    \item At low frequencies ($\omega \ll 1$), $\tan(\omega/2) \approx \omega/2 \implies \Omega \approx \omega/T$ (Linear relationship).
+    \item As $\omega \to \pi$, $\tan(\omega/2) \to \infty \implies \Omega \to \infty$. The infinite analog frequency axis $[0, \infty)$ is non-linearly compressed into the finite digital interval $[0, \pi)$.
+    \item This compression non-linearly distorts transition widths and frequency spacing.
+\end{itemize}
+
+\subsection{4.2 The Principle of Frequency Pre-Warping}
+To compensate for frequency compression, the designer must **pre-warp** the desired digital critical frequencies ($\omega_p, \omega_s$) into analog critical frequencies ($\Omega_p, \Omega_s$) **before designing the analog prototype**:
+\begin{equation}
+\mathbf{\Omega_p = \frac{2}{T} \tan\left(\frac{\omega_p}{2}\right)}, \qquad \mathbf{\Omega_s = \frac{2}{T} \tan\left(\frac{\omega_s}{2}\right)}
+\label{eq:prewarping}
+\end{equation}
+When the analog prototype $H_a(s)$ is synthesized to meet $\Omega_p$ and $\Omega_s$, the subsequent bilinear transformation maps these frequencies back to $\omega_p$ and $\omega_s$ **with mathematical perfection**!
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{5. THE MATCHED Z-TRANSFORM (MZT) METHOD}
+
+\subsection{5.1 Basic Concept}
+The \textbf{Matched Z-Transform (MZT)} is an alternative heuristic technique that maps the poles and finite zeros of an analog transfer function directly into discrete poles and zeros:
+\begin{equation}
+\mathbf{(s - p_k) \quad \longrightarrow \quad (1 - e^{p_k T} z^{-1})}, \qquad \mathbf{(s - z_k) \quad \longrightarrow \quad (1 - e^{z_k T} z^{-1})}
+\end{equation}
+For an analog filter with $M$ zeros and $N$ poles ($M \le N$):
+\begin{equation}
+H_a(s) = K \frac{\prod_{k=1}^M (s - z_k)}{\prod_{k=1}^N (s - p_k)} \implies H(z) = K_d \frac{\prod_{k=1}^M (1 - e^{z_k T} z^{-1})}{\prod_{k=1}^N (1 - e^{p_k T} z^{-1})}
+\end{equation}
+
+\subsection{5.2 Handling Zeros at Infinity}
+Most analog lowpass prototypes (such as Butterworth filters) have all-pole transfer functions where $M = 0$ and $N$ zeros lie at $s = \infty$.
+\begin{itemize}
+    \item Because $s = \infty$ corresponds to the digital Nyquist frequency $\omega = \pi$ ($z = -1$), the Matched Z-Transform inserts zeros at $z = -1$:
+    \begin{equation}
+    (1 + z^{-1})^{N - M}
+    \end{equation}
+    \item The gain constant $K_d$ is then chosen to match the DC gain: $H(1) = H_a(0)$.
+\end{itemize}
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{6. COMPREHENSIVE COMPARISON OF IIR DESIGN METHODS}
+
+\begin{table}[H]
 \centering
-\includegraphics[width=0.85\textwidth]{images/moving_average_zplane.png}
-\caption{Moving Average Zplane}
-\end{figure}
-\begin{figure}[H]
+\caption{Comprehensive Comparison of Analog-to-Digital IIR Transformation Techniques}
+\label{tab:iir_comparison}
+\vspace{2mm}
+\resizebox{\textwidth}{!}{
+\begin{tabular}{lccc}
+\toprule
+\textbf{Feature / Property} & \textbf{Impulse Invariance} & \textbf{Bilinear Transformation (BLT)} & \textbf{Matched Z-Transform (MZT)} \\
+\midrule
+\textbf{Core Mapping Principle} & $h[n] = T_s h_a(n T_s)$ & $s = \frac{2}{T}\left(\frac{1 - z^{-1}}{1 + z^{-1}}\right)$ & $(s - a) \to (1 - e^{a T} z^{-1})$ \\
+\textbf{Mathematical Basis} & Time-domain sampling & Trapezoidal numerical integration & Direct pole-zero substitution \\
+\textbf{Stability Preservation} & Guaranteed ($\text{Re}(s_k)<0 \implies |z_k|<1$) & Guaranteed ($\text{Re}(s_k)<0 \implies |z_k|<1$) & Guaranteed ($\text{Re}(s_k)<0 \implies |z_k|<1$) \\
+\textbf{Aliasing Occurrence} & **Severe** (infinite spectral superposition) & **None** (one-to-one conformal mapping) & Mild aliasing present \\
+\textbf{Frequency Relationship} & Linear: $\omega = \Omega T_s$ & Non-linear: $\Omega = \frac{2}{T}\tan(\omega/2)$ & Non-linear: $\omega = \Omega T_s$ \\
+\textbf{Pre-Warping Needed?} & No & **Yes** (mandatory for critical edges) & No \\
+\textbf{Permissible Filters} & Band-limited LPF and BPF only & **Universal: LPF, HPF, BPF, BSF** & LPF and BPF primarily \\
+\textbf{Mapping of Zeros} & Zeros do **not** map algebraically & Zeros map via same algebraic rule & Zeros map directly to $z_k = e^{z_{a,k}T}$ \\
+\bottomrule
+\end{tabular}
+}
+\end{table}
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{7. STEP-BY-STEP WORKED NUMERICAL EXAMPLES}
+
+\subsection{Example 25.1: First-Order Analog to Digital BLT Transformation}
+\textbf{Problem Statement:} An analog lowpass filter is described by:
+\begin{equation}
+H_a(s) = \frac{2}{s + 2}
+\end{equation}
+Determine the digital filter transfer function $H(z)$ using the Bilinear Transformation with $T = 0.5$ seconds.
+
+\vspace{1mm}
+\noindent\textbf{Solution:}
+
+\noindent\textbf{Step 1: Formulate the BLT Substitution Operator}
+With $T = 0.5$ s, $\frac{2}{T} = \frac{2}{0.5} = 4$. The substitution rule is:
+\begin{equation}
+s = 4 \left( \frac{1 - z^{-1}}{1 + z^{-1}} \right)
+\end{equation}
+
+\noindent\textbf{Step 2: Substitute $s$ into $H_a(s)$}
+\begin{equation}
+H(z) = \left. \frac{2}{s + 2} \right|_{s = 4 \left(\frac{1 - z^{-1}}{1 + z^{-1}}\right)} = \frac{2}{4\left(\frac{1 - z^{-1}}{1 + z^{-1}}\right) + 2}
+\end{equation}
+Multiplying numerator and denominator by $(1 + z^{-1})$:
+\begin{align}
+H(z) &= \frac{2(1 + z^{-1})}{4(1 - z^{-1}) + 2(1 + z^{-1})} = \frac{2 + 2z^{-1}}{(4 - 4z^{-1}) + (2 + 2z^{-1})} \nonumber \\
+     &= \frac{2 + 2z^{-1}}{6 - 2z^{-1}}
+\end{align}
+Dividing numerator and denominator by $6$:
+\begin{equation}
+\mathbf{H(z) = \frac{\frac{1}{3} + \frac{1}{3} z^{-1}}{1 - \frac{1}{3} z^{-1}} = \frac{0.3333(1 + z^{-1})}{1 - 0.3333 z^{-1}}}
+\end{equation}
+
+\noindent\textbf{Step 3: Verification of Pole Location and DC Gain}
+\begin{itemize}
+    \item Pole location: $z_1 = \frac{1}{3} \approx 0.3333 < 1$ ($\implies$ strictly stable!).
+    \item Transmission Zero: At $z = -1$ ($\omega = \pi$), producing a transmission null at Nyquist!
+    \item DC Gain ($z = 1$): $H(1) = \frac{0.3333(2)}{1 - 0.3333} = \frac{0.6667}{0.6667} = \mathbf{1.0} = H_a(0)$ (Exact DC gain match!).
+\end{itemize}
+
+\vspace{2mm}
+\subsection{Example 25.2: Complete Design of a Second-Order Digital Butterworth Filter}
+\textbf{Problem Statement:} Design a second-order digital Butterworth lowpass filter with a 3-dB cutoff frequency of $\omega_c = 0.2\pi$ rad/sample using the Bilinear Transformation with $T = 1$ second.
+
+\vspace{1mm}
+\noindent\textbf{Solution:}
+
+\noindent\textbf{Step 1: Pre-Warp the Digital Cutoff Frequency}
+Using \eqref{eq:prewarping} with $T = 1$:
+\begin{equation}
+\Omega_c = \frac{2}{T}\tan\left(\frac{\omega_c}{2}\right) = 2 \tan\left(\frac{0.2\pi}{2}\right) = 2 \tan(0.1\pi) = 2 \tan(18^\circ)
+\end{equation}
+Since $\tan(18^\circ) \approx 0.32492$:
+\begin{equation}
+\mathbf{\Omega_c = 2 \times 0.32492 = 0.6498 \text{ rad/s}}
+\end{equation}
+
+\noindent\textbf{Step 2: Formulate the Normalized 2nd-Order Butterworth Analog Prototype}
+The transfer function of a normalized 2nd-order Butterworth lowpass filter with cutoff $\Omega_c$ is:
+\begin{equation}
+H_a(s) = \frac{\Omega_c^2}{s^2 + \sqrt{2}\Omega_c s + \Omega_c^2}
+\end{equation}
+Substituting $\Omega_c = 0.6498$:
+\begin{itemize}
+    \item $\Omega_c^2 = (0.6498)^2 \approx \mathbf{0.4223}$
+    \item $\sqrt{2}\Omega_c = \sqrt{2}(0.6498) \approx \mathbf{0.9190}$
+\end{itemize}
+Thus:
+\begin{equation}
+H_a(s) = \frac{0.4223}{s^2 + 0.9190 s + 0.4223}
+\end{equation}
+
+\noindent\textbf{Step 3: Apply the Bilinear Transformation ($T = 1$)}
+With $T = 1$, $s = 2\left(\frac{1 - z^{-1}}{1 + z^{-1}}\right)$:
+\begin{equation}
+H(z) = \frac{0.4223}{\left[2\left(\frac{1 - z^{-1}}{1 + z^{-1}}\right)\right]^2 + 0.9190\left[2\left(\frac{1 - z^{-1}}{1 + z^{-1}}\right)\right] + 0.4223}
+\end{equation}
+Multiply numerator and denominator by $(1 + z^{-1})^2$:
+\begin{align}
+\text{Numerator} &= 0.4223(1 + z^{-1})^2 = 0.4223(1 + 2z^{-1} + z^{-2}) \\
+\text{Denominator} &= 4(1 - z^{-1})^2 + 1.8380(1 - z^{-1})(1 + z^{-1}) + 0.4223(1 + z^{-1})^2 \nonumber \\
+&= 4(1 - 2z^{-1} + z^{-2}) + 1.8380(1 - z^{-2}) + 0.4223(1 + 2z^{-1} + z^{-2})
+\end{align}
+Collecting like powers of $z^{-1}$:
+\begin{itemize}
+    \item Constant term ($z^0$): $4 + 1.8380 + 0.4223 = \mathbf{6.2603}$
+    \item Coefficient of $z^{-1}$: $-8 + 0 + 0.8446 = \mathbf{-7.1554}$
+    \item Coefficient of $z^{-2}$: $4 - 1.8380 + 0.4223 = \mathbf{2.5843}$
+\end{itemize}
+Thus:
+\begin{equation}
+H(z) = \frac{0.4223(1 + 2z^{-1} + z^{-2})}{6.2603 - 7.1554 z^{-1} + 2.5843 z^{-2}}
+\end{equation}
+Dividing numerator and denominator by $6.2603$:
+\begin{equation}
+\mathbf{H(z) = \frac{0.06746(1 + 2z^{-1} + z^{-2})}{1 - 1.1430 z^{-1} + 0.4128 z^{-2}}}
+\end{equation}
+Verification:
+\begin{itemize}
+    \item DC Gain ($z = 1$): $H(1) = \frac{0.06746(4)}{1 - 1.1430 + 0.4128} = \frac{0.26984}{0.2698} \approx \mathbf{1.0}$ (Exact 0 dB gain at DC!).
+    \item Nyquist Gain ($z = -1$): $H(-1) = 0$ (Transmission zero at $\omega = \pi$).
+    \item Stability: Roots of denominator have magnitude $|z| = \sqrt{0.4128} \approx 0.6425 < 1$ ($\implies$ strictly stable!).
+\end{itemize}
+
+\vspace{2mm}
+\subsection{Example 25.3: Design via Matched Z-Transform}
+\textbf{Problem Statement:} Apply the Matched Z-Transform method to convert:
+\begin{equation}
+H_a(s) = \frac{1}{(s + 1)(s + 2)}
+\end{equation}
+into a digital filter with $T = 0.1$ s, adding zeros at $z = -1$ and matching DC gain.
+
+\vspace{1mm}
+\noindent\textbf{Solution:}
+
+\noindent\textbf{Step 1: Map Continuous Poles to Discrete Poles}
+Analog poles: $s_1 = -1, s_2 = -2$.
+With $T = 0.1$ s:
+\begin{equation}
+z_1 = e^{s_1 T} = e^{-0.1} \approx 0.9048, \quad z_2 = e^{s_2 T} = e^{-0.2} \approx 0.8187
+\end{equation}
+Denominator polynomial:
+\begin{equation}
+D(z) = (1 - 0.9048 z^{-1})(1 - 0.8187 z^{-1}) = 1 - 1.7235 z^{-1} + 0.7408 z^{-2}
+\end{equation}
+
+\noindent\textbf{Step 2: Insert Zero at $z = -1$}
+Since $H_a(s)$ has $N=2$ poles and $M=0$ finite zeros, we add a zero at $z = -1$:
+\begin{equation}
+H(z) = K_d \frac{1 + z^{-1}}{(1 - 0.9048 z^{-1})(1 - 0.8187 z^{-1})}
+\end{equation}
+
+\noindent\textbf{Step 3: Normalize DC Gain}
+Analog DC Gain: $H_a(0) = \frac{1}{(1)(2)} = 0.5$.
+Digital DC Gain at $z = 1$:
+\begin{equation}
+H(1) = K_d \frac{2}{(1 - 0.9048)(1 - 0.8187)} = K_d \frac{2}{(0.0952)(0.1813)} = K_d \frac{2}{0.01726} = 115.87 K_d
+\end{equation}
+Equating to $H_a(0) = 0.5$:
+\begin{equation}
+115.87 K_d = 0.5 \implies K_d = \frac{0.5}{115.87} \approx \mathbf{0.004315}
+\end{equation}
+Final transfer function:
+\begin{equation}
+\mathbf{H(z) = \frac{0.004315(1 + z^{-1})}{1 - 1.7235 z^{-1} + 0.7408 z^{-2}}}
+\end{equation}
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{8. FACULTY INSIGHTS, COMMON PITFALLS \& EXAM TRAPS}
+
+\begin{itemize}
+    \item \textbf{Pitfall 1: Forgetting to Pre-Warp Cutoff Frequencies:}
+    Students frequently design the analog prototype using the raw digital frequency $\Omega = \omega / T$. Because frequency warping compresses frequencies non-linearly, the resulting digital filter will have a cutoff frequency significantly lower than required. \textbf{Always pre-warp: $\Omega_c = \frac{2}{T}\tan(\omega_c/2)$}.
+    
+    \item \textbf{Pitfall 2: Algebraic Errors in $(1 + z^{-1})^2$ Multiplication:}
+    When clearing fractions after substituting $s = \frac{2}{T}\left(\frac{1 - z^{-1}}{1 + z^{-1}}\right)$, students often expand $(1 - z^{-1})(1 + z^{-1})$ as $1 - 2z^{-1} + z^{-2}$ instead of $1 - z^{-2}$, causing complete corruption of the denominator coefficients.
+    
+    \item \textbf{Pitfall 3: Assuming BLT Preserves Analog Phase Linearity:}
+    The Bilinear Transformation non-linearly warps the frequency axis. Therefore, even if an analog filter had approximately linear phase, \textbf{BLT distorts the phase response}. Linear phase can never be achieved in an IIR filter designed via BLT!
+    
+    \item \textbf{Pitfall 4: Confusion Over Sampling Period $T$:}
+    In university exams, if $T$ is not explicitly specified, students often assume they cannot solve the problem. In reality, $T = 1$ or $T = 2$ can be chosen arbitrarily because $T$ cancels out completely in the normalized equations when pre-warping is performed consistently!
+\end{itemize}
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{9. QUICK REVISION \& SUMMARY CHEAT-SHEET}
+
+\begin{table}[H]
 \centering
-\includegraphics[width=0.85\textwidth]{images/moving_average_frequency.png}
-\caption{Moving Average Frequency}
-\end{figure}
+\caption{Bilinear Transformation and Matched Z-Transform Quick Reference Sheet}
+\label{tab:quick_reference}
+\vspace{2mm}
+\resizebox{\textwidth}{!}{
+\begin{tabular}{lll}
+\toprule
+\textbf{Concept / Parameter} & \textbf{Mathematical Definition / Formula} & \textbf{Key Pedagogical Note} \\
+\midrule
+\textbf{BLT Substitution} & $s = \frac{2}{T}\left(\frac{1 - z^{-1}}{1 + z^{-1}}\right)$ & Replaces $s$ directly in $H_a(s)$ \\
+\textbf{Inverse BLT Mapping} & $z = \frac{1 + s T/2}{1 - s T/2}$ & Maps continuous $s$ to discrete $z$ \\
+\textbf{Frequency Warping} & $\Omega = \frac{2}{T}\tan(\omega/2)$ & Non-linear mapping between $\Omega$ and $\omega$ \\
+\textbf{Pre-Warping Formula} & $\Omega_c = \frac{2}{T}\tan(\omega_c/2)$ & Mandatory step before analog prototype design \\
+\textbf{Aliasing Behavior} & **Zero Aliasing** & One-to-one mapping of $j\Omega$ onto unit circle \\
+\textbf{Filter Suitability} & Universal: LPF, HPF, BPF, BSF & Valid for all standard filter configurations \\
+\textbf{MZT Pole Rule} & $(s - p_k) \longrightarrow (1 - e^{p_k T} z^{-1})$ & Direct exponential mapping of poles \\
+\textbf{MZT Zero Rule} & Add $(1 + z^{-1})$ for zeros at $s = \infty$ & Creates transmission null at Nyquist \\
+\bottomrule
+\end{tabular}
+}
+\end{table}
 
 \end{document}

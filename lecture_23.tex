@@ -9,7 +9,7 @@
 \usepackage{float}
 \usepackage{xcolor}
 
-\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Lecture 23: Design of FIR filter - windowing method (continued) \\ \large (III B.Tech EEE)}
+\title{\textbf{EE3621: Digital Signal Processing} \\ \Large Lecture 23: Design of FIR filter - frequency sampling \\ \large (III B.Tech EEE)}
 \author{Comprehensive Lecture Notes \& Faculty Textbook Reference}
 \date{}
 
@@ -37,12 +37,17 @@
 
 \section*{Lecture Plan \& Objectives (40 Minutes Breakdown)}
 \begin{itemize}
-    \item \textbf{00:00 -- 06:00 (6 mins):} The Inherent Limitation of Fixed Windows: The rigid, non-tunable trade-off between mainlobe width and sidelobe attenuation in classic windows (Hann, Hamming, Blackman). Why needing $55$ dB attenuation forces an over-engineered jump to Blackman ($74$ dB), incurring a severe penalty in filter length $N$ and transition bandwidth.
-    \item \textbf{06:00 -- 16:00 (10 mins):} Mathematical Foundations of the Kaiser Window: The zeroth-order modified Bessel function of the first kind $I_0(x)$ series expansion, the time-domain formulation $w_K[n]$, and the role of the shape parameter $\beta$ as a continuous dial interpolating from Rectangular ($\beta = 0$) to Hamming ($\beta \approx 5.4$) to Blackman ($\beta \approx 8.9$).
-    \item \textbf{16:00 -- 24:00 (8 mins):} Empirical Kaiser Design Equations: Closed-form formulas for computing shape factor $\beta$ and required filter length $N$ directly from attenuation $A_s$ and normalized transition bandwidth $\Delta f$.
-    \item \textbf{24:00 -- 30:00 (6 mins):} Systematic Multi-Band FIR Synthesis Protocol: Handling asymmetric ripple specs by enforcing $\delta = \min(\delta_p, \delta_s)$, computing cutoff frequencies, enforcing Type 1 odd parity ($N = \text{odd}$), and closed-form ideal formulations for LPF, HPF, BPF, and BSF (Notch) filters.
-    \item \textbf{30:00 -- 38:00 (8 mins):} Step-by-Step Worked Numerical Examples: Complete design of an industrial-grade Kaiser Lowpass filter ($A_s \ge 50$ dB), synthesis of a $50$ Hz biomedical power-line Notch (Bandstop) filter ($f_s = 500$ Hz, $A_s \ge 60$ dB), and a comparative design evaluation between Kaiser and Blackman window designs.
-    \item \textbf{38:00 -- 40:00 (2 mins):} Faculty Insights, Common Misconceptions, and University Semester Exam Traps.
+    \item \textbf{00:00 -- 05:00 (5 mins):} The Frequency Sampling Paradigm: Moving from time-domain window truncation to direct frequency-domain specification. Sampling the continuous desired frequency response $H_d(e^{j\omega})$ at $N$ uniformly spaced points $\omega_k = \frac{2\pi k}{N}$ on the unit circle.
+    \item \textbf{05:00 -- 14:00 (9 mins):} Mathematical Foundations \& The Continuous Interpolation Formula: Expressing $H(z)$ via the discrete frequency samples $H[k]$. Derivation of the interpolation Dirichlet kernel $P(\omega) = \frac{\sin(N\omega/2)}{N\sin(\omega/2)}$, pole-zero cancellation on the unit circle, and linear-phase constraint assignment $\theta_k = -\tau \omega_k$.
+    \item \textbf{14:00 -- 22:00 (8 mins):} Closed-Form Real-Valued IDFT Synthesis Formulas: Exploiting Hermitian symmetry ($H[N-k] = H^*[k]$) to eliminate complex exponentials. Explicit, computationally efficient formulas for Type 1 ($N$ odd) and Type 2 ($N$ even) linear-phase filters.
+    \item \textbf{22:00 -- 28:00 (6 mins):} Inter-Sample Ringing \& Transition Sample Optimization: Why naive brick-wall sampling yields disastrous stopband rejection (only $-16$ dB). The Rabiner--Gold--McGonegal optimization technique: inserting $1$, $2$, or $3$ unconstrained transition samples ($T_1, T_2, T_3$) to boost attenuation to $-45$ dB, $-75$ dB, and $-95$ dB.
+    \item \textbf{28:00 -- 38:00 (10 mins):} Step-by-Step Worked Numerical Examples:
+    \begin{itemize}
+        \item \textbf{Example 24.1:} Manual calculation of a $7$-point ($N=7$) Type 1 linear-phase LPF with symmetry verification.
+        \item \textbf{Example 24.2:} Complete synthesis of a $15$-point ($N=15$) LPF with $1$ optimized transition sample ($T_1 = 0.38$), proving $+29$ dB sidelobe suppression.
+        \item \textbf{Example 24.3:} Design of an $8$-point ($N=8$) Type 2 even-length FIR filter with half-sample delay $\tau = 3.5$ and boundary zero enforcement.
+    \end{itemize}
+    \item \textbf{38:00 -- 40:00 (2 mins):} Design Comparison (Windowing vs. Frequency Sampling), Exam Traps, Common Misconceptions, and Comprehensive Revision Cheat-Sheet.
 \end{itemize}
 
 \noindent\rule{\textwidth}{0.5pt}
@@ -50,469 +55,523 @@
 \section{1. LEARNING OBJECTIVES}
 By the end of this lecture, students will be able to:
 \begin{enumerate}
-    \item \textbf{Identify} the architectural inefficiency of fixed window families when satisfying intermediate stopband attenuation specifications.
-    \item \textbf{Formulate} the Kaiser window sequence $w_K[n]$ utilizing the modified Bessel function of the first kind $I_0(x)$.
-    \item \textbf{Calculate} the Bessel function $I_0(x)$ rapidly using its truncated power series expansion.
-    \item \textbf{Apply} Kaiser's empirical piecewise formulas to determine the exact shape factor $\beta$ for any specified stopband attenuation $A_s$.
-    \item \textbf{Estimate} the minimum required filter length $N$ from transition bandwidth $\Delta f$ and attenuation $A_s$.
-    \item \textbf{Harmonize} asymmetric passband and stopband ripple tolerances ($\delta_p \ne \delta_s$) to ensure strict specification compliance.
-    \item \textbf{Design} high-rejection Lowpass, Highpass, Bandpass, and Bandstop (Notch) filters meeting stringent industrial standards.
-    \item \textbf{Contrast} filter order, transition efficiency, and group delay between optimal Kaiser designs and standard fixed window implementations.
+    \item \textbf{Formulate} the frequency sampling design problem by discretizing a desired continuous frequency response $H_d(e^{j\omega})$ at uniform frequencies $\omega_k = \frac{2\pi k}{N}$.
+    \item \textbf{Derive} the continuous interpolation formula $H(z)$ and $H(e^{j\omega})$ via frequency samples $H[k]$ using Dirichlet kernels.
+    \item \textbf{Assign} exact linear-phase angles $\theta_k = -\left(\frac{N-1}{2}\right)\frac{2\pi k}{N}$ to ensure constant group delay $\tau = (N-1)/2$.
+    \item \textbf{Apply} closed-form real-valued IDFT summation formulas for both $N$ odd (Type 1) and $N$ even (Type 2) linear-phase filters without complex arithmetic.
+    \item \textbf{Analyze} the origin of inter-sample ripples and explain why naive brick-wall frequency sampling produces a severe $-16$ dB stopband floor.
+    \item \textbf{Optimize} stopband rejection by introducing unconstrained transition samples ($T_1, T_2, T_3$) using the Rabiner--Gold lookup tables.
+    \item \textbf{Synthesize} linear-phase FIR filters with odd and even lengths through complete step-by-step numerical calculations.
+    \item \textbf{Compare} the performance trade-offs, design flexibility, and computational procedures between the Frequency Sampling Method and the Windowing Method.
 \end{enumerate}
 
 \noindent\rule{\textwidth}{0.5pt}
 
-\section{2. THE KAISER WINDOW FAMILY: MATHEMATICAL FOUNDATIONS}
+\section{2. THE FREQUENCY SAMPLING PARADIGM: MATHEMATICAL FOUNDATIONS}
 
-\subsection{2.1 Motivation: Overcoming the Rigidity of Fixed Windows}
-In Lecture 22, we explored the classic fixed window families: Rectangular ($A_s = 21$ dB), Hann ($A_s = 44$ dB), Hamming ($A_s = 53$ dB), and Blackman ($A_s = 74$ dB). While computationally straightforward, these windows suffer from a severe practical drawback: \textbf{their trade-off between mainlobe width and sidelobe attenuation is completely rigid and discrete}.
-
-Consider an industrial instrumentation scenario requiring a stopband attenuation of $A_s = 55$ dB with a normalized transition bandwidth of $\Delta f = 0.05$:
+\subsection{2.1 Motivation: Direct Frequency-Domain Filter Specification}
+In Lectures 22 and 23, we designed FIR filters using the **windowing method**, which begins in the continuous frequency domain ($H_d(e^{j\omega})$), transforms via inverse DTFT to the continuous infinite impulse response ($h_d[n]$), and truncates using a window sequence $w[n]$. However, the windowing method exhibits key limitations:
 \begin{itemize}
-    \item A Hamming window achieves only $A_s = 53$ dB, failing the specification by $2$ dB.
-    \item The DSP designer is forced to jump to the next fixed window—the Blackman window ($A_s = 74$ dB).
-    \item However, the Blackman window possesses a normalized mainlobe width of $5.5 / N$, compared to $3.3 / N$ for Hamming.
-    \item Required length for Blackman: $N \approx 5.5 / 0.05 = \mathbf{110 \text{ taps}}$.
-    \item If a tunable window were available that provided exactly $55$ dB, the required length would be only $N \approx \mathbf{65 \text{ taps}}$!
-    \item Using Blackman wastes nearly \textbf{45 extra delay registers and multipliers}, increasing silicon area, power dissipation, and arithmetic throughput latency by over $40\%$.
+    \item Inverse DTFT integrals $\int_{-\pi}^{\pi} H_d(e^{j\omega}) e^{j\omega n} d\omega$ can rarely be evaluated analytically for non-standard, arbitrary, or experimentally measured frequency responses.
+    \item The designer has no direct control over the exact values of the frequency response at specific discrete frequency bins of interest.
 \end{itemize}
-In 1966, James F. Kaiser of Bell Laboratories solved this fundamental problem by developing an adjustable, near-optimal window family based on prolate spheroidal wave functions.
-
-\subsection{2.2 The Zeroth-Order Modified Bessel Function \texorpdfstring{$I_0(x)$}{I0(x)}}
-The Kaiser window is parameterized by the \textbf{zeroth-order modified Bessel function of the first kind}, denoted as $I_0(x)$. It is defined by the infinite power series:
+The \textbf{Frequency Sampling Method} provides an elegant, highly flexible alternative: rather than approximating an infinite time-domain sinc function, we **directly specify the desired filter response at $N$ uniformly spaced frequency points on the unit circle**:
 \begin{equation}
-I_0(x) = \sum_{k=0}^{\infty} \left[ \frac{(x/2)^k}{k!} \right]^2 = 1 + \frac{x^2}{4} + \frac{x^4}{64} + \frac{x^6}{2304} + \dots + \left[ \frac{(x/2)^k}{k!} \right]^2
-\label{eq:bessel_series}
+\omega_k = \frac{2\pi k}{N}, \quad k = 0, 1, \dots, N-1
+\label{eq:grid_frequencies}
 \end{equation}
-Because the denominator involves $(k!)^2$, the terms in \eqref{eq:bessel_series} decay with extraordinary rapidity. In digital hardware and embedded DSP routines, truncating the series to just $15$ to $20$ terms guarantees double-precision ($64$-bit floating-point) accuracy across all practical arguments $x \in [0, 15]$.
-
-Key numerical properties of $I_0(x)$:
-\begin{itemize}
-    \item $I_0(0) = 1.0$.
-    \item $I_0(x) = I_0(-x)$ (strictly even function).
-    \item $I_0(x)$ is strictly positive, real-valued, and monotonically increasing for all real $x \ge 0$.
-\end{itemize}
-
-\subsection{2.3 Mathematical Formulation of the Kaiser Window}
-For a filter of length $N$ (order $M = N-1$), centered at the linear-phase delay $\tau = (N-1)/2$, the causal Kaiser window sequence $w_K[n]$ is defined as:
+The discrete frequency samples $H[k]$ are defined simply by sampling $H_d(e^{j\omega})$:
 \begin{equation}
-\mathbf{w_K[n] = \frac{I_0\left( \beta \sqrt{1 - \left( \frac{n - \tau}{\tau} \right)^2} \right)}{I_0(\beta)}}, \quad 0 \le n \le N-1
-\label{eq:kaiser_def}
+H[k] = \left. H_d(e^{j\omega}) \right|_{\omega = \frac{2\pi k}{N}} = H_d\left( e^{j \frac{2\pi k}{N}} \right)
+\label{eq:sample_definition}
 \end{equation}
-where $\beta \ge 0$ is the \textbf{dimensionless shape parameter}.
-
-\noindent\textbf{Geometric and Physical Interpretation:}
-\begin{itemize}
-    \item \textbf{At the Center ($n = \tau$):}
-    \begin{equation}
-    w_K[\tau] = \frac{I_0\left( \beta \sqrt{1 - 0} \right)}{I_0(\beta)} = \frac{I_0(\beta)}{I_0(\beta)} = \mathbf{1.0} \quad \forall \beta
-    \end{equation}
-    The window is always normalized to unity at its center of symmetry.
-    
-    \item \textbf{At the Endpoints ($n = 0$ and $n = N-1$):}
-    Here, $\left(\frac{n-\tau}{\tau}\right)^2 = \left(\frac{-\tau}{\tau}\right)^2 = 1$. Therefore:
-    \begin{equation}
-    w_K[0] = w_K[N-1] = \frac{I_0\left( \beta \sqrt{1 - 1} \right)}{I_0(\beta)} = \mathbf{\frac{I_0(0)}{I_0(\beta)} = \frac{1}{I_0(\beta)}}
-    \end{equation}
-    \item \textbf{When $\beta = 0$:} Since $I_0(0) = 1$, $w_K[n] = 1/1 = 1.0$ for all $n$. Thus, \textbf{the Kaiser window reduces identically to the Rectangular window}!
-    \item \textbf{As $\beta$ Increases:} $I_0(\beta)$ grows rapidly, forcing the endpoint values $w_K[0]$ to decay toward zero. The window profile tapers smoothly, suppressing spectral sidelobes at the expense of widening the mainlobe.
-\end{itemize}
+The finite-length impulse response $h[n]$ ($0 \le n \le N-1$) is then obtained directly via the $N$-point **Inverse Discrete Fourier Transform (IDFT)**:
+\begin{equation}
+\mathbf{h[n] = \frac{1}{N} \sum_{k=0}^{N-1} H[k] \, e^{j \frac{2\pi k n}{N}}, \quad 0 \le n \le N-1}
+\label{eq:idft_basic}
+\end{equation}
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.90\textwidth]{images/fir_kaiser_time_profiles.png}
-\caption{Kaiser Window Time-Domain Profiles $w_K[n]$ for Increasing Shape Parameter $\beta \in \{0, 2.5, 5.0, 7.5, 10.0\}$ ($N = 51$). As $\beta$ increases, the window smoothly transitions from a flat rectangular boxcar to a tapered bell curve.}
-\label{fig:kaiser_time}
+\includegraphics[width=0.92\textwidth]{images/fir_freq_sampling_principle.png}
+\caption{The frequency sampling paradigm. Left: $N=16$ uniform DFT frequency bins $z_k = e^{j 2\pi k / N}$ on the unit circle in the $z$-plane, distinguishing passband samples ($|H[k]|=1$) from stopband samples ($|H[k]|=0$). Right: Continuous reconstructed filter spectrum $|H(e^{j\omega})|$ matching the desired specification exactly at every sampling grid point $\omega_k = 2\pi k / N$.}
+\label{fig:freq_sampling_principle}
 \end{figure}
 
-\subsection{2.4 Spectral Tuning via the Shape Parameter \texorpdfstring{$\beta$}{Beta}}
-The Fourier transform of the Kaiser window exhibits continuous, monotonic control over the spectral sidelobe levels:
-\begin{itemize}
-    \item $\beta = 0.0 \implies$ Peak sidelobe: $\mathbf{-13.3 \text{ dB}}$, Mainlobe: $\frac{4\pi}{N}$ (Rectangular).
-    \item $\beta \approx 5.44 \implies$ Peak sidelobe: $\mathbf{-41.0 \text{ dB}}$, Mainlobe: $\frac{8\pi}{N}$ (approximates Hamming).
-    \item $\beta \approx 8.96 \implies$ Peak sidelobe: $\mathbf{-57.0 \text{ dB}}$, Mainlobe: $\frac{12\pi}{N}$ (approximates Blackman).
-    \item $\beta = 10.0 \implies$ Peak sidelobe: $\mathbf{-75.0 \text{ dB}}$, Mainlobe: $\frac{14.5\pi}{N}$ (High-rejection audio standard).
-\end{itemize}
-By tuning $\beta$ continuously, the engineer can dial in \textbf{any arbitrary stopband attenuation from 21 dB to over 100 dB}!
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.92\textwidth]{images/fir_kaiser_window_beta.png}
-\caption{Frequency Magnitude Spectra of the Kaiser Window for Various Shape Parameters $\beta$ ($N = 51$). Continuous parameter tuning suppresses spectral sidelobes below $-80$ dB without discrete family jumps.}
-\label{fig:kaiser_spectra}
-\end{figure}
-
-\noindent\rule{\textwidth}{0.5pt}
-
-\section{3. KAISER'S EMPIRICAL DESIGN EQUATIONS}
-
-Through extensive numerical optimization, James Kaiser determined a set of remarkably accurate closed-form empirical equations that map engineering filter specifications directly to the parameters $\beta$ and $N$.
-
-\subsection{3.1 Specification Translation and Ripple Harmonization}
-Let the engineering filter requirements be defined by:
-\begin{itemize}
-    \item Passband edge: $\omega_p$ (rad/sample) or $f_p = \omega_p / (2\pi)$.
-    \item Stopband edge: $\omega_s$ (rad/sample) or $f_s = \omega_s / (2\pi)$.
-    \item Passband peak-to-peak ripple: $\delta_p$ (or $A_p = 20\log_{10}\frac{1+\delta_p}{1-\delta_p}$ dB).
-    \item Stopband peak ripple: $\delta_s$ (or minimum stopband attenuation $A_s = -20\log_{10}\delta_s$ dB).
-\end{itemize}
-
-\noindent\textbf{The Equal Ripple Principle in Window Design:}
-Because windowing convolves the ideal response with a single symmetric window spectrum $W(e^{j\omega})$, the resulting filter exhibits \textbf{substantially equal peak ripple in both the passband and stopband}:
+\subsection{2.2 The Continuous Interpolation Formula}
+Because $h[n]$ is uniquely defined by the IDFT in \eqref{eq:idft_basic}, its continuous $z$-transform $H(z) = \sum_{n=0}^{N-1} h[n] z^{-n}$ can be expressed directly in terms of the frequency samples $H[k]$:
+\begin{align}
+H(z) &= \sum_{n=0}^{N-1} \left( \frac{1}{N} \sum_{k=0}^{N-1} H[k] \, e^{j \frac{2\pi k n}{N}} \right) z^{-n} \nonumber \\
+     &= \frac{1}{N} \sum_{k=0}^{N-1} H[k] \sum_{n=0}^{N-1} \left( e^{j \frac{2\pi k}{N}} z^{-1} \right)^n
+\end{align}
+Applying the finite geometric series identity $\sum_{n=0}^{N-1} a^n = \frac{1 - a^N}{1 - a}$ with $a = e^{j \frac{2\pi k}{N}} z^{-1}$:
 \begin{equation}
-\delta_{\text{actual}} \approx \delta_p \approx \delta_s
+a^N = \left( e^{j \frac{2\pi k}{N}} z^{-1} \right)^N = e^{j 2\pi k} z^{-N} = 1 \cdot z^{-N} = z^{-N}
 \end{equation}
-Therefore, if the designer is given different tolerances ($\delta_p \ne \delta_s$), the filter must be designed to satisfy the \textbf{stricter (smaller)} of the two:
+Substituting this yields the fundamental **Frequency Sampling Interpolation Formula**:
 \begin{equation}
-\mathbf{\delta = \min(\delta_p, \; \delta_s)}
-\label{eq:min_delta}
+\mathbf{H(z) = \frac{1 - z^{-N}}{N} \sum_{k=0}^{N-1} \frac{H[k]}{1 - e^{j \frac{2\pi k}{N}} z^{-1}}}
+\label{eq:interpolation_z}
 \end{equation}
-The effective stopband attenuation requirement in dB is then established as:
+Evaluating $H(z)$ on the unit circle ($z = e^{j\omega}$) yields the continuous frequency response:
 \begin{equation}
-\mathbf{A_s = -20\log_{10}\delta}
-\label{eq:as_calc}
+\mathbf{H(e^{j\omega}) = \sum_{k=0}^{N-1} H[k] \, \Phi\left( \omega - \frac{2\pi k}{N} \right)}
+\label{eq:interpolation_freq}
+\end{equation}
+where $\Phi(\omega)$ is the complex **Dirichlet interpolation kernel**:
+\begin{equation}
+\Phi(\omega) = \frac{1}{N} \frac{1 - e^{-j N \omega}}{1 - e^{-j\omega}} = \frac{1}{N} e^{-j \left(\frac{N-1}{2}\right)\omega} \frac{\sin(N\omega/2)}{\sin(\omega/2)}
+\label{eq:dirichlet_kernel}
 \end{equation}
 
-\subsection{3.2 Empirical Formula for the Shape Parameter \texorpdfstring{$\beta$}{Beta}}
-The shape parameter $\beta$ is determined solely by the required attenuation $A_s$ via Kaiser's piecewise relation:
-\begin{equation}
-\mathbf{\beta = \begin{cases} 
-0.1102(A_s - 8.7), & A_s > 50 \\ 
-0.5842(A_s - 21)^{0.4} + 0.07886(A_s - 21), & 21 \le A_s \le 50 \\ 
-0.0, & A_s < 21 
-\end{cases}}
-\label{eq:kaiser_beta}
-\end{equation}
-
-\subsection{3.3 Empirical Formula for Required Filter Length \texorpdfstring{$N$}{N}}
-The normalized transition bandwidth is:
-\begin{equation}
-\Delta f = \frac{|\omega_s - \omega_p|}{2\pi}
-\label{eq:delta_f}
-\end{equation}
-The minimum filter length $N$ required to achieve transition bandwidth $\Delta f$ with stopband attenuation $A_s$ is given by Kaiser's universal formula:
-\begin{equation}
-\mathbf{N \ge \frac{A_s - 7.95}{14.36 \cdot \Delta f} + 1 = \frac{2\pi(A_s - 7.95)}{14.36 \cdot \Delta\omega} + 1}
-\label{eq:kaiser_N}
-\end{equation}
-\textbf{Crucial Parity Rule:} The calculated value of $N$ from \eqref{eq:kaiser_N} must always be \textbf{rounded up to the next odd integer} ($N \leftarrow 2\lceil(N-1)/2\rceil + 1$). Choosing an odd length ensures that the filter is \textbf{Type 1}, avoiding mandatory boundary zero restrictions at $\omega = \pi$ and $\omega = 0$.
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.90\textwidth]{images/fir_window_spec_tradeoff.png}
-\caption{Required Filter Length $N$ vs. Normalized Transition Bandwidth $\Delta f$: Illustrating the hyperbolic relationship across classic windows and Kaiser designs. Notice the smooth efficiency of Kaiser curves compared to fixed window leaps.}
-\label{fig:length_tradeoff}
-\end{figure}
-
-\subsection{3.4 Comprehensive Systematic Design Algorithm}
-The end-to-end design procedure follows five explicit, deterministic steps:
+\noindent\textbf{Key Insights from the Interpolation Formula:}
 \begin{enumerate}
-    \item \textbf{Harmonize Specifications:} Determine $\delta = \min(\delta_p, \delta_s)$ and calculate $A_s = -20\log_{10}\delta$. Compute normalized transition width $\Delta f = |\omega_s - \omega_p| / (2\pi)$ and cutoff frequency $\omega_c = (\omega_p + \omega_s)/2$.
-    \item \textbf{Calculate Shape Parameter $\beta$:} Evaluate \eqref{eq:kaiser_beta} using $A_s$.
-    \item \textbf{Calculate Length $N$:} Evaluate \eqref{eq:kaiser_N}, round up to the next odd integer, and set delay center $\tau = (N-1)/2$.
-    \item \textbf{Evaluate Sequences Pointwise:} Compute $w_K[n]$ via \eqref{eq:kaiser_def} and the causal ideal impulse response $h_d[n]$ (e.g. \eqref{eq:ideal_lpf_sinc}).
-    \item \textbf{Generate Coefficients:} Multiply pointwise: $h[n] = h_d[n] \cdot w_K[n]$ for $n = 0, 1, \dots, N-1$.
-\end{enumerate}
-
-\noindent\rule{\textwidth}{0.5pt}
-
-\section{4. MULTI-BAND FIR FILTER SYNTHESIS VIA WINDOWING}
-
-\subsection{4.1 Kaiser Lowpass Filter (LPF)}
-With cutoff $\omega_c = (\omega_p + \omega_s)/2$ and linear-phase delay $\tau = (N-1)/2$:
-\begin{equation}
-h_{d,\text{LP}}[n] = \begin{cases} \frac{\omega_c}{\pi}, & n = \tau \\ \frac{\sin(\omega_c(n - \tau))}{\pi(n - \tau)}, & n \ne \tau \end{cases}
-\label{eq:ideal_lpf_sinc}
-\end{equation}
-Multiplying by $w_K[n]$ gives the causal lowpass coefficients: $h_{\text{LP}}[n] = h_{d,\text{LP}}[n] \cdot w_K[n]$.
-
-\subsection{4.2 Kaiser Highpass Filter (HPF)}
-With cutoff $\omega_c = (\omega_s + \omega_p)/2$, where $\omega_s < \omega_p$ and $\Delta\omega = \omega_p - \omega_s$:
-\begin{equation}
-h_{d,\text{HP}}[n] = \begin{cases} 1 - \frac{\omega_c}{\pi}, & n = \tau \\ -\frac{\sin(\omega_c(n - \tau))}{\pi(n - \tau)}, & n \ne \tau \end{cases}
-\end{equation}
-Multiplying by $w_K[n]$ gives the causal highpass coefficients: $h_{\text{HP}}[n] = h_{d,\text{HP}}[n] \cdot w_K[n]$.
-
-\subsection{4.3 Kaiser Bandpass Filter (BPF)}
-With lower transition band $[\omega_{s1}, \omega_{p1}]$ and upper transition band $[\omega_{p2}, \omega_{s2}]$:
-\begin{itemize}
-    \item Effective transition width: $\Delta\omega = \min(\omega_{p1} - \omega_{s1}, \; \omega_{s2} - \omega_{p2})$.
-    \item Lower cutoff: $\omega_{c1} = (\omega_{s1} + \omega_{p1})/2$.
-    \item Upper cutoff: $\omega_{c2} = (\omega_{p2} + \omega_{s2})/2$.
-    \item Ideal impulse response:
+    \item \textbf{Exact Pointwise Matching:} At $\omega = \omega_m = \frac{2\pi m}{N}$, the kernel satisfies:
     \begin{equation}
-    h_{d,\text{BP}}[n] = \begin{cases} \frac{\omega_{c2} - \omega_{c1}}{\pi}, & n = \tau \\ \frac{\sin(\omega_{c2}(n - \tau))}{\pi(n - \tau)} - \frac{\sin(\omega_{c1}(n - \tau))}{\pi(n - \tau)}, & n \ne \tau \end{cases}
+    \Phi\left( \frac{2\pi (m - k)}{N} \right) = \begin{cases} 1, & m = k \\ 0, & m \ne k \end{cases}
     \end{equation}
-\end{itemize}
-
-\subsection{4.4 Kaiser Bandstop (Notch) Filter (BSF)}
-For suppressing single-frequency interference (such as 50 Hz or 60 Hz mains hum):
-\begin{equation}
-h_{d,\text{BS}}[n] = \begin{cases} 1 - \frac{\omega_{c2} - \omega_{c1}}{\pi}, & n = \tau \\ \frac{\sin(\omega_{c1}(n - \tau))}{\pi(n - \tau)} - \frac{\sin(\omega_{c2}(n - \tau))}{\pi(n - \tau)}, & n \ne \tau \end{cases}
-\end{equation}
-
-\noindent\rule{\textwidth}{0.5pt}
-
-\section{5. STEP-BY-STEP WORKED NUMERICAL EXAMPLES}
-
-\subsection{Example 23.1: Complete Design of an Industrial Kaiser Lowpass Filter}
-\textbf{Problem Statement:} Design a linear-phase FIR lowpass filter satisfying the following specifications:
-\begin{itemize}
-    \item Passband edge: $\omega_p = 0.2\pi$ rad/sample.
-    \item Stopband edge: $\omega_s = 0.3\pi$ rad/sample.
-    \item Passband peak ripple: $\delta_p \le 0.01$ (approx. $0.17$ dB).
-    \item Minimum stopband attenuation: $A_s \ge 50$ dB.
-\end{itemize}
-Determine $\delta$, $A_s$, shape parameter $\beta$, filter length $N$, delay $\tau$, and calculate the first 5 filter coefficients ($h[0]$ through $h[4]$) and the center tap $h[\tau]$.
-
-\vspace{1mm}
-\noindent\textbf{Solution:}
-
-\noindent\textbf{Step 1: Specification Harmonization}
-Convert passband tolerance $\delta_p = 0.01$ to attenuation:
-\begin{equation}
-A_p = -20\log_{10}(0.01) = 40 \text{ dB}
-\end{equation}
-The stopband requirement is $A_s \ge 50$ dB, which corresponds to:
-\begin{equation}
-\delta_s = 10^{-50/20} = 10^{-2.5} \approx 0.003162
-\end{equation}
-Since $\delta_s < \delta_p$, the stopband requirement is much stricter. We must design for:
-\begin{equation}
-\delta = \min(\delta_p, \delta_s) = \mathbf{0.003162} \implies \mathbf{A_s = 50.0 \text{ dB}}
-\end{equation}
-Transition bandwidth and cutoff:
-\begin{align}
-\Delta\omega &= \omega_s - \omega_p = 0.3\pi - 0.2\pi = 0.1\pi \text{ rad/sample} \\
-\Delta f &= \frac{\Delta\omega}{2\pi} = \frac{0.1\pi}{2\pi} = \mathbf{0.05} \\
-\omega_c &= \frac{\omega_p + \omega_s}{2} = \frac{0.2\pi + 0.3\pi}{2} = \mathbf{0.25\pi}
-\end{align}
-
-\vspace{1mm}
-\noindent\textbf{Step 2: Shape Parameter $\beta$ Calculation}
-Since $21 \le A_s \le 50$, using the middle branch of \eqref{eq:kaiser_beta} with $A_s = 50$:
-\begin{align}
-\beta &= 0.5842(50 - 21)^{0.4} + 0.07886(50 - 21) \nonumber \\
-&= 0.5842(29)^{0.4} + 0.07886(29) \nonumber \\
-&= 0.5842(3.83226) + 2.28694 = 2.2388 + 2.2869 = \mathbf{4.5508} \approx \mathbf{4.551}
-\end{align}
-
-\vspace{1mm}
-\noindent\textbf{Step 3: Filter Length $N$ Calculation}
-Using Kaiser's length formula \eqref{eq:kaiser_N}:
-\begin{equation}
-N \ge \frac{A_s - 7.95}{14.36 \cdot \Delta f} + 1 = \frac{50 - 7.95}{14.36 \times 0.05} + 1 = \frac{42.05}{0.718} + 1 = 58.566 + 1 = 59.566
-\end{equation}
-Rounding up to the next \textbf{odd integer}:
-\begin{equation}
-\mathbf{N = 61} \implies M = 60, \quad \tau = \frac{61-1}{2} = \mathbf{30 \text{ samples}}
-\end{equation}
-(Note: If evaluated at the $A_s = 50$ boundary using $\beta = 0.1102(50-8.7) = 4.551$ with relaxed transition formula, lengths in the range $45 \le N \le 61$ provide compliance, as shown in Figure~\ref{fig:worked_example_lpf}).
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.92\textwidth]{images/fir_window_lpf_worked_example.png}
-\caption{Worked Example 23.1: Synthesized Kaiser Lowpass Filter Frequency Magnitude Response (Left) achieving $<-50$ dB stopband attenuation across $\omega \in [0.3\pi, \pi]$, and Z-Plane Zero Constellation (Right) displaying all 44 complex zeros.}
-\label{fig:worked_example_lpf}
-\end{figure}
-
-\vspace{1mm}
-\noindent\textbf{Step 4: Numerical Tap Evaluation for $N = 61$, $\tau = 30$, $\beta = 4.551$}
-Compute denominator Bessel constant using \eqref{eq:bessel_series}:
-\begin{equation}
-I_0(4.551) \approx 1 + \frac{(4.551)^2}{4} + \frac{(4.551)^4}{64} + \frac{(4.551)^6}{2304} + \dots = \mathbf{12.4277}
-\end{equation}
-Now evaluate taps:
-\begin{itemize}
-    \item \textbf{Center Tap ($n = 30$):}
-    \begin{align}
-    w_K[30] &= 1.0 \\
-    h_d[30] &= \frac{\omega_c}{\pi} = \frac{0.25\pi}{\pi} = 0.2500 \\
-    h[30] &= h_d[30] \cdot w_K[30] = 0.2500 \times 1.0 = \mathbf{0.250000}
-    \end{align}
-    
-    \item \textbf{Tap $n = 0$ ($n - \tau = -30$):}
-    \begin{align}
-    w_K[0] &= \frac{1}{I_0(4.551)} = \frac{1}{12.4277} = \mathbf{0.080465} \\
-    h_d[0] &= \frac{\sin(0.25\pi(0 - 30))}{\pi(0 - 30)} = \frac{\sin(-7.5\pi)}{-30\pi} = \frac{-1}{-30\pi} = \frac{1}{30\pi} \approx 0.010610 \\
-    h[0] &= h_d[0] \cdot w_K[0] = 0.010610 \times 0.080465 = \mathbf{0.000854}
-    \end{align}
-    
-    \item \textbf{Tap $n = 1$ ($n - \tau = -29$):}
-    \begin{align}
-    \text{Radical: } &\sqrt{1 - (-29/30)^2} = \sqrt{1 - 0.934444} = \sqrt{0.065556} = 0.256038 \\
-    \text{Arg: } &4.551 \times 0.256038 = 1.16523 \implies I_0(1.16523) \approx 1.3703 \\
-    w_K[1] &= \frac{1.3703}{12.4277} = \mathbf{0.11026} \\
-    h_d[1] &= \frac{\sin(0.25\pi(-29))}{-29\pi} = \frac{\sin(-7.25\pi)}{-29\pi} = \frac{-\sqrt{2}/2}{-29\pi} = \frac{\sqrt{2}}{58\pi} \approx 0.007752 \\
-    h[1] &= h_d[1] \cdot w_K[1] = 0.007752 \times 0.11026 = \mathbf{0.000855}
-    \end{align}
-    
-    \item \textbf{Tap $n = 2$ ($n - \tau = -28$):}
-    \begin{align}
-    h_d[2] &= \frac{\sin(0.25\pi(-28))}{-28\pi} = \frac{\sin(-7\pi)}{-28\pi} = \mathbf{0.0000} \implies h[2] = \mathbf{0.0000}
-    \end{align}
-\end{itemize}
-
-\subsection{Example 23.2: 50 Hz Biomedical ECG Notch (Bandstop) Filter Design}
-\textbf{Problem Statement:} In electrocardiogram (ECG) acquisition, raw sensor signals are corrupted by 50 Hz power-line electromagnetic interference. The system operates at sampling rate $f_s = 500$ Hz. Design a linear-phase Kaiser Bandstop filter to eliminate the 50 Hz tone with the following specs:
-\begin{itemize}
-    \item Notch frequency: $f_0 = 50$ Hz.
-    \item Stopband rejection width: Notch null from $48$ Hz to $52$ Hz.
-    \item Passband edges: $f_{p1} = 40$ Hz, $f_{p2} = 60$ Hz.
-    \item Minimum stopband attenuation: $A_s \ge 60$ dB.
-\end{itemize}
-Determine normalized frequencies, shape parameter $\beta$, required filter length $N$, and state the analytical closed form of $h_d[n]$.
-
-\vspace{1mm}
-\noindent\textbf{Solution:}
-
-\noindent\textbf{Step 1: Frequency Normalization}
-\begin{align}
-\omega_{p1} &= 2\pi \frac{f_{p1}}{f_s} = 2\pi \frac{40}{500} = 0.16\pi \text{ rad/sample} \\
-\omega_{s1} &= 2\pi \frac{48}{500} = 0.192\pi \text{ rad/sample} \\
-\omega_{s2} &= 2\pi \frac{52}{500} = 0.208\pi \text{ rad/sample} \\
-\omega_{p2} &= 2\pi \frac{60}{500} = 0.24\pi \text{ rad/sample}
-\end{align}
-The transition bandwidths on both sides of the notch are symmetric:
-\begin{equation}
-\Delta\omega = \omega_{s1} - \omega_{p1} = 0.192\pi - 0.16\pi = 0.032\pi \implies \Delta f = \frac{0.032\pi}{2\pi} = \mathbf{0.016}
-\end{equation}
-Effective cutoff edges for the ideal notch:
-\begin{align}
-\omega_{c1} &= \frac{\omega_{p1} + \omega_{s1}}{2} = \frac{0.16\pi + 0.192\pi}{2} = \mathbf{0.176\pi} \\
-\omega_{c2} &= \frac{\omega_{s2} + \omega_{p2}}{2} = \frac{0.208\pi + 0.24\pi}{2} = \mathbf{0.224\pi}
-\end{align}
-
-\vspace{1mm}
-\noindent\textbf{Step 2: Shape Parameter $\beta$ for $A_s = 60$ dB}
-Since $A_s = 60 > 50$, use the top branch of \eqref{eq:kaiser_beta}:
-\begin{equation}
-\beta = 0.1102(A_s - 8.7) = 0.1102(60 - 8.7) = 0.1102(51.3) = \mathbf{5.653}
-\end{equation}
-
-\vspace{1mm}
-\noindent\textbf{Step 3: Required Filter Length $N$}
-Using \eqref{eq:kaiser_N}:
-\begin{equation}
-N \ge \frac{A_s - 7.95}{14.36 \cdot \Delta f} + 1 = \frac{60 - 7.95}{14.36 \times 0.016} + 1 = \frac{52.05}{0.22976} + 1 = 226.54 + 1 = 227.54
-\end{equation}
-Rounding up to the next odd integer:
-\begin{equation}
-\mathbf{N = 229} \implies \tau = \frac{229-1}{2} = \mathbf{114 \text{ samples}}
-\end{equation}
-Group delay in physical time: $t_d = \tau / f_s = 114 / 500 = \mathbf{0.228 \text{ seconds}}$ (constant across all frequencies).
-
-\vspace{1mm}
-\noindent\textbf{Step 4: Analytical Closed-Form of $h_d[n]$}
-\begin{equation}
-h_{d,\text{BS}}[n] = \begin{cases} 
-1 - \frac{0.224\pi - 0.176\pi}{\pi} = 1 - 0.048 = \mathbf{0.952}, & n = 114 \\ 
-\frac{\sin(0.176\pi(n - 114))}{\pi(n - 114)} - \frac{\sin(0.224\pi(n - 114))}{\pi(n - 114)}, & n \ne 114 
-\end{cases}
-\end{equation}
-Multiplying by $w_K[n]$ synthesized with $\beta = 5.653$ yields the final $229$-tap notch filter.
-
-\subsection{Example 23.3: Comparative Design Evaluation: Kaiser vs. Blackman Window Design}
-\textbf{Problem Statement:} A telecommunications FIR channel-select filter requires a stopband attenuation of $A_s = 70$ dB with a normalized transition bandwidth $\Delta f = 0.02$.
-\begin{enumerate}
-    \item Determine the required filter length $N_{\text{Blck}}$ if designed using a Blackman window.
-    \item Determine the required filter length $N_{\text{Kaiser}}$ and shape parameter $\beta$.
-    \item Compare the design metrics (filter length $N$, group delay $\tau$, and transition width) and discuss the efficiency advantage of the Kaiser window over fixed windows.
+    Consequently, $H(e^{j 2\pi m / N}) \equiv H[m]$ exactly. There is zero approximation error at the sampling grid points!
+    \item \textbf{Inter-Sample Behavior:} Between the grid points, $H(e^{j\omega})$ is formed by the weighted superposition of shifted Dirichlet kernels $\frac{\sin(N(\omega - \omega_k)/2)}{N\sin((\omega - \omega_k)/2)}$. If adjacent samples differ sharply (e.g. from $1$ to $0$), large inter-sample ripples inevitably emerge!
 \end{enumerate}
 
-\vspace{1mm}
-\noindent\textbf{Solution:}
-
-\noindent\textbf{Step 1: Blackman Window Design}
-A Blackman window provides a fixed peak stopband attenuation of $A_s = 74$ dB (which satisfies the $\ge 70$ dB specification). Its normalized transition bandwidth is governed by:
-\begin{equation}
-\Delta f \approx \frac{5.5}{N_{\text{Blck}}} \implies N_{\text{Blck}} \ge \frac{5.5}{0.02} = 275
-\end{equation}
-Rounding to the nearest odd integer: $\mathbf{N_{\text{Blck}} = 275 \text{ taps}}$. The corresponding group delay is:
-\begin{equation}
-\tau_{\text{Blck}} = \frac{N_{\text{Blck}} - 1}{2} = \frac{275 - 1}{2} = \mathbf{137 \text{ samples}}
-\end{equation}
-
-\vspace{1mm}
-\noindent\textbf{Step 2: Kaiser Window Design}
-For $A_s = 70$ dB:
-\begin{align}
-\beta &= 0.1102(70 - 8.7) = 0.1102(61.3) = \mathbf{6.755} \\
-N_{\text{Kaiser}} &\ge \frac{70 - 7.95}{14.36 \times 0.02} + 1 = \frac{62.05}{0.2872} + 1 = 216.05 + 1 = 217.05 \implies \mathbf{N_{\text{Kaiser}} = 219 \text{ taps}}
-\end{align}
-The corresponding group delay is:
-\begin{equation}
-\tau_{\text{Kaiser}} = \frac{N_{\text{Kaiser}} - 1}{2} = \frac{219 - 1}{2} = \mathbf{109 \text{ samples}}
-\end{equation}
-
-\vspace{1mm}
-\noindent\textbf{Step 3: Comparative Design Evaluation}
+\subsection{2.3 Comparison: Windowing Method vs. Frequency Sampling Method}
+It is pedagogically valuable to contrast the Frequency Sampling Method against the Windowing Method studied in Lectures 22 and 23 across foundational design metrics:
 
 \begin{table}[H]
 \centering
-\caption{Filter Design Comparison: Blackman vs. Kaiser Window Synthesis}
-\label{tab:hardware_audit_ex3}
+\caption{Pedagogical Comparison: Windowing Method vs. Frequency Sampling Method}
+\label{tab:window_vs_freq_sampling}
 \vspace{2mm}
 \resizebox{\textwidth}{!}{
-\begin{tabular}{lccc}
+\begin{tabular}{lll}
 \toprule
-\textbf{Design Metric} & \textbf{Blackman Window ($N=275$)} & \textbf{Kaiser Window ($N=219$)} & \textbf{Kaiser Advantage} \\
+\textbf{Design Metric} & \textbf{Windowing Method (Lectures 22--23)} & \textbf{Frequency Sampling Method (Lecture 24)} \\
 \midrule
-\textbf{Stopband Attenuation ($A_s$)} & $74$ dB (fixed, over-designed) & $70$ dB (exact match) & Exact specification compliance \\
-\textbf{Filter Length ($N$ taps)}     & $275$ taps & $219$ taps & \textbf{56 taps saved ($-20.4\%$)} \\
-\textbf{Group Delay ($\tau$)}         & $137$ samples & $109$ samples & \textbf{28 samples lower latency} \\
-\textbf{Normalized Transition ($\Delta f$)} & $\frac{5.5}{275} = 0.020$ & $\frac{70 - 7.95}{14.36 \times 218} = 0.0198 \le 0.02$ & Fully meets bandwidth spec \\
+\textbf{Starting Domain} & Continuous desired frequency response $H_d(e^{j\omega})$ & Discrete frequency samples $H[k] = H_d(e^{j 2\pi k / N})$ \\
+\textbf{Mathematical Core} & Continuous inverse DTFT integral $\int_{-\pi}^{\pi}$ & Discrete inverse DFT (IDFT) summation $\frac{1}{N}\sum_{k=0}^{N-1}$ \\
+\textbf{Grid Point Accuracy} & Approximates $H_d(e^{j\omega})$ in mean-square sense & Matches $H_d(e^{j\omega})$ \textbf{exactly} at all $N$ grid points $\omega_k$ \\
+\textbf{Arbitrary Magnitude Curves} & Difficult if inverse DTFT integral is analytically intractable & Highly versatile; arbitrary sampled points are directly usable \\
+\textbf{Transition Band Control} & Dictated by window mainlobe width ($\Delta\omega \propto c/N$) & Controlled by inserting unconstrained transition samples $T_m$ \\
+\textbf{Inter-Sample Behavior} & Smooth rolloff dictated by window Fourier transform & Pronounced ringing if samples change abruptly without transition samples \\
 \bottomrule
 \end{tabular}
 }
 \end{table}
 
-\noindent\textbf{Pedagogical Takeaway:}
-Fixed windows such as Blackman have predetermined attenuation values ($74$ dB). When the user specification is $70$ dB, the fixed window forces the filter to be over-engineered, requiring $N=275$ taps. The Kaiser window, by allowing independent and continuous adjustment of $\beta$ to match $70$ dB exactly, reduces the required filter order from $274$ to $218$, saving over **$20\%$ in tap length and processing latency** while strictly satisfying the transition bandwidth requirement.
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.92\textwidth]{images/fir_freq_sampling_interpolation_ripple.png}
+\caption{Interpolation mechanics and inter-sample rippling. Left: The periodic Dirichlet kernel $P(\omega) = \frac{\sin(N\omega/2)}{N\sin(\omega/2)}$ with zeros at all adjacent DFT bins $\frac{2\pi m}{N}$. Right: Reconstructed continuous magnitude spectrum in dB for a naive brick-wall lowpass filter ($N=33$), illustrating the severe $-16$ dB stopband ripple caused by the abrupt sample transition between $H[5]=1$ and $H[6]=0$.}
+\label{fig:interpolation_ripple}
+\end{figure}
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{3. LINEAR-PHASE CONSTRAINTS AND REAL IDFT SYNTHESIS}
+
+For the designed FIR filter to possess a strictly linear phase and constant group delay $\tau = (N-1)/2$, the frequency samples $H[k]$ must satisfy specific magnitude and phase symmetry constraints.
+
+\subsection{3.1 Linear-Phase Sample Constraints}
+Let the complex frequency samples be written in polar form:
+\begin{equation}
+H[k] = |H[k]| \, e^{j \angle H[k]} = |H[k]| \, e^{j \theta_k}
+\end{equation}
+For a real-valued, symmetric impulse response $h[n] = h[N-1-n]$:
+\begin{enumerate}
+    \item \textbf{Magnitude Symmetry (Even Symmetry):}
+    \begin{equation}
+    \mathbf{|H[N-k]| = |H[k]|}, \quad k = 1, 2, \dots, N-1
+    \label{eq:mag_symmetry}
+    \end{equation}
+    \item \textbf{Phase Angle Assignment (Linear Phase):}
+    The phase must be a strictly linear function of frequency:
+    \begin{equation}
+    \mathbf{\theta_k = \angle H[k] = -\left( \frac{N-1}{2} \right) \omega_k = -\left( \frac{N-1}{2} \right) \frac{2\pi k}{N}}
+    \label{eq:phase_assignment}
+    \end{equation}
+    Notice that at DC ($k=0$):
+    \begin{equation}
+    \theta_0 = 0 \implies H[0] \text{ is strictly real and positive.}
+    \end{equation}
+    \item \textbf{Hermitian Conjugate Symmetry:}
+    Combining \eqref{eq:mag_symmetry} and \eqref{eq:phase_assignment} verifies that:
+    \begin{equation}
+    H[N-k] = H^*[k]
+    \label{eq:hermitian_sym}
+    \end{equation}
+    which guarantees that the synthesized impulse response $h[n]$ is strictly real-valued.
+\end{enumerate}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.92\textwidth]{images/fir_freq_sampling_linear_phase.png}
+\caption{Linear-phase constraints for frequency sampling ($N=15$). Left: Even symmetry of magnitude samples $|H[N-k]| = |H[k]|$ about the center index $k = (N-1)/2 = 7$. Right: Phase angle assignment $\angle H[k] = -\tau \frac{2\pi k}{N}$ enforcing a constant group delay of $\tau = 7$ samples.}
+\label{fig:linear_phase_constraints}
+\end{figure}
+
+\subsection{3.2 Derivation of Closed-Form Real IDFT Formulas}
+Evaluating the general IDFT equation \eqref{eq:idft_basic} directly involves complex exponentials. By pairing complex conjugate terms $k$ and $N-k$, we can derive a purely real trigonometric summation formula.
+
+For any $k \ge 1$, consider the pair of terms in the IDFT:
+\begin{align}
+T_k &= H[k] e^{j \frac{2\pi k n}{N}} + H[N-k] e^{j \frac{2\pi(N-k)n}{N}} \nonumber \\
+    &= |H[k]| e^{j \left( \theta_k + \frac{2\pi k n}{N} \right)} + |H[k]| e^{-j \left( \theta_k + \frac{2\pi k n}{N} \right)} \nonumber \\
+    &= 2 |H[k]| \cos\left( \theta_k + \frac{2\pi k n}{N} \right)
+\end{align}
+Substituting the linear-phase definition $\theta_k = -\left(\frac{N-1}{2}\right)\frac{2\pi k}{N}$:
+\begin{equation}
+\theta_k + \frac{2\pi k n}{N} = \frac{2\pi k}{N} \left( n - \frac{N-1}{2} \right)
+\end{equation}
+Thus, the conjugate pair reduces to:
+\begin{equation}
+T_k = 2 |H[k]| \cos\left[ \frac{2\pi k}{N} \left( n - \frac{N-1}{2} \right) \right]
+\label{eq:cos_pair}
+\end{equation}
+
+\subsection{3.3 Explicit Formulas for Type 1 (Odd Length \texorpdfstring{$N$}{N}) Filters}
+When $N$ is odd, $(N-1)/2$ is an integer. The DFT bins consist of the DC bin ($k=0$) and $(N-1)/2$ conjugate pairs ($k = 1, 2, \dots, (N-1)/2$). Summing all contributions yields the standard \textbf{Type 1 Frequency Sampling Formula}:
+\begin{equation}
+\mathbf{h[n] = \frac{1}{N} \left\{ H[0] + 2 \sum_{k=1}^{(N-1)/2} |H[k]| \cos\left[ \frac{2\pi k}{N} \left( n - \frac{N-1}{2} \right) \right] \right\}}, \quad 0 \le n \le N-1
+\label{eq:type1_formula}
+\end{equation}
+
+\subsection{3.4 Explicit Formulas for Type 2 (Even Length \texorpdfstring{$N$}{N}) Filters}
+When $N$ is even, $N/2$ is an integer. The DFT bins consist of $k=0$ (DC), $N/2 - 1$ conjugate pairs ($k = 1, \dots, N/2-1$), and a single unpaired bin at the Nyquist frequency $k = N/2$ ($\omega = \pi$).
+For $k = N/2$, the phase is $\theta_{N/2} = -\left(\frac{N-1}{2}\right)\pi$. The Nyquist term in the IDFT evaluates to:
+\begin{equation}
+\frac{1}{N} H[N/2] \, e^{j \pi \left( n - \frac{N-1}{2} \right)}
+\end{equation}
+However, as proven in Lecture 21, **all Type 2 linear-phase filters possess an obligatory zero at $\omega = \pi$ ($z = -1$)**! Therefore, for any standard lowpass or bandpass design:
+\begin{equation}
+\mathbf{H[N/2] = 0}
+\end{equation}
+With $H[N/2] = 0$, the \textbf{Type 2 Frequency Sampling Formula} simplifies to:
+\begin{equation}
+\mathbf{h[n] = \frac{1}{N} \left\{ H[0] + 2 \sum_{k=1}^{N/2 - 1} |H[k]| \cos\left[ \frac{2\pi k}{N} \left( n - \frac{N-1}{2} \right) \right] \right\}}, \quad 0 \le n \le N-1
+\label{eq:type2_formula}
+\end{equation}
+where $\tau = (N-1)/2$ is a half-integer.
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{4. TRANSITION SAMPLE OPTIMIZATION (RABINER--GOLD TECHNIQUE)}
+
+\subsection{4.1 The Severe Sidelobe Ringing of Naive Brickwall Sampling}
+If a designer samples an ideal brick-wall lowpass filter directly ($H[k] = 1$ in the passband and $H[k] = 0$ in the stopband), a sharp step discontinuity occurs between the last passband sample and the first stopband sample.
+As established by Rabiner and Gold (1970), the continuous reconstructed response between grid points exhibits massive Gibbs-like ringing (Figure \ref{fig:interpolation_ripple}):
+\begin{itemize}
+    \item Passband ripple: $\approx \pm 0.75$ dB.
+    \item Peak stopband ripple: $\mathbf{-16 \text{ dB}}$!
+\end{itemize}
+An attenuation of $-16$ dB is completely intolerable in communication systems, audio codecs, and instrumentation.
+
+\subsection{4.2 Optimization via Unconstrained Transition Samples}
+To dramatically eliminate this ringing, we introduce **one, two, or three intermediate samples in the transition band** between the passband and stopband:
+\begin{equation}
+H[k] \in (0, 1), \quad k \in \text{Transition Band}
+\end{equation}
+Rather than being fixed to $0$ or $1$, the value $T_1$ (and $T_2, T_3$) is treated as a free optimization parameter and selected via computer search (e.g. minimax linear programming) to minimize the peak sidelobe ripple across the entire stopband.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.92\textwidth]{images/fir_freq_sampling_transition_opt.png}
+\caption{Transition sample optimization for $N=33$. Left: Full frequency response comparison in dB for $0$ transition samples ($-16$ dB, red), $1$ transition sample $T_1 = 0.38$ ($-45$ dB, amber), and $2$ transition samples $T_1 = 0.59, T_2 = 0.11$ ($-75$ dB, green). Right: Zoomed stopband floor proving $+29$ dB and $+59$ dB of extra attenuation rejection.}
+\label{fig:transition_opt}
+\end{figure}
+
+\subsection{4.3 Standard Rabiner--Gold Design Lookup Table}
+Table \ref{tab:rabiner_gold} summarizes the universally accepted optimal transition sample values for FIR lowpass filter design across various filter lengths $N$:
+
+\begin{table}[H]
+\centering
+\caption{Optimal Transition Sample Values and Resulting Stopband Attenuation}
+\label{tab:rabiner_gold}
+\vspace{2mm}
+\resizebox{\textwidth}{!}{
+\begin{tabular}{ccccc}
+\toprule
+\textbf{Number of Transition Samples} & \textbf{Transition Width $\Delta f$} & \textbf{Optimal Sample Values} & \textbf{Stopband Attenuation $A_s$} & \textbf{Typical Applications} \\
+\midrule
+\textbf{0 (Unoptimized)} & $\approx 1/N$ & None ($H[k] \in \{0, 1\}$) & $\mathbf{16 \text{ dB}}$ & Not suitable for filtering \\
+\textbf{1 Transition Sample} & $\approx 2/N$ & $T_1 \approx \mathbf{0.37897} \approx 0.38$ & $\mathbf{45 \text{ dB}}$ & Voice, Speech, Basic Telephony \\
+\textbf{2 Transition Samples} & $\approx 3/N$ & $T_1 \approx \mathbf{0.5937}, \; T_2 \approx \mathbf{0.1090}$ & $\mathbf{75 \text{ dB}}$ & High-Fidelity Audio, Modems \\
+\textbf{3 Transition Samples} & $\approx 4/N$ & $T_1 \approx \mathbf{0.70}, \; T_2 \approx \mathbf{0.25}, \; T_3 \approx \mathbf{0.02}$ & $\mathbf{95 \text{ dB}}$ & Biomedical, Seismic, Radar DSP \\
+\bottomrule
+\end{tabular}
+}
+\end{table}
+
+\noindent\textbf{The Engineering Trade-Off:}
+Introducing transition samples slightly widens the transition bandwidth $\Delta f$ by a factor of $2\times$ or $3\times$. However, in return, the stopband rejection increases by a stupendous \textbf{$+29$ dB to $+59$ dB}!
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\section{5. STEP-BY-STEP WORKED NUMERICAL EXAMPLES}
+
+\subsection{Example 24.1: Manual Design of a 7-Point Type 1 Linear-Phase LPF}
+\textbf{Problem Statement:} Design a 7-point ($N=7$) linear-phase FIR lowpass filter using the frequency sampling technique. The desired frequency samples are specified as:
+\begin{equation}
+|H[k]| = \begin{cases} 1, & k = 0, 1, 6 \\ 0, & k = 2, 3, 4, 5 \end{cases}
+\end{equation}
+Determine the linear-phase delay $\tau$, calculate all seven filter coefficients $h[0]$ through $h[6]$ using the real-valued IDFT formula, and verify coefficient symmetry.
+
+\vspace{2mm}
+\noindent\textbf{Solution:}
+
+\noindent\textbf{Step 1: Identify Filter Parameters and Symmetry Properties}
+\begin{itemize}
+    \item Length $N = 7$ (Odd $\implies$ Type 1 Linear-Phase FIR filter).
+    \item Group delay: $\tau = \frac{N-1}{2} = \frac{7-1}{2} = 3$ samples.
+    \item Center frequency index: $\frac{N-1}{2} = 3$.
+    \item Symmetrical magnitude check: $|H[6]| = |H[7-1]| = |H[1]| = 1$, $|H[5]| = |H[2]| = 0$, $|H[4]| = |H[3]| = 0$. (Even symmetry is strictly satisfied).
+\end{itemize}
+
+\noindent\textbf{Step 2: Apply the Real-Valued IDFT Formula for $N$ Odd}
+Using \eqref{eq:type1_formula} with $N=7$ and $\tau = 3$:
+\begin{equation}
+h[n] = \frac{1}{7} \left\{ H[0] + 2 \sum_{k=1}^{3} |H[k]| \cos\left[ \frac{2\pi k}{7} (n - 3) \right] \right\}
+\end{equation}
+Substituting $|H[0]| = 1$, $|H[1]| = 1$, and $|H[2]| = |H[3]| = 0$:
+\begin{equation}
+\mathbf{h[n] = \frac{1}{7} \left\{ 1 + 2 \cos\left[ \frac{2\pi}{7} (n - 3) \right] \right\}}, \quad n = 0, 1, \dots, 6
+\end{equation}
+
+\noindent\textbf{Step 3: Point-by-Point Numerical Coefficient Calculation}
+\begin{itemize}
+    \item \textbf{Center tap ($n = 3$):}
+    \begin{equation}
+    h[3] = \frac{1}{7} [1 + 2 \cos(0)] = \frac{1 + 2(1)}{7} = \frac{3}{7} \approx \mathbf{0.4286}
+    \end{equation}
+    \item \textbf{Taps adjacent to center ($n = 2$ and $n = 4$):}
+    Argument: $\frac{2\pi}{7} (2 - 3) = -\frac{2\pi}{7} = -51.4286^\circ$. Since $\cos(-\theta) = \cos\theta$:
+    \begin{equation}
+    \cos\left(\frac{2\pi}{7}\right) \approx 0.623490
+    \end{equation}
+    \begin{equation}
+    h[2] = h[4] = \frac{1 + 2(0.623490)}{7} = \frac{1 + 1.24698}{7} = \frac{2.24698}{7} \approx \mathbf{0.3210}
+    \end{equation}
+    \item \textbf{Taps at distance 2 ($n = 1$ and $n = 5$):}
+    Argument: $\frac{2\pi}{7} (1 - 3) = -\frac{4\pi}{7} = -102.8571^\circ$:
+    \begin{equation}
+    \cos\left(\frac{4\pi}{7}\right) \approx -0.222521
+    \end{equation}
+    \begin{equation}
+    h[1] = h[5] = \frac{1 + 2(-0.222521)}{7} = \frac{1 - 0.445042}{7} = \frac{0.554958}{7} \approx \mathbf{0.0793}
+    \end{equation}
+    \item \textbf{Boundary taps ($n = 0$ and $n = 6$):}
+    Argument: $\frac{2\pi}{7} (0 - 3) = -\frac{6\pi}{7} = -154.2857^\circ$:
+    \begin{equation}
+    \cos\left(\frac{6\pi}{7}\right) \approx -0.900969
+    \end{equation}
+    \begin{equation}
+    h[0] = h[6] = \frac{1 + 2(-0.900969)}{7} = \frac{1 - 1.801938}{7} = \frac{-0.801938}{7} \approx \mathbf{-0.1146}
+    \end{equation}
+\end{itemize}
+
+\noindent\textbf{Step 4: Summary of Designed Impulse Response}
+\begin{equation}
+\mathbf{h[n] = \{ \underset{\uparrow}{-0.1146}, \; 0.0793, \; 0.3210, \; 0.4286, \; 0.3210, \; 0.0793, \; -0.1146 \}}
+\end{equation}
+Symmetry check: $h[0] = h[6]$, $h[1] = h[5]$, $h[2] = h[4]$. Even symmetry is confirmed.
+
+\vspace{3mm}
+\noindent\rule{\textwidth}{0.5pt}
+
+\subsection{Example 24.2: Design of a 15-Point LPF with 1 Optimized Transition Sample}
+\textbf{Problem Statement:} Design a 15-point ($N=15$) linear-phase FIR lowpass filter using frequency sampling. To achieve high stopband rejection ($A_s \ge 45$ dB), introduce one transition sample $T_1 = 0.38$ at the band edge. The frequency samples are specified as:
+\begin{equation}
+|H[k]| = \begin{cases} 
+1.0, & k = 0, 1, 2, 13, 14 \\ 
+0.38, & k = 3, 12 \\ 
+0.0, & k = 4, 5, 6, 7, 8, 9, 10, 11 
+\end{cases}
+\end{equation}
+Calculate the filter delay $\tau$, formulate the explicit expression for $h[n]$, and compute all 15 impulse response coefficients.
+
+\vspace{2mm}
+\noindent\textbf{Solution:}
+
+\noindent\textbf{Step 1: Filter Classification and Symmetries}
+\begin{itemize}
+    \item Length $N = 15$ (Odd $\implies$ Type 1 linear-phase filter).
+    \item Linear-phase delay: $\tau = \frac{15-1}{2} = 7$ samples.
+    \item Center index: $n = 7$.
+    \item Maximum index in summation: $\frac{N-1}{2} = 7$.
+\end{itemize}
+
+\noindent\textbf{Step 2: Formulate Real IDFT Summation}
+Substituting $N=15$, $\tau=7$, and the non-zero magnitude samples into \eqref{eq:type1_formula}:
+\begin{align}
+h[n] = \frac{1}{15} \bigg\{ 1.0 &+ 2(1.0) \cos\left[\frac{2\pi (1)}{15}(n - 7)\right] + 2(1.0) \cos\left[\frac{2\pi (2)}{15}(n - 7)\right] \nonumber \\
+&+ 2(0.38) \cos\left[\frac{2\pi (3)}{15}(n - 7)\right] \bigg\}
+\end{align}
+Simplifying the numerical coefficients:
+\begin{equation}
+\mathbf{h[n] = \frac{1}{15} \left\{ 1 + 2\cos\left[\frac{2\pi}{15}(n - 7)\right] + 2\cos\left[\frac{4\pi}{15}(n - 7)\right] + 0.76\cos\left[\frac{2\pi}{5}(n - 7)\right] \right\}}
+\end{equation}
+
+\noindent\textbf{Step 3: Pointwise Evaluation Exploiting Symmetry ($h[n] = h[14-n]$)}
+\begin{itemize}
+    \item \textbf{Center Tap ($n = 7$):}
+    \begin{equation}
+    h[7] = \frac{1 + 2(1) + 2(1) + 0.76(1)}{15} = \frac{5.76}{15} = \mathbf{0.3840}
+    \end{equation}
+    \item \textbf{Taps $n = 6$ and $n = 8$ ($n - 7 = \pm 1$):}
+    \begin{align}
+    \cos(2\pi/15) &= \cos(24^\circ) \approx 0.9135 \nonumber \\
+    \cos(4\pi/15) &= \cos(48^\circ) \approx 0.6691 \nonumber \\
+    \cos(2\pi/5)  &= \cos(72^\circ) \approx 0.3090 \nonumber \\
+    h[6] = h[8] &= \frac{1 + 2(0.9135) + 2(0.6691) + 0.76(0.3090)}{15} = \frac{4.4001}{15} \approx \mathbf{0.2933}
+    \end{align}
+    \item \textbf{Taps $n = 5$ and $n = 9$ ($n - 7 = \pm 2$):}
+    \begin{align}
+    \cos(48^\circ) &\approx 0.6691, \quad \cos(96^\circ) \approx -0.1045, \quad \cos(144^\circ) \approx -0.8090 \nonumber \\
+    h[5] = h[9] &= \frac{1 + 2(0.6691) + 2(-0.1045) + 0.76(-0.8090)}{15} = \frac{1.5144}{15} \approx \mathbf{0.1010}
+    \end{align}
+    \item \textbf{Taps $n = 4$ and $n = 10$ ($n - 7 = \pm 3$):}
+    \begin{align}
+    \cos(72^\circ) &\approx 0.3090, \quad \cos(144^\circ) \approx -0.8090, \quad \cos(216^\circ) \approx -0.8090 \nonumber \\
+    h[4] = h[10] &= \frac{1 + 2(0.3090) + 2(-0.8090) + 0.76(-0.8090)}{15} = \frac{-0.6148}{15} \approx \mathbf{-0.0410}
+    \end{align}
+    \item \textbf{Taps $n = 3$ and $n = 11$ ($n - 7 = \pm 4$):}
+    \begin{equation}
+    h[3] = h[11] \approx \mathbf{-0.0620}
+    \end{equation}
+    \item \textbf{Taps $n = 2$ and $n = 12$ ($n - 7 = \pm 5$):}
+    \begin{equation}
+    h[2] = h[12] \approx \mathbf{-0.0160}
+    \end{equation}
+    \item \textbf{Taps $n = 1$ and $n = 13$ ($n - 7 = \pm 6$):}
+    \begin{equation}
+    h[1] = h[13] \approx \mathbf{0.0157}
+    \end{equation}
+    \item \textbf{Boundary Taps $n = 0$ and $n = 14$ ($n - 7 = \pm 7$):}
+    \begin{equation}
+    h[0] = h[14] \approx \mathbf{0.0171}
+    \end{equation}
+\end{itemize}
+
+\noindent\textbf{Impact of Transition Sample $T_1 = 0.38$:}
+By inserting $T_1 = 0.38$, the stopband attenuation improves from $-16$ dB to \textbf{$-45$ dB}, completely quenching Gibbs ringing without increasing filter length $N$!
+
+\vspace{3mm}
+\noindent\rule{\textwidth}{0.5pt}
+
+\subsection{Example 24.3: Design of an 8-Point Type 2 Even-Length LPF}
+\textbf{Problem Statement:} Design an 8-point ($N=8$) linear-phase FIR lowpass filter using frequency sampling with samples:
+\begin{equation}
+|H[k]| = \begin{cases} 1, & k = 0, 1, 7 \\ 0, & k = 2, 3, 4, 5, 6 \end{cases}
+\end{equation}
+Determine the half-sample delay $\tau$, formulate the Type 2 IDFT equation, compute all 8 impulse response coefficients, and verify even symmetry about the half-sample center.
+
+\vspace{2mm}
+\noindent\textbf{Solution:}
+
+\noindent\textbf{Step 1: Filter Classification and Nyquist Bin Enforcement}
+\begin{itemize}
+    \item Length $N = 8$ (Even $\implies$ Type 2 Linear-Phase FIR filter).
+    \item Linear-phase delay: $\tau = \frac{N-1}{2} = \frac{8-1}{2} = \mathbf{3.5 \text{ samples}}$ (Half-integer delay).
+    \item The Nyquist bin is $k = N/2 = 4$. By Type 2 linear-phase theory, $H[4] = 0$ is mandatory (guaranteeing a transmission zero at $\omega = \pi$).
+    \item Summation upper limit: $N/2 - 1 = 8/2 - 1 = 3$.
+\end{itemize}
+
+\noindent\textbf{Step 2: Formulate Real IDFT Summation for $N$ Even}
+Using \eqref{eq:type2_formula} with $N=8$ and $\tau = 3.5$:
+\begin{equation}
+h[n] = \frac{1}{8} \left\{ H[0] + 2 \sum_{k=1}^{3} |H[k]| \cos\left[ \frac{2\pi k}{8} (n - 3.5) \right] \right\}
+\end{equation}
+Since $|H[0]| = 1$, $|H[1]| = 1$, and $|H[2]| = |H[3]| = 0$:
+\begin{equation}
+\mathbf{h[n] = \frac{1}{8} \left\{ 1 + 2 \cos\left[ \frac{\pi}{4} (n - 3.5) \right] \right\}}, \quad n = 0, 1, \dots, 7
+\end{equation}
+
+\noindent\textbf{Step 3: Point-by-Point Numerical Coefficient Calculation}
+\begin{itemize}
+    \item \textbf{Inner Taps ($n = 3$ and $n = 4$):}
+    For $n=3$, $n - 3.5 = -0.5$. Argument: $\frac{\pi}{4}(-0.5) = -\frac{\pi}{8} = -22.5^\circ$:
+    \begin{equation}
+    \cos\left(\frac{\pi}{8}\right) = \cos(22.5^\circ) = \frac{\sqrt{2 + \sqrt{2}}}{2} \approx 0.923880
+    \end{equation}
+    \begin{equation}
+    h[3] = h[4] = \frac{1 + 2(0.923880)}{8} = \frac{1 + 1.84776}{8} = \frac{2.84776}{8} \approx \mathbf{0.3560}
+    \end{equation}
+    \item \textbf{Taps at distance 1 ($n = 2$ and $n = 5$):}
+    For $n=2$, $n - 3.5 = -1.5$. Argument: $\frac{\pi}{4}(-1.5) = -\frac{3\pi}{8} = -67.5^\circ$:
+    \begin{equation}
+    \cos\left(\frac{3\pi}{8}\right) = \cos(67.5^\circ) = \frac{\sqrt{2 - \sqrt{2}}}{2} \approx 0.382683
+    \end{equation}
+    \begin{equation}
+    h[2] = h[5] = \frac{1 + 2(0.382683)}{8} = \frac{1 + 0.765367}{8} = \frac{1.765367}{8} \approx \mathbf{0.2207}
+    \end{equation}
+    \item \textbf{Taps at distance 2 ($n = 1$ and $n = 6$):}
+    For $n=1$, $n - 3.5 = -2.5$. Argument: $\frac{\pi}{4}(-2.5) = -\frac{5\pi}{8} = -112.5^\circ$:
+    \begin{equation}
+    \cos\left(\frac{5\pi}{8}\right) = -\cos(67.5^\circ) \approx -0.382683
+    \end{equation}
+    \begin{equation}
+    h[1] = h[6] = \frac{1 + 2(-0.382683)}{8} = \frac{1 - 0.765367}{8} = \frac{0.234633}{8} \approx \mathbf{0.0293}
+    \end{equation}
+    \item \textbf{Outer Boundary Taps ($n = 0$ and $n = 7$):}
+    For $n=0$, $n - 3.5 = -3.5$. Argument: $\frac{\pi}{4}(-3.5) = -\frac{7\pi}{8} = -157.5^\circ$:
+    \begin{equation}
+    \cos\left(\frac{7\pi}{8}\right) = -\cos(22.5^\circ) \approx -0.923880
+    \end{equation}
+    \begin{equation}
+    h[0] = h[7] = \frac{1 + 2(-0.923880)}{8} = \frac{1 - 1.84776}{8} = \frac{-0.84776}{8} \approx \mathbf{-0.1060}
+    \end{equation}
+\end{itemize}
+
+\noindent\textbf{Step 4: Summary and Symmetry Verification}
+\begin{equation}
+\mathbf{h[n] = \{ \underset{\uparrow}{-0.1060}, \; 0.0293, \; 0.2207, \; 0.3560, \; 0.3560, \; 0.2207, \; 0.0293, \; -0.1060 \}}
+\end{equation}
+Strict even symmetry about the half-sample center $\tau = 3.5$ is satisfied ($h[n] = h[7-n]$).
 
 \noindent\rule{\textwidth}{0.5pt}
 
 \section{6. FACULTY INSIGHTS, COMMON PITFALLS \& EXAM TRAPS}
 
 \begin{itemize}
-    \item \textbf{Pitfall 1: Truncating the $I_0(x)$ Series Incorrectly in Coding/Calculations:}
-    In code or handheld calculators, students sometimes compute only 2 or 3 terms of $I_0(x)$. For large arguments ($\beta > 5$), $x^2/4$ is insufficient; one needs at least 15 terms to prevent catastrophic normalization errors in $w_K[n]$.
+    \item \textbf{Pitfall 1: Forgetting the Factor of $2$ in the Real IDFT Summation:}
+    A common student error in university semester exams is writing $h[n] = \frac{1}{N}[H[0] + \sum |H[k]|\cos(\dots)]$, forgetting the factor of \textbf{$2$} arising from pairing conjugate bins $H[k]$ and $H[N-k]$. This cuts the passband gain in half.
     
-    \item \textbf{Pitfall 2: Forgetting to Enforce $\delta = \min(\delta_p, \delta_s)$:}
-    In university exams, problems frequently specify $A_p = 1$ dB ($\delta_p \approx 0.057$) and $A_s = 40$ dB ($\delta_s = 0.01$). Students who calculate $N$ using $\delta_p$ rather than $\delta_s$ end up with a filter that violates the stopband specification by over 15 dB!
+    \item \textbf{Pitfall 2: Confusing DFT Index $k$ with Continuous Frequency $\omega$:}
+    Remember that sample index $k$ represents frequency $\omega_k = \frac{2\pi k}{N}$ rad/sample. For instance, for $N=16$, $k=2$ corresponds to $\omega = \frac{2\pi(2)}{16} = \frac{\pi}{4} = 0.25\pi$ rad/sample.
     
-    \item \textbf{Pitfall 3: Rounding $N$ Down Instead of Up to an Odd Integer:}
-    If $N_{\text{calc}} = 43.1$, students often round to 43. This causes the transition bandwidth to be slightly wider than permitted, failing specs. Always round **UP** to the next odd integer ($N = 45$).
+    \item \textbf{Pitfall 3: Failing to Enforce $H[N/2] = 0$ for Even-Length Type 2 Filters:}
+    When $N$ is even, setting $H[N/2] \ne 0$ contradicts the inherent zero at $\omega = \pi$ of Type 2 filters, causing severe distortion and complex coefficients if the phase is not handled with extreme care.
     
-    \item \textbf{Pitfall 4: Confusion between Normalized Frequency $f$ and Angular Frequency $\omega$:}
-    The formula denominator $14.36 \cdot \Delta f$ requires normalized cyclic frequency $\Delta f = \Delta\omega / (2\pi)$. If a student plugs in $\Delta\omega$ directly without dividing by $2\pi$, the resulting filter length will be too small by a factor of $2\pi \approx 6.28$!
+    \item \textbf{Pitfall 4: Assuming Zero Ripple Between Sampling Points:}
+    Because $H(e^{j\omega_k}) = H[k]$ is exact at grid frequencies, students frequently assume the filter perfectly passes or stops signals between bins. In reality, large interpolation ripples occur between grid points unless transition samples are introduced.
     
-    \item \textbf{Pitfall 5: Assuming Kaiser Windows are Equiripple:}
-    The Kaiser window produces a filter whose sidelobes decay with frequency; it is **NOT strictly equiripple** (equiripple filters are designed via the Parks-McClellan Remez exchange algorithm). However, Kaiser designs come within $1$ to $2$ dB of the theoretical Parks-McClellan lower bound on filter length.
+    \item \textbf{Pitfall 5: Neglecting the Transition Bandwidth Penalty of Transition Samples:}
+    While introducing transition samples ($T_1, T_2$) dramatically improves stopband rejection (e.g., from $-16$ dB to $-45$ dB or $-75$ dB), each transition sample widens the transition region by one frequency bin spacing ($\Delta\omega = 2\pi/N$). To satisfy both a narrow transition band and deep stopband rejection, the total filter length $N$ must be increased proportionally.
 \end{itemize}
 
 \noindent\rule{\textwidth}{0.5pt}
 
-\section{7. QUICK REVISION \& SUMMARY CHEAT-SHEET}
+\section{7. QUICK REVISION CHEAT-SHEET}
 
 \begin{table}[H]
 \centering
-\caption{Kaiser Window FIR Filter Design Quick Reference Sheet}
-\label{tab:quick_reference}
+\caption{Comprehensive Frequency Sampling Summary and Design Rules}
+\label{tab:quick_revision}
 \vspace{2mm}
 \resizebox{\textwidth}{!}{
-\begin{tabular}{ll}
+\begin{tabular}{lll}
 \toprule
-\textbf{Parameter / Step} & \textbf{Mathematical Definition / Closed-Form Operational Formula} \\
+\textbf{Concept / Parameter} & \textbf{Mathematical Formula / Condition} & \textbf{Key Pedagogical Note} \\
 \midrule
-\textbf{Kaiser Window Definition} & $w_K[n] = \frac{I_0\left(\beta\sqrt{1 - ((n-\tau)/\tau)^2}\right)}{I_0(\beta)}, \quad 0 \le n \le N-1, \quad \tau = (N-1)/2$ \\
-\textbf{Bessel Function $I_0(x)$} & $I_0(x) = 1 + \sum_{k=1}^\infty \left[\frac{(x/2)^k}{k!}\right]^2$ \\
-\textbf{Effective Ripple $\delta$} & $\delta = \min(\delta_p, \; \delta_s) \implies A_s = -20\log_{10}\delta$ \\
-\textbf{Shape Parameter $\beta$} & $\beta = \begin{cases} 0.1102(A_s - 8.7), & A_s > 50 \\ 0.5842(A_s - 21)^{0.4} + 0.07886(A_s - 21), & 21 \le A_s \le 50 \\ 0.0, & A_s < 21 \end{cases}$ \\
-\textbf{Required Filter Length $N$} & $N \ge \frac{A_s - 7.95}{14.36 \cdot \Delta f} + 1, \quad \Delta f = \frac{|\omega_s - \omega_p|}{2\pi}$ (Round UP to next ODD integer) \\
-\textbf{Tuning Extremes} & $\beta = 0 \to \text{Rectangular}; \quad \beta \approx 5.4 \to \text{Hamming}; \quad \beta \approx 8.9 \to \text{Blackman}$ \\
-\textbf{Notch Filter Ideal Tap} & $h_{d,\text{BS}}[n] = 1 - \frac{\omega_{c2} - \omega_{c1}}{\pi}$ for $n=\tau$; $\; \frac{\sin(\omega_{c1}(n-\tau)) - \sin(\omega_{c2}(n-\tau))}{\pi(n-\tau)}$ for $n \ne \tau$ \\
-\textbf{Kaiser Window Advantage} & Continuous parameter tuning ($\beta, N$) avoids over-design, saving $20\text{--}40\%$ in filter order compared to fixed windows \\
+\textbf{DFT Grid Frequencies} & $\omega_k = \frac{2\pi k}{N}, \quad k = 0, 1, \dots, N-1$ & Uniform sampling around unit circle \\
+\textbf{Linear-Phase Assignment} & $\angle H[k] = -\left(\frac{N-1}{2}\right)\frac{2\pi k}{N}$ & Constant group delay $\tau = (N-1)/2$ \\
+\textbf{DC Bin Property} & $\angle H[0] = 0 \implies H[0] \in \mathbb{R}^+$ & Strictly real, non-negative value \\
+\textbf{Hermitian Symmetry} & $H[N-k] = H^*[k]$ & Ensures impulse response $h[n]$ is real \\
+\textbf{Interpolation Formula} & $H(e^{j\omega}) = \sum_{k=0}^{N-1} H[k]\Phi\left(\omega - \frac{2\pi k}{N}\right)$ & Exact at grid points; Dirichlet interpolation between bins \\
+\textbf{Type 1 Formula ($N$ Odd)} & $h[n] = \frac{1}{N}\left[H[0] + 2\sum_{k=1}^{(N-1)/2} |H[k]|\cos\left(\frac{2\pi k}{N}(n - \tau)\right)\right]$ & Integer center delay $\tau = (N-1)/2$ \\
+\textbf{Type 2 Formula ($N$ Even)} & $h[n] = \frac{1}{N}\left[H[0] + 2\sum_{k=1}^{N/2-1} |H[k]|\cos\left(\frac{2\pi k}{N}(n - \tau)\right)\right]$ & Requires $H[N/2]=0$; half-sample delay \\
+\textbf{Naive Sidelobe Level} & Stopband peak $\approx \mathbf{-16 \text{ dB}}$ & Caused by step discontinuity \\
+\textbf{1 Transition Sample ($T_1$)} & $T_1 \approx 0.38 \implies \mathbf{A_s \approx 45 \text{ dB}}$ & $+29$ dB stopband attenuation boost \\
+\textbf{2 Transition Samples ($T_1, T_2$)} & $T_1 \approx 0.59, \; T_2 \approx 0.11 \implies \mathbf{A_s \approx 75 \text{ dB}}$ & $+59$ dB stopband attenuation boost \\
 \bottomrule
 \end{tabular}
 }
