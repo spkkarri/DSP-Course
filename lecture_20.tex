@@ -8,16 +8,22 @@
 \usepackage{hyperref}
 \usepackage{float}
 \usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,calc,shapes.geometric,fit,backgrounds}
 
 \title{\textbf{EE3621: Digital Signal Processing} \\ \Large Lecture 20: IIR Filter — Lattice Form Realization \\ \large (III B.Tech EEE)}
 \author{Comprehensive Lecture Notes \& Faculty Textbook Reference}
 \date{}
 
 \definecolor{darkbg}{HTML}{0d121f}
+\definecolor{cardbg}{HTML}{151e32}
 \definecolor{lighttext}{HTML}{e2e8f0}
 \definecolor{primary}{HTML}{8b5cf6}
 \definecolor{secondary}{HTML}{0dd5c5}
 \definecolor{accent}{HTML}{10b981}
+\definecolor{warning}{HTML}{f59e0b}
+\definecolor{danger}{HTML}{ef4444}
+\definecolor{muted}{HTML}{94a3b8}
 
 \pagecolor{darkbg}
 \color{lighttext}
@@ -590,5 +596,690 @@ The complete rational IIR transfer function realized by the filter is:
 \end{tabular}
 }
 \end{table}
+
+\newpage
+\appendix
+\section*{APPENDIX: VISUAL ARCHITECTURAL ATLAS}
+\addcontentsline{toc}{section}{Appendix: Visual Architectural Atlas}
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\subsection*{A.1 The Inversion Duality: FIR Forward Lattice vs. All-Pole IIR Feedback Lattice}
+The fundamental foundation of IIR lattice realization is the mathematical duality between forward FIR prediction and feedback all-pole filtering. Figure~\ref{fig:app_inversion_duality} provides a direct, node-by-node visual comparison between a single forward FIR stage and the corresponding inverted all-pole IIR stage.
+
+\begin{figure}[H]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[
+    scale=0.92,
+    font=\sffamily\small,
+    thick,
+    >=Stealth,
+    every node/.style={color=lighttext}
+]
+    % (a) FIR Forward Lattice
+    \draw[dashed, color=primary!60, fill=cardbg, rounded corners=6pt] (-0.8, -2.6) rectangle (15.2, 1.3);
+    \node[color=primary, font=\bfseries\normalsize, anchor=north west] at (-0.6, 1.1) {(a) Classical FIR Forward Lattice Stage $m$ (Pure Feedforward $\implies$ Zeros Only)};
+
+    \coordinate (fir_f_in) at (0, 0);
+    \coordinate (fir_f_tap) at (1.8, 0);
+    \coordinate (fir_f_add) at (5.5, 0);
+    \coordinate (fir_f_out) at (8.2, 0);
+
+    \coordinate (fir_g_in) at (0, -1.8);
+    \coordinate (fir_z) at (2.0, -1.8);
+    \coordinate (fir_g_tap) at (3.5, -1.8);
+    \coordinate (fir_g_add) at (5.5, -1.8);
+    \coordinate (fir_g_out) at (8.2, -1.8);
+
+    % Wires FIR
+    \draw[->, color=secondary, line width=1.2pt] (fir_f_in) -- node[above, text=secondary, font=\bfseries] {$f_{m-1}[n]$} (fir_f_add);
+    \draw[->, color=secondary, line width=1.2pt] (fir_f_add) -- node[above, text=secondary, font=\bfseries] {$f_m[n]$} (fir_f_out);
+
+    \draw[->, color=accent, line width=1.2pt] (fir_g_in) -- node[below, text=accent, font=\bfseries] {$g_{m-1}[n]$} (fir_z);
+    \draw[->, color=accent, line width=1.2pt] (fir_z) -- node[below, text=muted, font=\scriptsize] {$g_{m-1}[n-1]$} (fir_g_add);
+    \draw[->, color=accent, line width=1.2pt] (fir_g_add) -- node[below, text=accent, font=\bfseries] {$g_m[n]$} (fir_g_out);
+
+    % Delay box
+    \node[draw=accent, fill=darkbg, rounded corners=2pt, minimum width=0.9cm, minimum height=0.6cm, font=\bfseries\small] at (fir_z) {$z^{-1}$};
+
+    % Adders
+    \node[draw=secondary, fill=darkbg, circle, inner sep=2pt, font=\bfseries] at (fir_f_add) {$+$};
+    \node[draw=accent, fill=darkbg, circle, inner sep=2pt, font=\bfseries] at (fir_g_add) {$+$};
+
+    % Criss-cross
+    \fill[accent] (fir_g_tap) circle (2pt);
+    \draw[->, color=warning, line width=1.1pt] (fir_g_tap) -- node[pos=0.6, right, text=warning, font=\footnotesize\bfseries] {$+k_m$} (fir_f_add);
+
+    \fill[secondary] (fir_f_tap) circle (2pt);
+    \draw[->, color=warning, line width=1.1pt] (fir_f_tap) -- node[pos=0.6, left, text=warning, font=\footnotesize\bfseries] {$+k_m$} (fir_g_add);
+
+    % Explanation callout box on right
+    \node[anchor=west, text width=5.6cm, fill=darkbg, draw=primary!50, rounded corners=4pt, font=\scriptsize, inner sep=5pt] at (8.8, -0.9) {
+        \textbf{FIR Governing Equations:}\\
+        $f_m[n] = f_{m-1}[n] + k_m g_{m-1}[n-1]$\\
+        $g_m[n] = k_m f_{m-1}[n] + g_{m-1}[n-1]$\\[3pt]
+        $\bullet$ Signal flows strictly left-to-right.\\
+        $\bullet$ No closed feedback loops.\\
+        $\bullet$ Realizes all-zero FIR polynomial $A_m(z)$.\\
+        $\bullet$ Unconditionally stable for all finite $k_m$.
+    };
+
+    % (b) Inverted All-Pole IIR Feedback Lattice
+    \begin{scope}[yshift=-4.6cm]
+        \draw[dashed, color=accent!60, fill=cardbg, rounded corners=6pt] (-0.8, -2.6) rectangle (15.2, 1.3);
+        \node[color=accent, font=\bfseries\normalsize, anchor=north west] at (-0.6, 1.1) {(b) Inverted All-Pole IIR Feedback Lattice Stage $m$ (Inverted Flow $\implies$ Internal Feedback Loop $\implies$ Poles)};
+
+        \coordinate (iir_f_in) at (0, 0);
+        \coordinate (iir_f_sub) at (2.5, 0);
+        \coordinate (iir_f_tap) at (4.5, 0);
+        \coordinate (iir_f_out) at (8.2, 0);
+
+        \coordinate (iir_g_out) at (0, -1.8);
+        \coordinate (iir_g_add) at (2.5, -1.8);
+        \coordinate (iir_z) at (6.0, -1.8);
+        \coordinate (iir_g_tap) at (4.5, -1.8);
+        \coordinate (iir_g_in) at (8.2, -1.8);
+
+        % Wires IIR
+        \draw[->, color=secondary, line width=1.2pt] (iir_f_in) -- node[above, text=secondary, font=\bfseries] {$f_m[n]$} (iir_f_sub);
+        \draw[->, color=secondary, line width=1.2pt] (iir_f_sub) -- node[above, text=secondary, font=\bfseries] {$f_{m-1}[n]$} (iir_f_out);
+
+        \draw[<-, color=accent, line width=1.2pt] (iir_g_out) -- node[below, text=accent, font=\bfseries] {$g_m[n]$} (iir_g_add);
+        \draw[<-, color=accent, line width=1.2pt] (iir_g_add) -- node[below, text=muted, font=\scriptsize] {$g_{m-1}[n-1]$} (iir_z);
+        \draw[<-, color=accent, line width=1.2pt] (iir_z) -- node[below, text=accent, font=\bfseries] {$g_{m-1}[n]$} (iir_g_in);
+
+        % Delay box
+        \node[draw=accent, fill=darkbg, rounded corners=2pt, minimum width=0.9cm, minimum height=0.6cm, font=\bfseries\small] at (iir_z) {$z^{-1}$};
+
+        % Subtractor on top, Adder on bottom
+        \node[draw=danger, fill=darkbg, circle, inner sep=2pt, font=\bfseries, text=danger] at (iir_f_sub) {$-$};
+        \node[draw=accent, fill=darkbg, circle, inner sep=2pt, font=\bfseries] at (iir_g_add) {$+$};
+
+        % Feedback branch (g_{m-1}[n-1] -> f_{m-1}[n])
+        \fill[accent] (iir_g_tap) circle (2pt);
+        \draw[->, color=danger, line width=1.2pt] (iir_g_tap) -- node[pos=0.6, right, text=danger, font=\footnotesize\bfseries] {$-k_m$} (iir_f_sub);
+
+        % Feedforward branch (f_{m-1}[n] -> g_m[n])
+        \fill[secondary] (iir_f_tap) circle (2pt);
+        \draw[->, color=warning, line width=1.1pt] (iir_f_tap) -- node[pos=0.6, left, text=warning, font=\footnotesize\bfseries] {$+k_m$} (iir_g_add);
+
+        % Explanation callout box on right
+        \node[anchor=west, text width=5.6cm, fill=darkbg, draw=accent!50, rounded corners=4pt, font=\scriptsize, inner sep=5pt] at (8.8, -0.9) {
+            \textbf{IIR Governing Equations:}\\
+            $\mathbf{f_{m-1}[n] = f_m[n] - k_m g_{m-1}[n-1]}$\\
+            $\mathbf{g_m[n] = k_m f_{m-1}[n] + g_{m-1}[n-1]}$\\[3pt]
+            $\bullet$ Inversion creates an \textcolor{danger}{\textbf{internal negative feedback loop}}.\\
+            $\bullet$ Synthesizes all-pole IIR polynomial $\frac{1}{A_m(z)}$.\\
+            $\bullet$ \textbf{Schur-Cohn Rule:} BIBO Stable $\iff |k_m| < 1$.
+        };
+    \end{scope}
+\end{tikzpicture}%
+}
+\caption{Architectural Inversion Duality: (a) Forward FIR lattice generating zeros without feedback. (b) Inverted All-Pole IIR lattice where algebraic inversion isolates $f_{m-1}[n]$, introducing a negative feedback loop that synthesizes system poles with decoupled stability bounds.}
+\label{fig:app_inversion_duality}
+\end{figure}
+
+\newpage
+\subsection*{A.2 Complete Signal Propagation in Cascaded All-Pole IIR Lattice ($N = 3$)}
+Figure~\ref{fig:app_all_pole_cascade} illustrates how $N$ inverted lattice stages cascade to form an $N$-th order all-pole filter. The input signal $x[n]$ is injected at Stage $N$ ($f_N[n] = x[n]$), traverses through negative feedback loops, and emerges as the output at Stage $0$ ($y[n] = f_0[n] = g_0[n]$).
+
+\begin{figure}[H]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[
+    scale=0.84,
+    font=\sffamily\small,
+    thick,
+    >=Stealth,
+    every node/.style={color=lighttext}
+]
+    % Bounding box
+    \draw[color=secondary!40, fill=cardbg, rounded corners=6pt] (-1.2, -3.2) rectangle (17.5, 1.8);
+    \node[color=secondary, font=\bfseries\normalsize, anchor=north west] at (-0.9, 1.6) {Complete 3rd-Order All-Pole IIR Lattice Cascade ($N = 3$): $H_{ap}(z) = \frac{Y(z)}{X(z)} = \frac{1}{A_3(z)}$};
+
+    % Input
+    \coordinate (x_in) at (-0.8, 0);
+    \node[left, text=accent, font=\bfseries] at (x_in) {$x[n] = f_3[n]$};
+
+    % STAGE 3 (m=3)
+    \coordinate (s3_sub) at (1.0, 0);
+    \coordinate (s3_tap_f) at (2.2, 0);
+    \coordinate (s3_out_f) at (3.8, 0);
+    \coordinate (s3_out_g) at (-0.8, -2.0);
+    \coordinate (s3_add) at (1.0, -2.0);
+    \coordinate (s3_z) at (3.5, -2.0);
+    \coordinate (s3_tap_g) at (2.2, -2.0);
+
+    % Draw Stage 3
+    \draw[->, color=secondary, line width=1.2pt] (x_in) -- (s3_sub);
+    \draw[->, color=secondary, line width=1.2pt] (s3_sub) -- node[above, text=lighttext, font=\footnotesize] {$f_2[n]$} (s3_out_f);
+    \draw[<-, color=accent, line width=1.2pt] (s3_out_g) -- node[below, text=accent, font=\footnotesize] {$g_3[n]$} (s3_add);
+    \draw[<-, color=accent, line width=1.2pt] (s3_add) -- (s3_z);
+
+    \node[draw=danger, fill=darkbg, circle, inner sep=2pt, font=\bfseries, text=danger] at (s3_sub) {$-$};
+    \node[draw=accent, fill=darkbg, circle, inner sep=2pt, font=\bfseries] at (s3_add) {$+$};
+    \node[draw=accent, fill=darkbg, rounded corners=2pt, minimum width=0.8cm, minimum height=0.55cm, font=\bfseries\scriptsize] at (s3_z) {$z^{-1}$};
+
+    \fill[accent] (s3_tap_g) circle (2pt);
+    \draw[->, color=danger, line width=1.1pt] (s3_tap_g) -- node[pos=0.6, right, text=danger, font=\scriptsize\bfseries] {$-k_3$} (s3_sub);
+    \fill[secondary] (s3_tap_f) circle (2pt);
+    \draw[->, color=warning, line width=1.1pt] (s3_tap_f) -- node[pos=0.6, left, text=warning, font=\scriptsize\bfseries] {$+k_3$} (s3_add);
+
+    \node[color=primary, font=\bfseries\footnotesize] at (2.2, 1.0) {Stage 3 ($m=3$)};
+
+    % STAGE 2 (m=2)
+    \coordinate (s2_sub) at (5.5, 0);
+    \coordinate (s2_tap_f) at (6.7, 0);
+    \coordinate (s2_out_f) at (8.3, 0);
+    \coordinate (s2_add) at (5.5, -2.0);
+    \coordinate (s2_z) at (8.0, -2.0);
+    \coordinate (s2_tap_g) at (6.7, -2.0);
+
+    % Connect Stage 3 to 2
+    \draw[->, color=secondary, line width=1.2pt] (s3_out_f) -- (s2_sub);
+    \draw[<-, color=accent, line width=1.2pt] (s3_z) -- node[below, text=accent, font=\footnotesize] {$g_2[n]$} (s2_add);
+
+    \draw[->, color=secondary, line width=1.2pt] (s2_sub) -- node[above, text=lighttext, font=\footnotesize] {$f_1[n]$} (s2_out_f);
+    \draw[<-, color=accent, line width=1.2pt] (s2_add) -- (s2_z);
+
+    \node[draw=danger, fill=darkbg, circle, inner sep=2pt, font=\bfseries, text=danger] at (s2_sub) {$-$};
+    \node[draw=accent, fill=darkbg, circle, inner sep=2pt, font=\bfseries] at (s2_add) {$+$};
+    \node[draw=accent, fill=darkbg, rounded corners=2pt, minimum width=0.8cm, minimum height=0.55cm, font=\bfseries\scriptsize] at (s2_z) {$z^{-1}$};
+
+    \fill[accent] (s2_tap_g) circle (2pt);
+    \draw[->, color=danger, line width=1.1pt] (s2_tap_g) -- node[pos=0.6, right, text=danger, font=\scriptsize\bfseries] {$-k_2$} (s2_sub);
+    \fill[secondary] (s2_tap_f) circle (2pt);
+    \draw[->, color=warning, line width=1.1pt] (s2_tap_f) -- node[pos=0.6, left, text=warning, font=\scriptsize\bfseries] {$+k_2$} (s2_add);
+
+    \node[color=primary, font=\bfseries\footnotesize] at (6.7, 1.0) {Stage 2 ($m=2$)};
+
+    % STAGE 1 (m=1)
+    \coordinate (s1_sub) at (10.0, 0);
+    \coordinate (s1_tap_f) at (11.2, 0);
+    \coordinate (s1_out_f) at (12.8, 0);
+    \coordinate (s1_add) at (10.0, -2.0);
+    \coordinate (s1_z) at (12.5, -2.0);
+    \coordinate (s1_tap_g) at (11.2, -2.0);
+
+    % Connect Stage 2 to 1
+    \draw[->, color=secondary, line width=1.2pt] (s2_out_f) -- (s1_sub);
+    \draw[<-, color=accent, line width=1.2pt] (s2_z) -- node[below, text=accent, font=\footnotesize] {$g_1[n]$} (s1_add);
+
+    \draw[->, color=secondary, line width=1.2pt] (s1_sub) -- node[above, text=lighttext, font=\footnotesize] {$f_0[n]$} (s1_out_f);
+    \draw[<-, color=accent, line width=1.2pt] (s1_add) -- (s1_z);
+
+    \node[draw=danger, fill=darkbg, circle, inner sep=2pt, font=\bfseries, text=danger] at (s1_sub) {$-$};
+    \node[draw=accent, fill=darkbg, circle, inner sep=2pt, font=\bfseries] at (s1_add) {$+$};
+    \node[draw=accent, fill=darkbg, rounded corners=2pt, minimum width=0.8cm, minimum height=0.55cm, font=\bfseries\scriptsize] at (s1_z) {$z^{-1}$};
+
+    \fill[accent] (s1_tap_g) circle (2pt);
+    \draw[->, color=danger, line width=1.1pt] (s1_tap_g) -- node[pos=0.6, right, text=danger, font=\scriptsize\bfseries] {$-k_1$} (s1_sub);
+    \fill[secondary] (s1_tap_f) circle (2pt);
+    \draw[->, color=warning, line width=1.1pt] (s1_tap_f) -- node[pos=0.6, left, text=warning, font=\scriptsize\bfseries] {$+k_1$} (s1_add);
+
+    \node[color=primary, font=\bfseries\footnotesize] at (11.2, 1.0) {Stage 1 ($m=1$)};
+
+    % STAGE 0 (Boundary: f_0 = g_0 = y[n])
+    \coordinate (s0_node) at (14.2, 0);
+    \coordinate (s0_bot) at (14.2, -2.0);
+    \coordinate (y_out) at (16.5, 0);
+
+    \draw[-, color=secondary, line width=1.2pt] (s1_out_f) -- (s0_node);
+    \draw[->, color=accent, line width=1.2pt] (s0_node) -- (y_out) node[right, text=accent, font=\bfseries] {$y[n]$};
+    \draw[->, color=accent, line width=1.2pt] (s0_node) -- node[right, text=muted, font=\scriptsize] {$f_0[n] \equiv g_0[n]$} (s0_bot) -- (s1_z);
+    \fill[secondary] (s0_node) circle (2.5pt);
+
+    \node[color=accent, font=\bfseries\footnotesize] at (14.5, 1.0) {Stage 0 (Output)};
+
+    % Bottom status annotations
+    \node[anchor=north west, font=\scriptsize, color=muted] at (-0.8, -2.5) {
+        $\bullet$ \textbf{Input Location:} Stage $N=3$ ($f_3[n] = x[n]$) \quad
+        $\bullet$ \textbf{Output Location:} Stage $0$ ($y[n] = f_0[n] = g_0[n]$) \quad
+        $\bullet$ \textbf{Memory Canonicity:} Exactly $N=3$ delay elements ($z^{-1}$).
+    };
+\end{tikzpicture}%
+}
+\caption{Complete Cascaded 3rd-Order All-Pole IIR Lattice Realization ($N = 3$): Signal traverses top rail from left to right through local feedback subtraction stages, loops through Stage 0 to produce output $y[n]$, and propagates backward error sequence $g_m[n]$ through the delay spine.}
+\label{fig:app_all_pole_cascade}
+\end{figure}
+
+\newpage
+\subsection*{A.3 General IIR Synthesis: The Gray-Markel Lattice-Ladder (Poles + Zeros)}
+Figure~\ref{fig:app_lattice_ladder} depicts the canonical Gray-Markel Lattice-Ladder structure for general pole-zero IIR filters. The all-pole feedback lattice forms the structural backbone establishing system poles, while feedforward ladder taps $c_m$ weight the orthogonal backward prediction errors $g_m[n]$ to synthesize numerator zeros.
+
+\begin{figure}[H]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[
+    scale=0.90,
+    font=\sffamily\small,
+    thick,
+    >=Stealth,
+    every node/.style={color=lighttext}
+]
+    % Bounding box
+    \draw[color=accent!40, fill=cardbg, rounded corners=6pt] (-1.5, -6.3) rectangle (16.2, 2.0);
+    \node[color=accent, font=\bfseries\normalsize, anchor=north west] at (-1.2, 1.8) {General 2nd-Order Lattice-Ladder Architecture: $H(z) = \frac{B(z)}{A_2(z)} = \frac{c_0 B_0(z) + c_1 B_1(z) + c_2 B_2(z)}{1 + a_1 z^{-1} + a_2 z^{-2}}$};
+
+    % TOP BACKBONE (All-Pole Lattice) - Stage 2 and Stage 1
+    \coordinate (x_in) at (-1.0, 0);
+    \node[left, text=secondary, font=\bfseries] at (x_in) {$x[n] = f_2[n]$};
+
+    % Stage 2
+    \coordinate (s2_sub) at (0.8, 0);
+    \coordinate (s2_tap_f) at (2.0, 0);
+    \coordinate (s2_out_f) at (3.8, 0);
+    \coordinate (s2_out_g) at (-0.5, -2.0);
+    \coordinate (s2_add) at (0.8, -2.0);
+    \coordinate (s2_z) at (3.5, -2.0);
+    \coordinate (s2_tap_g) at (2.0, -2.0);
+
+    \draw[->, color=secondary, line width=1.2pt] (x_in) -- (s2_sub);
+    \draw[->, color=secondary, line width=1.2pt] (s2_sub) -- node[above, text=lighttext, font=\footnotesize] {$f_1[n]$} (s2_out_f);
+    \draw[<-, color=accent, line width=1.2pt] (s2_out_g) -- (s2_add);
+    \draw[<-, color=accent, line width=1.2pt] (s2_add) -- (s2_z);
+
+    \node[draw=danger, fill=darkbg, circle, inner sep=2pt, font=\bfseries, text=danger] at (s2_sub) {$-$};
+    \node[draw=accent, fill=darkbg, circle, inner sep=2pt, font=\bfseries] at (s2_add) {$+$};
+    \node[draw=accent, fill=darkbg, rounded corners=2pt, minimum width=0.8cm, minimum height=0.55cm, font=\bfseries\scriptsize] at (s2_z) {$z^{-1}$};
+
+    \fill[accent] (s2_tap_g) circle (2pt);
+    \draw[->, color=danger, line width=1.1pt] (s2_tap_g) -- node[pos=0.6, right, text=danger, font=\scriptsize\bfseries] {$-k_2$} (s2_sub);
+    \fill[secondary] (s2_tap_f) circle (2pt);
+    \draw[->, color=warning, line width=1.1pt] (s2_tap_f) -- node[pos=0.6, left, text=warning, font=\scriptsize\bfseries] {$+k_2$} (s2_add);
+
+    \node[color=primary, font=\bfseries\footnotesize] at (2.0, 0.9) {Lattice Stage 2 ($m=2$)};
+
+    % Stage 1
+    \coordinate (s1_sub) at (5.5, 0);
+    \coordinate (s1_tap_f) at (6.7, 0);
+    \coordinate (s1_out_f) at (8.5, 0);
+    \coordinate (s1_add) at (5.5, -2.0);
+    \coordinate (s1_z) at (8.2, -2.0);
+    \coordinate (s1_tap_g) at (6.7, -2.0);
+
+    \draw[->, color=secondary, line width=1.2pt] (s2_out_f) -- (s1_sub);
+    \draw[<-, color=accent, line width=1.2pt] (s2_z) -- (s1_add);
+    \draw[->, color=secondary, line width=1.2pt] (s1_sub) -- node[above, text=lighttext, font=\footnotesize] {$f_0[n]$} (s1_out_f);
+    \draw[<-, color=accent, line width=1.2pt] (s1_add) -- (s1_z);
+
+    \node[draw=danger, fill=darkbg, circle, inner sep=2pt, font=\bfseries, text=danger] at (s1_sub) {$-$};
+    \node[draw=accent, fill=darkbg, circle, inner sep=2pt, font=\bfseries] at (s1_add) {$+$};
+    \node[draw=accent, fill=darkbg, rounded corners=2pt, minimum width=0.8cm, minimum height=0.55cm, font=\bfseries\scriptsize] at (s1_z) {$z^{-1}$};
+
+    \fill[accent] (s1_tap_g) circle (2pt);
+    \draw[->, color=danger, line width=1.1pt] (s1_tap_g) -- node[pos=0.6, right, text=danger, font=\scriptsize\bfseries] {$-k_1$} (s1_sub);
+    \fill[secondary] (s1_tap_f) circle (2pt);
+    \draw[->, color=warning, line width=1.1pt] (s1_tap_f) -- node[pos=0.6, left, text=warning, font=\scriptsize\bfseries] {$+k_1$} (s1_add);
+
+    \node[color=primary, font=\bfseries\footnotesize] at (6.7, 0.9) {Lattice Stage 1 ($m=1$)};
+
+    % Stage 0 (Termination)
+    \coordinate (s0_node) at (10.2, 0);
+    \coordinate (s0_bot) at (10.2, -2.0);
+
+    \draw[-, color=secondary, line width=1.2pt] (s1_out_f) -- (s0_node);
+    \draw[->, color=accent, line width=1.2pt] (s0_node) -- node[right, text=muted, font=\scriptsize] {$f_0 = g_0$} (s0_bot) -- (s1_z);
+    \fill[secondary] (s0_node) circle (2.5pt);
+
+    \node[color=accent, font=\bfseries\footnotesize] at (10.2, 0.9) {Stage 0};
+
+    % BACKBONE BOUNDING BOX
+    \draw[dotted, color=primary, line width=1pt, rounded corners=4pt] (-1.2, -2.6) rectangle (11.0, 1.3);
+    \node[color=primary, font=\scriptsize\bfseries, anchor=north east] at (10.9, 1.25) {LATTICE BACKBONE (POLES)};
+
+    % LADDER FEEDFORWARD TAPS (ZEROS)
+    \coordinate (tap2_node) at (-0.5, -2.0);
+    \coordinate (tap1_node) at (4.3, -2.0);
+    \coordinate (tap0_node) at (9.4, -2.0);
+
+    \fill[accent] (tap2_node) circle (2.5pt);
+    \fill[accent] (tap1_node) circle (2.5pt);
+    \fill[accent] (tap0_node) circle (2.5pt);
+
+    \node[above, text=accent, font=\footnotesize\bfseries] at (tap2_node) {$g_2[n]$};
+    \node[above, text=accent, font=\footnotesize\bfseries] at (tap1_node) {$g_1[n]$};
+    \node[above, text=accent, font=\footnotesize\bfseries] at (tap0_node) {$g_0[n]$};
+
+    % Ladder Multipliers
+    \coordinate (c2_mult) at (-0.5, -3.8);
+    \coordinate (c1_mult) at (4.3, -3.8);
+    \coordinate (c0_mult) at (9.4, -3.8);
+
+    \draw[->, color=warning, line width=1.2pt] (tap2_node) -- (c2_mult);
+    \draw[->, color=warning, line width=1.2pt] (tap1_node) -- (c1_mult);
+    \draw[->, color=warning, line width=1.2pt] (tap0_node) -- (c0_mult);
+
+    \node[draw=warning, fill=darkbg, circle, inner sep=2pt, font=\bfseries\footnotesize, text=warning] at (c2_mult) {$\times c_2$};
+    \node[draw=warning, fill=darkbg, circle, inner sep=2pt, font=\bfseries\footnotesize, text=warning] at (c1_mult) {$\times c_1$};
+    \node[draw=warning, fill=darkbg, circle, inner sep=2pt, font=\bfseries\footnotesize, text=warning] at (c0_mult) {$\times c_0$};
+
+    % Summation Bus (Ladder)
+    \coordinate (sum1) at (4.3, -5.3);
+    \coordinate (sum2) at (-0.5, -5.3);
+    \coordinate (y_bus_out) at (-1.3, -5.3);
+
+    \draw[->, color=warning, line width=1.2pt] (c0_mult) |- (sum1);
+    \draw[->, color=warning, line width=1.2pt] (c1_mult) -- (sum1);
+    \draw[->, color=warning, line width=1.2pt] (sum1) -- (sum2);
+    \draw[->, color=warning, line width=1.2pt] (c2_mult) -- (sum2);
+    \draw[->, color=accent, line width=1.5pt] (sum2) -- (y_bus_out) node[left, text=accent, font=\bfseries\normalsize] {$y[n]$};
+
+    \node[draw=warning, fill=darkbg, circle, inner sep=2pt, font=\bfseries] at (sum1) {$+$};
+    \node[draw=warning, fill=darkbg, circle, inner sep=2pt, font=\bfseries] at (sum2) {$+$};
+
+    % LADDER BOUNDING BOX
+    \draw[dotted, color=warning, line width=1pt, rounded corners=4pt] (-1.0, -5.9) rectangle (10.6, -3.1);
+    \node[color=warning, font=\scriptsize\bfseries, anchor=north east] at (10.5, -3.15) {FEEDFORWARD LADDER BUS (ZEROS)};
+
+    % Side Annotation Card
+    \node[anchor=west, text width=4.3cm, fill=darkbg, draw=secondary!50, rounded corners=4pt, font=\scriptsize, inner sep=5pt] at (11.3, -2.6) {
+        \textbf{Orthogonal State Sum:}\\
+        $Y(z) = \sum_{m=0}^2 c_m G_m(z)$\\[3pt]
+        Substituting $G_m(z) = \frac{B_m(z)}{A_N(z)}X(z)$:\\
+        $Y(z) = \frac{\sum_{m=0}^2 c_m B_m(z)}{A_N(z)} X(z)$\\[4pt]
+        $\bullet$ \textbf{Poles:} Fixed strictly by reflection coefficients $\{k_1, k_2\}$.\\
+        $\bullet$ \textbf{Zeros:} Synthesized freely by ladder tap weights $\{c_0, c_1, c_2\}$.\\
+        $\bullet$ \textbf{Decoupled Robustness:} Changing $c_m$ never perturbs pole stability!\\
+        $\bullet$ \textbf{Delay Canonicity:} Strictly $N=2$ delays for 2nd order.
+    };
+\end{tikzpicture}%
+}
+\caption{Canonical Gray-Markel Lattice-Ladder Filter ($N = 2$): The upper feedback lattice establishes system poles with Schur-Cohn stability ($|k_m| < 1$). The lower feedforward ladder taps orthogonal states $g_m[n]$ to synthesize numerator zeros via linear combination $\sum c_m B_m(z)$ without altering stability.}
+\label{fig:app_lattice_ladder}
+\end{figure}
+
+\newpage
+\subsection*{A.4 Algorithmic Synthesis Flowcharts}
+This section presents the complete, self-contained operational flowcharts for the two synthesis algorithms of the Gray-Markel Lattice-Ladder structure:
+\begin{enumerate}
+    \item \textbf{Figure~\ref{fig:app_flowchart_stepdown}:} The \textbf{Step-Down (Levinson-Durbin Reverse) Algorithm}, extracting reflection coefficients $k_m$ with concurrent $O(N)$ Schur-Cohn stability verification.
+    \item \textbf{Figure~\ref{fig:app_flowchart_peeling}:} The \textbf{Reverse Polynomial Peeling Algorithm}, projecting target numerator $B(z)$ onto the orthogonal reverse basis to extract ladder tap weights $c_m$.
+\end{enumerate}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    font=\sffamily\small,
+    thick,
+    >=Stealth,
+    node distance=0.65cm and 1.0cm,
+    every node/.style={color=lighttext}
+]
+    % Nodes placed with relative positioning
+    \node (title) [color=secondary, font=\bfseries\large, align=center] {Denominator Step-Down (Levinson-Durbin) Flowchart};
+
+    \node (in1) [below=0.5cm of title, draw=secondary, fill=darkbg, rounded corners=4pt, align=center, inner sep=6pt, text width=7.2cm] {
+        \textbf{START: Input Direct-Form Denominator}\\
+        $A_N(z) = 1 + \sum_{i=1}^N \alpha_N(i) z^{-i}$\\
+        Initialize Stage Counter: $\mathbf{m \gets N}$
+    };
+
+    \node (km) [below=0.6cm of in1, draw=accent, fill=darkbg, rounded corners=4pt, align=center, inner sep=6pt, text width=7.2cm] {
+        \textbf{Extract Reflection Coefficient for Stage $m$:}\\
+        $\mathbf{k_m = \alpha_m(m)}$
+    };
+
+    \node (stab) [below=0.6cm of km, draw=warning, fill=darkbg, diamond, aspect=2.4, inner sep=4pt, align=center, font=\bfseries] {
+        $|k_m| < 1$?
+    };
+
+    \node (fail) [left=0.8cm of stab, draw=danger, fill=darkbg, rounded corners=4pt, align=center, inner sep=5pt, font=\bfseries, text=danger, text width=2.8cm] {
+        \textbf{TERMINATE}\\
+        Filter is Unstable\\
+        or $|k_m|=1$\\
+        {\scriptsize (Roots on/outside $|z|=1$)}
+    };
+
+    \node (rev) [below=0.7cm of stab, draw=accent, fill=darkbg, rounded corners=4pt, align=center, inner sep=6pt, text width=7.2cm] {
+        \textbf{Formulate Reverse Polynomial $B_m(z)$:}\\
+        $B_m(z) = z^{-m} A_m(z^{-1}) = \sum_{i=0}^m \alpha_m(m-i) z^{-i}$
+    };
+
+    \node (step) [below=0.6cm of rev, draw=primary, fill=darkbg, rounded corners=4pt, align=center, inner sep=6pt, text width=7.2cm] {
+        \textbf{Execute Polynomial Step-Down Reduction:}\\
+        $\mathbf{A_{m-1}(z) = \frac{A_m(z) - k_m B_m(z)}{1 - k_m^2}}$\\[4pt]
+        $\alpha_{m-1}(i) = \frac{\alpha_m(i) - k_m \alpha_m(m-i)}{1 - k_m^2}, \quad i=1, \dots, m-1$
+    };
+
+    \node (term) [below=0.6cm of step, draw=secondary, fill=darkbg, diamond, aspect=2.4, inner sep=4pt, align=center, font=\bfseries] {
+        $m = 1$?
+    };
+
+    \node (done) [below=0.6cm of term, draw=accent, fill=darkbg, rounded corners=4pt, align=center, inner sep=6pt, font=\bfseries, text=accent, text width=7.2cm] {
+        \textbf{SUCCESS: Synthesis Complete}\\
+        All reflection coefficients $\{k_1, k_2, \dots, k_N\}$ determined.\\
+        Filter is Guaranteed BIBO Stable.
+    };
+
+    % Connecting lines
+    \draw[->, color=secondary, line width=1.2pt] (in1) -- (km);
+    \draw[->, color=accent, line width=1.2pt] (km) -- (stab);
+    \draw[->, color=danger, line width=1.2pt] (stab.west) -- node[above, font=\bfseries, text=danger] {No} (fail.east);
+    \draw[->, color=accent, line width=1.2pt] (stab.south) -- node[right, font=\bfseries, text=accent] {Yes} (rev);
+    \draw[->, color=accent, line width=1.2pt] (rev) -- (step);
+    \draw[->, color=primary, line width=1.2pt] (step) -- (term);
+    \draw[->, color=secondary, line width=1.2pt] (term.south) -- node[right, font=\bfseries, text=secondary] {Yes} (done);
+
+    % Loopback with plenty of clearance to the right of step.east
+    \coordinate (loop_turn) at ($(step.east) + (1.2cm, 0)$);
+    \draw[->, color=warning, line width=1.2pt] (term.east) -| (loop_turn) |- node[pos=0.25, right, font=\scriptsize\bfseries, text=warning, align=left] {No:\\Decrement\\$m \gets m - 1$} (km.east);
+
+    % Background bounding box behind everything
+    \begin{scope}[on background layer]
+        \node [draw=secondary!50, fill=cardbg, rounded corners=8pt, fit=(title)(in1)(fail)(step)(done)(loop_turn), inner sep=12pt] {};
+    \end{scope}
+
+\end{tikzpicture}
+\caption{Denominator Step-Down (Levinson-Durbin Reverse) Flowchart: Systematic extraction of reflection coefficients $k_m$ with concurrent $O(N)$ Schur-Cohn stability verification at every stage.}
+\label{fig:app_flowchart_stepdown}
+\end{figure}
+
+\newpage
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    font=\sffamily\small,
+    thick,
+    >=Stealth,
+    node distance=0.65cm and 1.0cm,
+    every node/.style={color=lighttext}
+]
+    % Title
+    \node (title2) [color=warning, font=\bfseries\large, align=center] {Numerator Reverse Polynomial Peeling Flowchart};
+
+    % Nodes placed with relative positioning
+    \node (in2) [below=0.5cm of title2, draw=warning, fill=darkbg, rounded corners=4pt, align=center, inner sep=6pt, text width=7.4cm] {
+        \textbf{START: Input Target Numerator \& Reverse Basis}\\
+        $B(z) = \sum_{i=0}^M b_i z^{-i}$ \quad ($M \le N$)\\
+        Basis $\{B_0(z), B_1(z), \dots, B_N(z)\}$ from Step-Down\\
+        Initialize: $\mathbf{B^{(N)}(z) \gets B(z)}, \quad \mathbf{m \gets N}$
+    };
+
+    \node (cm) [below=0.65cm of in2, draw=accent, fill=darkbg, rounded corners=4pt, align=center, inner sep=6pt, text width=7.4cm] {
+        \textbf{Extract Highest-Order Ladder Tap Weight $c_m$:}\\
+        $\mathbf{c_m = \text{Coefficient of } z^{-m} \text{ in } B^{(m)}(z)}$\\[2pt]
+        {\scriptsize (Since only $c_m B_m(z)$ contributes to $z^{-m}$)}
+    };
+
+    \node (peel) [below=0.65cm of cm, draw=primary, fill=darkbg, rounded corners=4pt, align=center, inner sep=6pt, text width=7.4cm] {
+        \textbf{Peel Basis Contribution from Numerator:}\\
+        $\mathbf{B^{(m-1)}(z) = B^{(m)}(z) - c_m B_m(z)}$\\[3pt]
+        {\scriptsize (The $z^{-m}$ term cancels identically; degree reduced to $\le m-1$)}
+    };
+
+    \node (term2) [below=0.65cm of peel, draw=secondary, fill=darkbg, diamond, aspect=2.4, inner sep=4pt, align=center, font=\bfseries] {
+        $m = 1$?
+    };
+
+    \node (c0) [below=0.65cm of term2, draw=warning, fill=darkbg, rounded corners=4pt, align=center, inner sep=6pt, text width=7.4cm] {
+        \textbf{Extract Final Constant Ladder Tap Weight $c_0$:}\\
+        $\mathbf{c_0 = B^{(0)}(z)}$\\[2pt]
+        {\scriptsize (Since $B_0(z) \equiv 1$, the remaining scalar directly provides $c_0$)}
+    };
+
+    \node (done2) [below=0.65cm of c0, draw=accent, fill=darkbg, rounded corners=4pt, align=center, inner sep=6pt, font=\bfseries, text=accent, text width=7.4cm] {
+        \textbf{SUCCESS: Ladder Tap Synthesis Complete}\\
+        All ladder tap weights $\{c_0, c_1, \dots, c_N\}$ determined.\\
+        Exact Reconstruction: $\mathbf{B(z) = \sum_{m=0}^N c_m B_m(z)}$.
+    };
+
+    % Connecting lines
+    \draw[->, color=warning, line width=1.2pt] (in2) -- (cm);
+    \draw[->, color=accent, line width=1.2pt] (cm) -- (peel);
+    \draw[->, color=primary, line width=1.2pt] (peel) -- (term2);
+    \draw[->, color=secondary, line width=1.2pt] (term2.south) -- node[right, font=\bfseries, text=secondary] {Yes} (c0);
+    \draw[->, color=warning, line width=1.2pt] (c0) -- (done2);
+
+    % Loopback with safe clearance to the right of in2 / peel
+    \coordinate (loop2_turn) at ($(peel.east) + (1.2cm, 0)$);
+    \draw[->, color=warning, line width=1.2pt] (term2.east) -| (loop2_turn) |- node[pos=0.25, right, font=\scriptsize\bfseries, text=warning, align=left] {No:\\Decrement\\$m \gets m - 1$} (cm.east);
+
+    % Background bounding box behind everything
+    \begin{scope}[on background layer]
+        \node [draw=warning!50, fill=cardbg, rounded corners=8pt, fit=(title2)(in2)(peel)(c0)(done2)(loop2_turn), inner sep=12pt] {};
+    \end{scope}
+
+\end{tikzpicture}
+\caption{Numerator Reverse Polynomial Peeling Flowchart: Systematic projection of target numerator $B(z)$ onto the orthogonal basis $B_m(z)$ to extract ladder tap weights $c_m$.}
+\label{fig:app_flowchart_peeling}
+\end{figure}
+
+\newpage
+\subsection*{A.5 Step-by-Step Flowchart Execution Trace (Worked 2-Iteration Example)}
+To demonstrate how both flowcharts execute sample-by-sample in practice, we trace the complete 2nd-order transfer function from \textbf{Example 20.2}:
+\begin{equation}
+H(z) = \frac{B(z)}{A_2(z)} = \frac{2 + 3 z^{-1} + 4 z^{-2}}{1 - 0.9 z^{-1} + 0.2 z^{-2}}
+\end{equation}
+Because the filter order is $N = 2$, each flowchart executes for \textbf{exactly two iterations} ($m = 2$ and $m = 1$).
+
+\subsubsection*{Trace 1: Denominator Step-Down Flowchart (Figure~\ref{fig:app_flowchart_stepdown})}
+\begin{itemize}
+    \item \textbf{START Block:}
+    Input denominator polynomial: $A_2(z) = 1 - 0.9 z^{-1} + 0.2 z^{-2}$.
+    Coefficients: $\alpha_2(1) = -0.9, \; \alpha_2(2) = 0.2$. Set initial counter: $\mathbf{m = 2}$.
+
+    \item \textbf{Iteration 1 ($m = 2$):}
+    \begin{enumerate}
+        \item \textit{Block "Extract $k_m$":}
+        $$\mathbf{k_2 = \alpha_2(2) = 0.20}$$
+        \item \textit{Decision Diamond "$|k_m| < 1$?":}
+        $|k_2| = |0.20| = 0.20 < 1 \implies$ \textbf{YES (Passes stability check)}.
+        \item \textit{Block "Formulate Reverse Polynomial $B_2(z)$":}
+        $$B_2(z) = z^{-2} A_2(z^{-1}) = \mathbf{0.20 - 0.90 z^{-1} + 1.00 z^{-2}}$$
+        \item \textit{Block "Execute Polynomial Step-Down":}
+        Compute denominator factor: $1 - k_2^2 = 1 - (0.2)^2 = 0.96$.
+        $$\alpha_1(1) = \frac{\alpha_2(1) - k_2 \alpha_2(1)}{1 - k_2^2} = \frac{-0.90 - (0.20)(-0.90)}{0.96} = \frac{-0.72}{0.96} = \mathbf{-0.75}$$
+        The reduced 1st-order polynomial is: $\mathbf{A_1(z) = 1 - 0.75 z^{-1}}$.
+        \item \textit{Decision Diamond "$m = 1$?":}
+        $m = 2 \neq 1 \implies$ \textbf{NO}.
+        \item \textit{Loopback Branch:} Decrement $m \gets m - 1 = 2 - 1 = \mathbf{1}$. Loop back to top!
+    \end{enumerate}
+
+    \item \textbf{Iteration 2 ($m = 1$):}
+    \begin{enumerate}
+        \item \textit{Block "Extract $k_m$":}
+        From $A_1(z) = 1 - 0.75 z^{-1}$:
+        $$\mathbf{k_1 = \alpha_1(1) = -0.75}$$
+        \item \textit{Decision Diamond "$|k_m| < 1$?":}
+        $|k_1| = |-0.75| = 0.75 < 1 \implies$ \textbf{YES (Passes stability check)}.
+        \item \textit{Block "Formulate Reverse Polynomial $B_1(z)$":}
+        $$B_1(z) = z^{-1} A_1(z^{-1}) = \mathbf{-0.75 + 1.00 z^{-1}}$$
+        (Note that for Stage 0: $A_0(z) = 1 \implies B_0(z) = 1$).
+        \item \textit{Decision Diamond "$m = 1$?":}
+        $m = 1 \implies$ \textbf{YES}.
+        \item \textit{TERMINAL SUCCESS Block:}
+        Algorithm terminates successfully.
+        $$\mathbf{\{k_1 = -0.75, \quad k_2 = 0.20\}}$$
+        Because $|k_1| < 1$ and $|k_2| < 1$, the filter is \textbf{strictly BIBO stable}!
+    \end{enumerate}
+\end{itemize}
+
+\newpage
+\subsubsection*{Trace 2: Numerator Polynomial Peeling Flowchart (Figure~\ref{fig:app_flowchart_peeling})}
+\begin{itemize}
+    \item \textbf{START Block:}
+    Input target numerator: $B^{(2)}(z) = B(z) = 2 + 3 z^{-1} + 4 z^{-2}$.
+    Basis polynomials from Step-Down:
+    $$B_0(z) = 1, \quad B_1(z) = -0.75 + z^{-1}, \quad B_2(z) = 0.2 - 0.9 z^{-1} + z^{-2}$$
+    Initialize counter: $\mathbf{m = 2}$.
+
+    \item \textbf{Iteration 1 ($m = 2$):}
+    \begin{enumerate}
+        \item \textit{Block "Extract $c_m$":}
+        The coefficient of the highest power $z^{-2}$ in $B^{(2)}(z)$ is $4.0$.
+        $$\mathbf{c_2 = 4.00}$$
+        \item \textit{Block "Peel Basis Contribution":}
+        Compute $c_2 B_2(z) = 4.0(0.20 - 0.90 z^{-1} + 1.00 z^{-2}) = 0.80 - 3.60 z^{-1} + 4.00 z^{-2}$.
+        \begin{align}
+        B^{(1)}(z) &= B^{(2)}(z) - c_2 B_2(z) \nonumber \\
+        &= (2 - 0.80) + (3 - (-3.60)) z^{-1} + (4 - 4) z^{-2} = \mathbf{1.20 + 6.60 z^{-1}}
+        \end{align}
+        (Observe that $z^{-2}$ is canceled identically, leaving a 1st-order polynomial).
+        \item \textit{Decision Diamond "$m = 1$?":}
+        $m = 2 \neq 1 \implies$ \textbf{NO}.
+        \item \textit{Loopback Branch:} Decrement $m \gets m - 1 = 2 - 1 = \mathbf{1}$. Loop back!
+    \end{enumerate}
+
+    \item \textbf{Iteration 2 ($m = 1$):}
+    \begin{enumerate}
+        \item \textit{Block "Extract $c_m$":}
+        The coefficient of the highest power $z^{-1}$ in $B^{(1)}(z)$ is $6.60$.
+        $$\mathbf{c_1 = 6.60}$$
+        \item \textit{Block "Peel Basis Contribution":}
+        Compute $c_1 B_1(z) = 6.60(-0.75 + 1.00 z^{-1}) = -4.95 + 6.60 z^{-1}$.
+        \begin{align}
+        B^{(0)}(z) &= B^{(1)}(z) - c_1 B_1(z) \nonumber \\
+        &= (1.20 - (-4.95)) + (6.60 - 6.60) z^{-1} = \mathbf{6.15}
+        \end{align}
+        (Observe that $z^{-1}$ is canceled identically, leaving a 0th-order scalar constant).
+        \item \textit{Decision Diamond "$m = 1$?":}
+        $m = 1 \implies$ \textbf{YES}.
+        \item \textit{Block "Extract Final Constant $c_0$":}
+        Since $B_0(z) \equiv 1$:
+        $$\mathbf{c_0 = B^{(0)}(z) = 6.15}$$
+        \item \textit{TERMINAL SUCCESS Block:}
+        Algorithm terminates successfully.
+        $$\mathbf{\{c_0 = 6.15, \quad c_1 = 6.60, \quad c_2 = 4.00\}}$$
+    \end{enumerate}
+\end{itemize}
+
+\subsubsection*{Flowchart State Execution Summary Table}
+Table~\ref{tab:flowchart_trace_summary} summarizes the numerical state transitions across both iterations of the synthesis pipeline.
+
+\begin{table}[H]
+\centering
+\caption{Step-by-Step Flowchart State Transitions for Worked Example 20.2}
+\label{tab:flowchart_trace_summary}
+\vspace{2mm}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{cccccc}
+\toprule
+\textbf{Iteration} & \textbf{Stage ($m$)} & \textbf{Active Polynomial Input} & \textbf{Extracted Parameter} & \textbf{Stability / Check} & \textbf{Next State / Polynomial} \\
+\midrule
+\multicolumn{6}{c}{\textbf{Step-Down Algorithm (Figure~\ref{fig:app_flowchart_stepdown})}} \\
+\midrule
+Iter 1 & $m = 2$ & $A_2(z) = 1 - 0.9 z^{-1} + 0.2 z^{-2}$ & $k_2 = \alpha_2(2) = \mathbf{0.20}$ & $|0.20| < 1$ (Stable) & $A_1(z) = 1 - 0.75 z^{-1}$ \\
+Iter 2 & $m = 1$ & $A_1(z) = 1 - 0.75 z^{-1}$ & $k_1 = \alpha_1(1) = \mathbf{-0.75}$ & $|-0.75| < 1$ (Stable) & $m=1 \implies$ Terminate! \\
+\midrule
+\multicolumn{6}{c}{\textbf{Numerator Peeling Algorithm (Figure~\ref{fig:app_flowchart_peeling})}} \\
+\midrule
+Iter 1 & $m = 2$ & $B^{(2)}(z) = 2 + 3 z^{-1} + 4 z^{-2}$ & $c_2 = \text{Coeff}(z^{-2}) = \mathbf{4.00}$ & $m \neq 1 \implies$ Continue & $B^{(1)}(z) = 1.2 + 6.6 z^{-1}$ \\
+Iter 2 & $m = 1$ & $B^{(1)}(z) = 1.2 + 6.6 z^{-1}$ & $c_1 = \text{Coeff}(z^{-1}) = \mathbf{6.60}$ & $m = 1 \implies$ Final scalar & $c_0 = B^{(0)}(z) = \mathbf{6.15}$ \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\noindent\textbf{Verification of Exact Numerator Reconstruction:}
+\begin{align}
+\sum_{m=0}^2 c_m B_m(z) &= c_0 B_0(z) + c_1 B_1(z) + c_2 B_2(z) \nonumber \\
+&= 6.15(1) + 6.60(-0.75 + z^{-1}) + 4.00(0.20 - 0.90 z^{-1} + z^{-2}) \nonumber \\
+&= (6.15 - 4.95 + 0.80) + (6.60 - 3.60) z^{-1} + 4.00 z^{-2} \nonumber \\
+&= \mathbf{2 + 3 z^{-1} + 4 z^{-2}} \equiv B(z) \quad \text{\textbf{(Q.E.D.)}}
+\end{align}
+Both flowcharts execute deterministically, yielding exact realization coefficients without root-finding approximations.
 
 \end{document}
