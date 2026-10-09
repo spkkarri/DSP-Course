@@ -345,9 +345,9 @@ Compute the denominator factor:
 \begin{equation}
 1 - k_2^2 = 1 - (0.2533)^2 = 1 - 0.06418 = 0.93582
 \end{equation}
-Apply the step-down formula to compute $\alpha_1(1)$:
+Apply the step-down formula with $m = 2$ and $i = 1$ to compute $\alpha_1(1)$. Note that the complementary reverse index is $m - i = 2 - 1 = \mathbf{1}$, so $\alpha_2(m-i) = \alpha_2(2-1) = \mathbf{\alpha_2(1)}$:
 \begin{equation}
-\alpha_1(1) = \frac{\alpha_2(1) - k_2 \alpha_2(1)}{1 - k_2^2} = \frac{\alpha_2(1)(1 - k_2)}{1 - k_2^2} = \frac{\alpha_2(1)}{1 + k_2}
+\alpha_1(1) = \frac{\alpha_2(1) - k_2 \alpha_2(2-1)}{1 - k_2^2} = \frac{\alpha_2(1)(1 - k_2)}{(1 - k_2)(1 + k_2)} = \frac{\alpha_2(1)}{1 + k_2}
 \end{equation}
 \begin{equation}
 \alpha_1(1) = \frac{-0.77333}{1 + 0.25333} = \frac{-0.77333}{1.25333} \approx \mathbf{-0.6170}
@@ -408,16 +408,20 @@ Compute the denominator divisor:
 \begin{equation}
 1 - k_2^2 = 1 - (0.2)^2 = 1 - 0.04 = 0.96
 \end{equation}
-Apply the step-down formula to find $\alpha_1(1)$:
+Apply the step-down formula \eqref{eq:step_down_coeff} with $m = 2$ and $i = 1$ to find $\alpha_1(1)$. Note that the complementary reverse index is $m - i = 2 - 1 = \mathbf{1}$, so $\alpha_2(m-i) = \alpha_2(2-1) = \mathbf{\alpha_2(1) = -0.9}$:
 \begin{align}
-\alpha_1(1) &= \frac{\alpha_2(1) - k_2 \alpha_2(1)}{1 - k_2^2} = \frac{-0.9 - 0.2(-0.9)}{0.96} \nonumber \\
-&= \frac{-0.9(1 - 0.2)}{0.96} = \frac{-0.72}{0.96} = \mathbf{-0.75}
+\alpha_1(1) &= \frac{\alpha_2(1) - k_2 \alpha_2(2 - 1)}{1 - k_2^2} = \frac{\alpha_2(1) - k_2 \alpha_2(1)}{1 - k_2^2} \nonumber \\
+&= \frac{-0.9 - 0.2(-0.9)}{0.96} = \frac{-0.9(1 - 0.2)}{0.96} = \frac{-0.72}{0.96} = \mathbf{-0.75}
 \end{align}
-The stage 1 reflection coefficient is:
+The reduced first-order denominator polynomial is:
+\begin{equation}
+A_1(z) = 1 + \alpha_1(1) z^{-1} = \mathbf{1 - 0.75 z^{-1}}
+\end{equation}
+(Equivalently obtained via polynomial step-down: $A_1(z) = \frac{A_2(z) - k_2 B_2(z)}{1 - k_2^2}$). The stage 1 reflection coefficient is:
 \begin{equation}
 \mathbf{k_1 = \alpha_1(1) = -0.75}
 \end{equation}
-\textbf{Stability Check:} $|k_1| = 0.75 < 1$ and $|k_2| = 0.20 < 1$. The system is strictly stable. (Poles are at $z = 0.5$ and $z = 0.4$).
+\textbf{Stability Check:} $|k_1| = |-0.75| = 0.75 < 1$ and $|k_2| = |0.20| = 0.20 < 1$. By the Schur-Cohn criterion, the system is strictly BIBO stable (poles lie at $z = 0.5$ and $z = 0.4$, well inside the unit circle).
 
 \vspace{1mm}
 \noindent\textbf{Step 2: Construct the Reverse Polynomials $B_m(z)$}\\[1mm]
@@ -1037,9 +1041,10 @@ This section presents the complete, self-contained operational flowcharts for th
         $B_m(z) = z^{-m} A_m(z^{-1}) = \sum_{i=0}^m \alpha_m(m-i) z^{-i}$
     };
 
-    \node (step) [below=0.6cm of rev, draw=primary, fill=darkbg, rounded corners=4pt, align=center, inner sep=6pt, text width=7.2cm] {
-        \textbf{Execute Polynomial Step-Down Reduction:}\\
-        $\mathbf{A_{m-1}(z) = \frac{A_m(z) - k_m B_m(z)}{1 - k_m^2}}$\\[4pt]
+    \node (step) [below=0.6cm of rev, draw=primary, fill=darkbg, rounded corners=4pt, align=center, inner sep=6pt, text width=7.6cm] {
+        \textbf{Execute Step-Down Reduction to Order $m-1$:}\\
+        $\mathbf{A_{m-1}(z) = \frac{A_m(z) - k_m B_m(z)}{1 - k_m^2}}$\\[3pt]
+        $\implies \text{Read } \alpha_{m-1}(i) \text{ or evaluate element-wise:}$\\
         $\alpha_{m-1}(i) = \frac{\alpha_m(i) - k_m \alpha_m(m-i)}{1 - k_m^2}, \quad i=1, \dots, m-1$
     };
 
@@ -1166,13 +1171,34 @@ Because the filter order is $N = 2$, each flowchart executes for \textbf{exactly
         \item \textit{Block "Extract $k_m$":}
         $$\mathbf{k_2 = \alpha_2(2) = 0.20}$$
         \item \textit{Decision Diamond "$|k_m| < 1$?":}
-        $|k_2| = |0.20| = 0.20 < 1 \implies$ \textbf{YES (Passes stability check)}.
-        \item \textit{Block "Formulate Reverse Polynomial $B_2(z)$":}
+        $|k_2| = |0.20| = 0.20 < 1 \implies$ \textbf{YES (Passes Schur-Cohn stability check)}.
+        \item \textit{Block "Formulate Reverse Polynomial $B_m(z)$":}
         $$B_2(z) = z^{-2} A_2(z^{-1}) = \mathbf{0.20 - 0.90 z^{-1} + 1.00 z^{-2}}$$
-        \item \textit{Block "Execute Polynomial Step-Down":}
-        Compute denominator factor: $1 - k_2^2 = 1 - (0.2)^2 = 0.96$.
-        $$\alpha_1(1) = \frac{\alpha_2(1) - k_2 \alpha_2(1)}{1 - k_2^2} = \frac{-0.90 - (0.20)(-0.90)}{0.96} = \frac{-0.72}{0.96} = \mathbf{-0.75}$$
-        The reduced 1st-order polynomial is: $\mathbf{A_1(z) = 1 - 0.75 z^{-1}}$.
+        \item \textit{Block "Execute Polynomial Step-Down Reduction":}\\
+        Compute denominator factor: $1 - k_2^2 = 1 - (0.20)^2 = 1 - 0.04 = \mathbf{0.96}$.
+        
+        \textbf{Direct Polynomial Reduction (as ordered in flowchart):}
+        Using $A_2(z) = 1 - 0.90 z^{-1} + 0.20 z^{-2}$ and $B_2(z) = 0.20 - 0.90 z^{-1} + 1.00 z^{-2}$:
+        \begin{align}
+        A_1(z) &= \frac{A_2(z) - k_2 B_2(z)}{1 - k_2^2} \nonumber \\
+        &= \frac{(1 - 0.90 z^{-1} + 0.20 z^{-2}) - 0.20(0.20 - 0.90 z^{-1} + 1.00 z^{-2})}{0.96} \nonumber \\
+        &= \frac{(1 - 0.04) + (-0.90 - (-0.18)) z^{-1} + (0.20 - 0.20) z^{-2}}{0.96} \nonumber \\
+        &= \frac{0.96 - 0.72 z^{-1} + 0 z^{-2}}{0.96} = \mathbf{1 - 0.75 z^{-1}}
+        \end{align}
+        The highest-degree term $(0.20 - 0.20) z^{-2} \equiv 0$ cancels identically, reducing the order to 1.
+        
+        \textbf{Identify Reduced Polynomial Coefficient $\alpha_{m-1}$:}
+        From the reduced polynomial $A_1(z) = 1 + \alpha_1(1) z^{-1} = 1 - 0.75 z^{-1}$, we directly read off:
+        $$\mathbf{\alpha_1(1) = -0.75}$$
+
+        \textbf{Cross-Verification via Element-wise Coefficient Formula:}\\
+        Applying the scalar formula $\alpha_{m-1}(i) = \frac{\alpha_m(i) - k_m \alpha_m(m-i)}{1 - k_m^2}$ for $m = 2, i = 1$:
+        Note carefully that the reverse index is $m - i = 2 - 1 = \mathbf{1}$, so $\alpha_m(m-i) = \alpha_2(2-1) = \mathbf{\alpha_2(1) = -0.90}$ (and NOT $\alpha_2(2) = 0.20$):
+        \begin{align}
+        \alpha_1(1) &= \frac{\alpha_2(1) - k_2 \alpha_2(2-1)}{1 - k_2^2} = \frac{\alpha_2(1) - k_2 \alpha_2(1)}{1 - k_2^2} \nonumber \\
+        &= \frac{-0.90 - (0.20)(-0.90)}{0.96} = \frac{-0.90 + 0.18}{0.96} = \frac{-0.72}{0.96} = \mathbf{-0.75}
+        \end{align}
+        Both polynomial reduction and scalar coefficient recursion yield identical results: $\mathbf{A_1(z) = 1 - 0.75 z^{-1}}$ and $\mathbf{\alpha_1(1) = -0.75}$.
         \item \textit{Decision Diamond "$m = 1$?":}
         $m = 2 \neq 1 \implies$ \textbf{NO}.
         \item \textit{Loopback Branch:} Decrement $m \gets m - 1 = 2 - 1 = \mathbf{1}$. Loop back to top!
@@ -1181,13 +1207,20 @@ Because the filter order is $N = 2$, each flowchart executes for \textbf{exactly
     \item \textbf{Iteration 2 ($m = 1$):}
     \begin{enumerate}
         \item \textit{Block "Extract $k_m$":}
-        From $A_1(z) = 1 - 0.75 z^{-1}$:
+        From the active polynomial $A_1(z) = 1 - 0.75 z^{-1}$:
         $$\mathbf{k_1 = \alpha_1(1) = -0.75}$$
         \item \textit{Decision Diamond "$|k_m| < 1$?":}
-        $|k_1| = |-0.75| = 0.75 < 1 \implies$ \textbf{YES (Passes stability check)}.
-        \item \textit{Block "Formulate Reverse Polynomial $B_1(z)$":}
+        $|k_1| = |-0.75| = 0.75 < 1 \implies$ \textbf{YES (Passes Schur-Cohn stability check)}.
+        \item \textit{Block "Formulate Reverse Polynomial $B_m(z)$":}
         $$B_1(z) = z^{-1} A_1(z^{-1}) = \mathbf{-0.75 + 1.00 z^{-1}}$$
-        (Note that for Stage 0: $A_0(z) = 1 \implies B_0(z) = 1$).
+        \item \textit{Block "Execute Polynomial Step-Down Reduction":}\\
+        Computing the reduction to Stage 0:
+        \begin{align}
+        A_0(z) &= \frac{A_1(z) - k_1 B_1(z)}{1 - k_1^2} \nonumber \\
+        &= \frac{(1 - 0.75 z^{-1}) - (-0.75)(-0.75 + 1.00 z^{-1})}{1 - (-0.75)^2} \nonumber \\
+        &= \frac{(1 - 0.5625) + (-0.75 + 0.75) z^{-1}}{0.4375} = \frac{0.4375}{0.4375} = \mathbf{1.00 \equiv A_0(z)}
+        \end{align}
+        which confirms boundary condition $A_0(z) = 1$ and $B_0(z) = 1$.
         \item \textit{Decision Diamond "$m = 1$?":}
         $m = 1 \implies$ \textbf{YES}.
         \item \textit{TERMINAL SUCCESS Block:}
@@ -1261,8 +1294,8 @@ Table~\ref{tab:flowchart_trace_summary} summarizes the numerical state transitio
 \midrule
 \multicolumn{6}{c}{\textbf{Step-Down Algorithm (Figure~\ref{fig:app_flowchart_stepdown})}} \\
 \midrule
-Iter 1 & $m = 2$ & $A_2(z) = 1 - 0.9 z^{-1} + 0.2 z^{-2}$ & $k_2 = \alpha_2(2) = \mathbf{0.20}$ & $|0.20| < 1$ (Stable) & $A_1(z) = 1 - 0.75 z^{-1}$ \\
-Iter 2 & $m = 1$ & $A_1(z) = 1 - 0.75 z^{-1}$ & $k_1 = \alpha_1(1) = \mathbf{-0.75}$ & $|-0.75| < 1$ (Stable) & $m=1 \implies$ Terminate! \\
+Iter 1 & $m = 2$ & $A_2(z) = 1 - 0.9 z^{-1} + 0.2 z^{-2}$ & $k_2 = \alpha_2(2) = \mathbf{0.20}$ & $|0.20| < 1$ (Stable) & $A_1(z) = 1 - 0.75 z^{-1} \; [\alpha_1(1) = -0.75]$ \\
+Iter 2 & $m = 1$ & $A_1(z) = 1 - 0.75 z^{-1}$ & $k_1 = \alpha_1(1) = \mathbf{-0.75}$ & $|-0.75| < 1$ (Stable) & $A_0(z) = 1, \; m=1 \implies$ Terminate! \\
 \midrule
 \multicolumn{6}{c}{\textbf{Numerator Peeling Algorithm (Figure~\ref{fig:app_flowchart_peeling})}} \\
 \midrule
