@@ -3,7 +3,7 @@
 \usepackage{amsmath,amsfonts,amssymb}
 \usepackage{graphicx}
 \usepackage{geometry}
-\geometry{margin=1in}
+\geometry{top=0.65in,bottom=0.65in,left=0.75in,right=0.75in}
 \usepackage{booktabs}
 \usepackage{hyperref}
 \usepackage{float}
@@ -43,16 +43,29 @@ When digital symbols $s[n]$ are transmitted across a dispersive communication ch
 x[n] = s[n] \circledast h_c[n] + v[n] = h_c[0]s[n] + \sum_{k \ne 0} h_c[k]s[n-k] + v[n]
 \end{equation}
 
-\subsection{The Zero-Forcing Equalizer (ZFE) Criterion}
+\subsection{The Zero-Forcing Equalizer (ZFE) Criterion \& Matrix Formulation}
 An equalizing filter $h_{\text{eq}}[n]$ inverts channel distortion so that the combined response is a pure delay of $\Delta$ samples:
 \begin{equation}
 H_{\text{eq}}(z) \cdot H_c(z) = z^{-\Delta} \iff \mathbf{q[n] = h_c[n] \circledast h_{\text{eq}}[n] = \begin{cases} 1, & n = \Delta \\ 0, & n \ne \Delta \end{cases}}
 \end{equation}
-For an $N$-tap FIR equalizer $h_{\text{eq}}[n] = [w_0, w_1, \dots, w_{N-1}]^T$, we force $q[n] = 0$ for $n \ne \Delta$ and $q[\Delta] = 1$, setting up a system of linear algebraic equations to solve for weights $w_k$.
+For an $N$-tap FIR equalizer $\mathbf{w} = [w_0, w_1, \dots, w_{N-1}]^T$ and a channel $h_c[n]$ of length $L$, the convolution $q[n] = \sum_{k=0}^{N-1} w_k h_c[n-k]$ yields the linear matrix equation:
+\begin{equation}
+\mathbf{H}_c \, \mathbf{w} = \mathbf{u}_\Delta \implies 
+\begin{bmatrix}
+h_c[0] & 0 & \dots & 0 \\
+h_c[1] & h_c[0] & \dots & 0 \\
+\vdots & \vdots & \ddots & \vdots \\
+h_c[L-1] & h_c[L-2] & \dots & h_c[L-N]
+\end{bmatrix}
+\begin{bmatrix} w_0 \\ w_1 \\ \vdots \\ w_{N-1} \end{bmatrix}
+=
+\begin{bmatrix} 0 \\ \vdots \\ 1 \\ \vdots \\ 0 \end{bmatrix}
+\end{equation}
+where $\mathbf{u}_\Delta$ has a single $1$ at row index $\Delta$. For an FIR channel, an exact IIR inverse is required; a finite FIR equalizer forces the first $N$ samples of $q[n]$ to match $\mathbf{u}_\Delta$, leaving a small residual ISI tail.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.88\textwidth]{images/dsp_equalization_noise_cancellation_lms.png}
+\includegraphics[width=0.5\textwidth]{images/dsp_equalization_noise_cancellation_lms.png}
 \caption{Left: Channel Equalizer inverting dispersive channel $H_c(z)$. Right: Dual-input Adaptive Noise Canceller driven by the LMS algorithm.}
 \label{fig:dsp_apps_student}
 \end{figure}
@@ -94,22 +107,31 @@ The system error output $e[n]$ becomes the **clean, noise-free signal**!
 
 \section{The Adaptive FIR Filter \& The LMS Algorithm}
 
+\subsection{Derivation of the LMS Weight Update Equation}
+Let the Mean-Squared Error (MSE) cost function be $J(\mathbf{w}) = E[e^2[n]]$. The filter output is $y[n] = \mathbf{w}^T[n] \mathbf{x}[n]$, giving error $e[n] = d[n] - \mathbf{w}^T[n] \mathbf{x}[n]$.
+Computing the gradient of $J(\mathbf{w})$ with respect to the weight vector $\mathbf{w}$:
+\begin{equation}
+\nabla_{\mathbf{w}} J(\mathbf{w}) = \nabla_{\mathbf{w}} E[e^2[n]] = 2 E\left[ e[n] \nabla_{\mathbf{w}} e[n] \right]
+\end{equation}
+Evaluating $\nabla_{\mathbf{w}} e[n] = \nabla_{\mathbf{w}} \left( d[n] - \mathbf{w}^T \mathbf{x}[n] \right) = -\mathbf{x}[n]$:
+\begin{equation}
+\nabla_{\mathbf{w}} J(\mathbf{w}) = -2 E\left[ e[n] \mathbf{x}[n] \right]
+\end{equation}
+The classic method of **Steepest Descent** updates weights in the negative gradient direction:
+\begin{equation}
+\mathbf{w}[n+1] = \mathbf{w}[n] - \frac{1}{2} \mu \nabla_{\mathbf{w}} J = \mathbf{w}[n] + \mu E[e[n] \mathbf{x}[n]]
+\end{equation}
+\textbf{Widrow--Hoff Stochastic Approximation:} To eliminate computing statistical expectations in real time, the Least Mean Squares (LMS) algorithm replaces the ensemble expectation $E[e[n]\mathbf{x}[n]]$ with the **instantaneous sample estimate** $e[n]\mathbf{x}[n]$:
+\begin{equation}
+\mathbf{\mathbf{w}[n+1] = \mathbf{w}[n] + 2\mu \, e[n] \, \mathbf{x}[n]}
+\end{equation}
+
 \subsection{The 3 Core Operational Equations of LMS}
-For an $M$-tap adaptive transversal FIR filter with weight vector $\mathbf{w}[n] = [w_0[n], \dots, w_{M-1}[n]]^T$ and input vector $\mathbf{x}[n] = [x[n], \dots, x[n-M+1]]^T$:
+For an $M$-tap adaptive transversal FIR filter:
 \begin{enumerate}
-    \item \textbf{Filter Output:}
-    \begin{equation}
-    \mathbf{y[n] = \mathbf{w}^T[n] \mathbf{x}[n] = \sum_{k=0}^{M-1} w_k[n] x[n-k]}
-    \end{equation}
-    \item \textbf{Error Estimation:}
-    \begin{equation}
-    \mathbf{e[n] = d[n] - y[n]}
-    \end{equation}
-    \item \textbf{Widrow--Hoff Weight Update:}
-    \begin{equation}
-    \mathbf{\mathbf{w}[n+1] = \mathbf{w}[n] + 2\mu \, e[n] \, \mathbf{x}[n]}
-    \end{equation}
-    or for each individual tap: $\mathbf{w_k[n+1] = w_k[n] + 2\mu \, e[n] \, x[n-k]}$.
+    \item \textbf{Filter Output:} $\mathbf{y[n] = \mathbf{w}^T[n] \mathbf{x}[n] = \sum_{k=0}^{M-1} w_k[n] x[n-k]}$
+    \item \textbf{Error Estimation:} $\mathbf{e[n] = d[n] - y[n]}$
+    \item \textbf{Weight Vector Update:} $\mathbf{\mathbf{w}[n+1] = \mathbf{w}[n] + 2\mu \, e[n] \, \mathbf{x}[n]}$
 \end{enumerate}
 
 \subsection{Step-Size Parameter \texorpdfstring{$\mu$}{mu} Stability Criterion}
@@ -121,14 +143,16 @@ where $M$ is the number of filter taps and $P_x = E[x^2[n]]$ is the input signal
 
 \noindent\rule{\textwidth}{0.5pt}
 
-\section{Standard Solved Exam Example}
+\section{Standard Solved Exam Examples}
 
-\textbf{Problem:} A 2-tap adaptive FIR filter has initial weights $\mathbf{w}[0] = [0.0, \; 0.0]^T$ and adaptation step-size $\mu = 0.1$. Given the input sequences:
+\subsection*{Solved Exam Example 1: 2-Tap Adaptive LMS Filter Iterations}
+
+\textbf{Problem 1:} A 2-tap adaptive FIR filter has initial weight vector $\mathbf{w}[0] = [0.0, \; 0.0]^T$ and adaptation step-size $\mu = 0.1$. Given the input sequences:
 \begin{itemize}
     \item At $n = 0$: Reference vector $\mathbf{x}[0] = [1.0, \; 0.5]^T$, Primary target $d[0] = 2.0$.
     \item At $n = 1$: Reference vector $\mathbf{x}[1] = [0.5, \; 1.0]^T$, Primary target $d[1] = 1.5$.
 \end{itemize}
-Compute the filter output $y[n]$, error $e[n]$, and updated weight vector $\mathbf{w}[n+1]$ for iterations $n = 0$ and $n = 1$.
+Compute the filter output $y[n]$, error $e[n]$, and updated weight vector $\mathbf{w}[n+1]$ for iterations $n = 0$ and $n = 1$. Verify the convergence stability bound.
 
 \vspace{1mm}
 \noindent\textbf{Solution:}
@@ -137,48 +161,83 @@ Compute the filter output $y[n]$, error $e[n]$, and updated weight vector $\math
 \begin{enumerate}
     \item \textbf{Filter Output $y[0]$:}
     \begin{equation}
-    y[0] = w_0[0]x[0] + w_1[0]x[-1] = (0.0)(1.0) + (0.0)(0.5) = \mathbf{0.0}
+    y[0] = \mathbf{w}^T[0] \mathbf{x}[0] = w_0[0]x[0] + w_1[0]x[-1] = (0.0)(1.0) + (0.0)(0.5) = \mathbf{0.0}
     \end{equation}
-    \item \textbf{Error $e[0]$:}
+    \item \textbf{Estimation Error $e[0]$ and Instantaneous Square Error:}
     \begin{equation}
-    e[0] = d[0] - y[0] = 2.0 - 0.0 = \mathbf{2.0}
+    e[0] = d[0] - y[0] = 2.0 - 0.0 = \mathbf{2.0}, \qquad e^2[0] = (2.0)^2 = \mathbf{4.00}
     \end{equation}
     \item \textbf{Weight Vector Update $\mathbf{w}[1]$:}
-    With $2\mu = 2(0.1) = 0.2$:
+    With $2\mu = 2(0.1) = 0.2$, the scalar update factor is $2\mu e[0] = 0.2 \times 2.0 = \mathbf{0.40}$:
     \begin{equation}
-    2\mu e[0] = 0.2 \times 2.0 = 0.4
+    \mathbf{w}[1] = \mathbf{w}[0] + 2\mu e[0] \mathbf{x}[0] = \begin{bmatrix} 0.0 \\ 0.0 \end{bmatrix} + 0.40 \begin{bmatrix} 1.0 \\ 0.5 \end{bmatrix} = \mathbf{\begin{bmatrix} 0.40 \\ 0.20 \end{bmatrix}}
     \end{equation}
-    \begin{equation}
-    w_0[1] = w_0[0] + 0.4 x[0] = 0.0 + 0.4(1.0) = \mathbf{0.40}
-    \end{equation}
-    \begin{equation}
-    w_1[1] = w_1[0] + 0.4 x[-1] = 0.0 + 0.4(0.5) = \mathbf{0.20}
-    \end{equation}
-    Updated weight vector: $\mathbf{w}[1] = [0.40, \; 0.20]^T$.
 \end{enumerate}
 
 \noindent\textbf{Iteration 2 ($n = 1$):}
 \begin{enumerate}
     \item \textbf{Filter Output $y[1]$:}
     \begin{equation}
-    y[1] = w_0[1]x[1] + w_1[1]x[0] = (0.40)(0.5) + (0.20)(1.0) = 0.20 + 0.20 = \mathbf{0.40}
+    y[1] = \mathbf{w}^T[1] \mathbf{x}[1] = w_0[1]x[1] + w_1[1]x[0] = (0.40)(0.5) + (0.20)(1.0) = 0.20 + 0.20 = \mathbf{0.40}
     \end{equation}
-    \item \textbf{Error $e[1]$:}
+    \item \textbf{Estimation Error $e[1]$ and Instantaneous Square Error:}
     \begin{equation}
-    e[1] = d[1] - y[1] = 1.5 - 0.40 = \mathbf{1.10} \quad \text{(Error reduced from 2.0 to 1.10!)}
+    e[1] = d[1] - y[1] = 1.5 - 0.40 = \mathbf{1.10}, \qquad e^2[1] = (1.10)^2 = \mathbf{1.21}
     \end{equation}
+    \textbf{Convergence Check:} Squared error dropped from $e^2[0] = 4.00$ to $e^2[1] = 1.21$, achieving a $\mathbf{69.75\%}$ reduction in MSE in just a single step!
     \item \textbf{Weight Vector Update $\mathbf{w}[2]$:}
+    Scalar update factor: $2\mu e[1] = 0.2 \times 1.10 = \mathbf{0.22}$:
     \begin{equation}
-    2\mu e[1] = 0.2 \times 1.10 = 0.22
+    \mathbf{w}[2] = \mathbf{w}[1] + 2\mu e[1] \mathbf{x}[1] = \begin{bmatrix} 0.40 \\ 0.20 \end{bmatrix} + 0.22 \begin{bmatrix} 0.5 \\ 1.0 \end{bmatrix} = \mathbf{\begin{bmatrix} 0.51 \\ 0.42 \end{bmatrix}}
     \end{equation}
+    \item \textbf{Step-Size Stability Check:}
+    Average input power $P_x \approx \frac{1}{2}(1.0^2 + 0.5^2) = \frac{1.25}{2} = 0.625$. Upper stability bound:
     \begin{equation}
-    w_0[2] = w_0[1] + 0.22 x[1] = 0.40 + 0.22(0.5) = 0.40 + 0.11 = \mathbf{0.51}
+    \mu_{\max} = \frac{1}{M \cdot P_x} = \frac{1}{2 \times 0.625} = \mathbf{0.80}
     \end{equation}
-    \begin{equation}
-    w_1[2] = w_1[1] + 0.22 x[0] = 0.20 + 0.22(1.0) = 0.20 + 0.22 = \mathbf{0.42}
-    \end{equation}
-    Final weight vector: $\mathbf{w}[2] = [0.51, \; 0.42]^T$.
+    Since selected $\mu = 0.1 \ll 0.80$, the algorithm is unconditionally stable.
 \end{enumerate}
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\subsection*{Solved Exam Example 2: Zero-Forcing Equalizer (ZFE) Design}
+
+\textbf{Problem 2:} A multipath communication channel has the discrete impulse response $h_c[n] = \{1.0, \; 0.4\}$. Design a 3-tap FIR Zero-Forcing Equalizer $\mathbf{w} = [w_0, \; w_1, \; w_2]^T$ to eliminate ISI with zero delay ($\Delta = 0$). Determine the combined equalized impulse response $q[n]$ and calculate the percentage ISI reduction.
+
+\vspace{1mm}
+\noindent\textbf{Solution:}
+
+\noindent\textbf{Step 1: Set Up Convolution Equations} \\
+The combined response is $q[n] = h_c[n] \circledast w[n] = \sum_{k=0}^2 w_k h_c[n-k]$. For zero delay ($\Delta = 0$), the zero-forcing condition enforces $q[0] = 1$ and $q[1] = q[2] = 0$:
+\begin{align}
+n = 0: \quad q[0] &= h_c[0] w_0 = 1.0 \implies 1.0 w_0 = 1.0 \implies \mathbf{w_0 = 1.00} \nonumber \\
+n = 1: \quad q[1] &= h_c[1] w_0 + h_c[0] w_1 = 0 \implies 0.4(1.0) + 1.0 w_1 = 0 \implies \mathbf{w_1 = -0.40} \nonumber \\
+n = 2: \quad q[2] &= h_c[1] w_1 + h_c[0] w_2 = 0 \implies 0.4(-0.40) + 1.0 w_2 = 0 \implies \mathbf{w_2 = +0.16}
+\end{align}
+The designed equalizer tap weight vector is:
+\begin{equation}
+\mathbf{w = [1.00, \; -0.40, \; 0.16]^T}
+\end{equation}
+
+\noindent\textbf{Step 2: Evaluate the Residual Equalizer Tail}
+Because the equalizer is finite-length ($N=3$), a non-zero tail remains at $n = 3$:
+\begin{equation}
+q[3] = h_c[1] w_2 = 0.4 \times 0.16 = \mathbf{0.064}
+\end{equation}
+The complete equalized channel response is:
+\begin{equation}
+\mathbf{q[n] = \{1.000, \; 0.000, \; 0.000, \; 0.064\}}
+\end{equation}
+
+\noindent\textbf{Step 3: Quantitative ISI Reduction}
+\begin{itemize}
+    \item Unequalized channel peak ISI: $|h_c[1]| = \mathbf{0.400}$.
+    \item Equalized channel residual ISI: $|q[3]| = \mathbf{0.064}$.
+    \item Percentage ISI reduction:
+    \begin{equation}
+    \text{ISI Reduction} = \frac{0.400 - 0.064}{0.400} \times 100\% = \frac{0.336}{0.400} \times 100\% = \mathbf{84.0\%}
+    \end{equation}
+\end{itemize}
 
 \noindent\rule{\textwidth}{0.5pt}
 

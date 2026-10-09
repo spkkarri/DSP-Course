@@ -3,7 +3,7 @@
 \usepackage{amsmath,amsfonts,amssymb}
 \usepackage{graphicx}
 \usepackage{geometry}
-\geometry{margin=1in}
+\geometry{top=0.6in,bottom=0.6in,left=0.7in,right=0.7in}
 \usepackage{booktabs}
 \usepackage{hyperref}
 \usepackage{float}
@@ -44,12 +44,29 @@ The \textbf{Impulse Invariance Method} designs a digital IIR filter by sampling 
 \end{equation}
 The factor $T_s$ scales the discrete response so that the digital filter's low-frequency gain matches the analog filter.
 
-\subsection{The Fundamental Pole Mapping Rule}
-Let the analog filter transfer function be expanded in partial fractions with distinct poles $s_k$:
+\subsection{Mathematical Proof of the Pole Mapping Formula}
+Let the analog filter transfer function $H_a(s)$ have distinct poles $s_k$ and be expanded into partial fractions:
 \begin{equation}
-H_a(s) = \sum_{k=1}^N \frac{A_k}{s - s_k} \iff h_a(t) = \sum_{k=1}^N A_k e^{s_k t} u(t)
+H_a(s) = \sum_{k=1}^N \frac{A_k}{s - s_k}
 \end{equation}
-Sampling at $t = n T_s$ and taking the $Z$-transform yields the \textbf{Master Operational Formula}:
+We derive the digital filter transfer function $H(z)$ via three rigorous mathematical steps:
+\begin{enumerate}
+    \item \textbf{Step 1: Inverse Laplace Transform to continuous-time:}
+    \begin{equation}
+    h_a(t) = \mathcal{L}^{-1}\{H_a(s)\} = \sum_{k=1}^N A_k e^{s_k t} u(t)
+    \end{equation}
+    \item \textbf{Step 2: Periodic Sampling with Scaling $T_s$ ($t = n T_s$):}
+    \begin{equation}
+    h[n] = T_s h_a(n T_s) = T_s \sum_{k=1}^N A_k e^{s_k n T_s} u[n] = \sum_{k=1}^N T_s A_k \left(e^{s_k T_s}\right)^n u[n]
+    \end{equation}
+    \item \textbf{Step 3: Z-Transform via Infinite Geometric Series:}
+    Applying $\mathcal{Z}\{a^n u[n]\} = \sum_{n=0}^\infty a^n z^{-n} = \frac{1}{1 - a z^{-1}}$ (convergent for $|z| > |a|$):
+    \begin{align}
+    H(z) &= \sum_{n=0}^\infty h[n] z^{-n} = \sum_{n=0}^\infty \left[ \sum_{k=1}^N T_s A_k \left(e^{s_k T_s}\right)^n \right] z^{-n} \nonumber \\
+    &= \sum_{k=1}^N T_s A_k \sum_{n=0}^\infty \left(e^{s_k T_s} z^{-1}\right)^n = \sum_{k=1}^N \frac{T_s A_k}{1 - e^{s_k T_s} z^{-1}}
+    \end{align}
+\end{enumerate}
+Therefore, each individual analog partial fraction term maps directly according to:
 \begin{equation}
 \mathbf{\frac{A_k}{s - s_k} \quad \xrightarrow{\quad \text{Impulse Invariance} \quad} \quad \frac{T_s A_k}{1 - e^{s_k T_s} z^{-1}}}
 \label{eq:master_ii}
@@ -86,7 +103,7 @@ Because the analog rational transfer function $H_a(j\Omega)$ cannot be strictly 
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.75\textwidth]{images/iir_impulse_invariance_mapping.png}
+\includegraphics[width=0.46\textwidth]{images/iir_impulse_invariance_mapping.png}
 \caption{Left: Horizontal strips of width $2\pi/T_s$ in the $s$-plane mapping into the $z$-plane unit circle. Right: Aliasing caused by overlapping tails of the periodic spectrum copies.}
 \label{fig:ii_aliasing}
 \end{figure}
@@ -115,59 +132,98 @@ Because the analog rational transfer function $H_a(j\Omega)$ cannot be strictly 
 
 \section{Standard Solved Exam Example}
 
-\textbf{Problem:} An analog second-order Butterworth lowpass filter with cutoff $\Omega_c = 1$ rad/s is given by:
+\textbf{Problem 1:} An analog second-order Butterworth lowpass filter with cutoff frequency $\Omega_c = 1$ rad/s has the transfer function:
 \begin{equation}
 H_a(s) = \frac{1}{s^2 + \sqrt{2} s + 1}
 \end{equation}
-Design the corresponding digital IIR filter using the Impulse Invariance method with $T_s = 1$ second.
+Design the corresponding digital IIR filter using the Impulse Invariance method with sampling period $T_s = 1$ second. Verify filter stability and calculate the DC gain.
 
 \vspace{1mm}
 \noindent\textbf{Solution:}
 
-\noindent\textbf{Step 1: Find the Analog Poles}
+\noindent\textbf{Step 1: Determine Analog Poles via Quadratic Formula}
+Setting the denominator polynomial to zero:
 \begin{equation}
-s^2 + \sqrt{2} s + 1 = 0 \implies s_{1,2} = -\frac{1}{\sqrt{2}} \pm j \frac{1}{\sqrt{2}} \approx -0.7071 \pm j 0.7071
+s^2 + \sqrt{2} s + 1 = 0
 \end{equation}
-
-\noindent\textbf{Step 2: Partial Fraction Expansion}
-\begin{equation}
-H_a(s) = \frac{A_1}{s - s_1} + \frac{A_2}{s - s_2}
-\end{equation}
-Evaluating the residues:
-\begin{equation}
-A_1 = \frac{1}{s_1 - s_2} = \frac{1}{j 2(0.7071)} = \frac{1}{j \sqrt{2}} = -j \frac{1}{\sqrt{2}} \approx -j 0.7071
-\end{equation}
-and $A_2 = A_1^* = +j \frac{1}{\sqrt{2}} \approx +j 0.7071$.
-
-\noindent\textbf{Step 3: Map Poles to the Z-Domain ($T_s = 1$ s)}
-\begin{equation}
-z_1 = e^{s_1 T_s} = e^{-0.7071 + j 0.7071} = e^{-0.7071}\angle(0.7071 \text{ rad})
-\end{equation}
-Converting $0.7071 \text{ rad} = 0.7071 \times \frac{180^\circ}{\pi} \approx 40.51^\circ$:
-\begin{equation}
-e^{-0.7071} \approx 0.4931, \quad \cos(40.51^\circ) \approx 0.7602, \quad \sin(40.51^\circ) \approx 0.6496
-\end{equation}
-\begin{equation}
-z_1 = 0.4931(0.7602 + j 0.6496) \approx \mathbf{0.3748 + j 0.3203}, \quad z_2 = z_1^* = \mathbf{0.3748 - j 0.3203}
-\end{equation}
-
-\noindent\textbf{Step 4: Combine into Real Second-Order Biquad}
+Applying the quadratic formula with all intermediate arithmetic steps:
 \begin{align}
-H(z) &= \frac{T_s A_1}{1 - z_1 z^{-1}} + \frac{T_s A_2}{1 - z_2 z^{-1}} = \frac{-j \frac{1}{\sqrt{2}}(1 - z_1^* z^{-1}) + j \frac{1}{\sqrt{2}}(1 - z_1 z^{-1})}{(1 - z_1 z^{-1})(1 - z_1^* z^{-1})} \nonumber \\
-     &= \frac{j \frac{1}{\sqrt{2}}(z_1^* - z_1) z^{-1}}{1 - 2\text{Re}(z_1) z^{-1} + |z_1|^2 z^{-2}}
+s_{1,2} &= \frac{-\sqrt{2} \pm \sqrt{(\sqrt{2})^2 - 4(1)(1)}}{2(1)} = \frac{-\sqrt{2} \pm \sqrt{2 - 4}}{2} \nonumber \\
+&= \frac{-\sqrt{2} \pm \sqrt{-2}}{2} = \frac{-\sqrt{2} \pm j\sqrt{2}}{2} = -\frac{1}{\sqrt{2}} \pm j \frac{1}{\sqrt{2}} \approx \mathbf{-0.7071 \pm j 0.7071}
 \end{align}
-Evaluating the numerator and denominator parameters:
-\begin{itemize}
-    \item $z_1^* - z_1 = -j 2\text{Im}(z_1) = -j 2(0.3203) = -j 0.6406$
-    \item Numerator coefficient: $j \frac{1}{\sqrt{2}}(-j 0.6406) = \frac{0.6406}{\sqrt{2}} \approx \mathbf{0.4530}$
-    \item Denominator $z^{-1}$ coefficient: $2\text{Re}(z_1) = 2(0.3748) = \mathbf{0.7496}$
-    \item Denominator $z^{-2}$ coefficient: $|z_1|^2 = (0.4931)^2 \approx \mathbf{0.2431}$
-\end{itemize}
-The final digital filter transfer function is:
+
+\noindent\textbf{Step 2: Partial Fraction Expansion and Residue Calculations}
+Express $H_a(s)$ in partial fractions:
+\begin{equation}
+H_a(s) = \frac{1}{(s - s_1)(s - s_2)} = \frac{A_1}{s - s_1} + \frac{A_2}{s - s_2}
+\end{equation}
+Computing the residue $A_1$ using the Heaviside limit method:
+\begin{align}
+A_1 &= \lim_{s \to s_1} (s - s_1) H_a(s) = \left. \frac{1}{s - s_2} \right|_{s = s_1} = \frac{1}{s_1 - s_2} \nonumber \\
+&= \frac{1}{\left(-\frac{1}{\sqrt{2}} + j\frac{1}{\sqrt{2}}\right) - \left(-\frac{1}{\sqrt{2}} - j\frac{1}{\sqrt{2}}\right)} = \frac{1}{j \frac{2}{\sqrt{2}}} = \frac{1}{j \sqrt{2}} = \mathbf{-j \frac{1}{\sqrt{2}}} \approx -j 0.7071
+\end{align}
+Since the poles are complex conjugates, the second residue is the conjugate of the first:
+\begin{equation}
+A_2 = A_1^* = \mathbf{+j \frac{1}{\sqrt{2}}} \approx +j 0.7071
+\end{equation}
+
+\noindent\textbf{Step 3: Map Analog Poles to Z-Plane Discrete Poles ($T_s = 1$ s)}
+Using the mapping rule $z_k = e^{s_k T_s}$ with $T_s = 1$:
+\begin{align}
+z_1 &= e^{s_1 \cdot 1} = e^{-0.7071 + j 0.7071} = e^{-0.7071} \cdot e^{j 0.7071} \nonumber \\
+&= e^{-0.7071} \left[ \cos(0.7071 \text{ rad}) + j \sin(0.7071 \text{ rad}) \right]
+\end{align}
+Converting radians to degrees: $\theta = 0.7071 \times \frac{180^\circ}{\pi} \approx 40.514^\circ$. Evaluating values:
+\begin{align}
+e^{-0.7071} &\approx 0.49307 \nonumber \\
+\cos(40.514^\circ) &\approx 0.76024, \quad \sin(40.514^\circ) \approx 0.64964 \nonumber \\
+z_1 &= 0.49307(0.76024 + j 0.64964) = \mathbf{0.37485 + j 0.32032} \approx \mathbf{0.3749 + j 0.3203} \nonumber \\
+z_2 &= z_1^* = \mathbf{0.3749 - j 0.3203}
+\end{align}
+Stability check: $|z_1| = |z_2| = e^{\sigma_1 T_s} = e^{-0.7071} = 0.4931 < 1$. Both poles lie inside the unit circle; the filter is strictly stable.
+
+\noindent\textbf{Step 4: Algebraic Synthesis of the Real Second-Order Biquad}
+Applying the impulse invariance transformation $\frac{A_k}{s - s_k} \to \frac{T_s A_k}{1 - z_k z^{-1}}$:
+\begin{align}
+H(z) &= \frac{T_s A_1}{1 - z_1 z^{-1}} + \frac{T_s A_2}{1 - z_1^* z^{-1}} = \frac{-j \frac{1}{\sqrt{2}}(1 - z_1^* z^{-1}) + j \frac{1}{\sqrt{2}}(1 - z_1 z^{-1})}{(1 - z_1 z^{-1})(1 - z_1^* z^{-1})} \nonumber \\
+&= \frac{j \frac{1}{\sqrt{2}}(z_1^* - z_1) z^{-1}}{1 - (z_1 + z_1^*) z^{-1} + |z_1|^2 z^{-2}} = \frac{j \frac{1}{\sqrt{2}}(z_1^* - z_1) z^{-1}}{1 - 2\text{Re}(z_1) z^{-1} + |z_1|^2 z^{-2}}
+\end{align}
+Computing each intermediate term explicitly:
+\begin{align}
+z_1^* - z_1 &= -j 2\text{Im}(z_1) = -j 2(0.32032) = -j 0.64064 \implies \text{Numerator} = j \frac{1}{\sqrt{2}} (-j 0.64064) = \mathbf{0.4530} \nonumber \\
+2\text{Re}(z_1) &= 2(0.37485) = \mathbf{0.7497} \approx \mathbf{0.7496}, \qquad |z_1|^2 = (0.49307)^2 = \mathbf{0.2431}
+\end{align}
+The final digital filter system transfer function is:
 \begin{equation}
 \mathbf{H(z) = \frac{0.4530 z^{-1}}{1 - 0.7496 z^{-1} + 0.2431 z^{-2}}}
 \end{equation}
-Stability verification: Poles are at $r = |z_{1,2}| = 0.4931 < 1$, ensuring a strictly stable digital filter.
+
+\noindent\textbf{Step 5: DC Gain and Aliasing Analysis}
+Evaluating $H(z)$ at DC ($z = e^{j0} = 1$):
+\begin{equation}
+H(1) = \frac{0.4530(1)}{1 - 0.7496(1) + 0.2431(1)} = \frac{0.4530}{0.4935} \approx \mathbf{0.9179}
+\end{equation}
+\textbf{Physical Meaning:} The analog prototype has DC gain $H_a(0) = 1.0$. The digital DC gain is $0.9179$. The difference ($0.9179$ vs $1.0000$) is the exact quantitative manifestation of \textbf{aliasing distortion} caused by selecting a relatively large sampling period $T_s = 1$ s.
+
+\noindent\rule{\textwidth}{0.5pt}
+
+\subsection*{Solved Exam Example 2: First-Order Prototype \& Impact of Sampling Period}
+
+\textbf{Problem 2:} An analog lowpass system is described by $H_a(s) = \frac{2}{s + 2}$. Find the digital filter $H(z)$ using Impulse Invariance for: (a) $T_s = 0.1$ s, and (b) $T_s = 0.5$ s. Compare the DC gains.
+
+\vspace{1mm}
+\noindent\textbf{Solution:}
+The analog pole is at $s_1 = -2$, with residue $A_1 = 2$. By impulse invariance:
+\begin{equation}
+H(z) = \frac{T_s A_1}{1 - e^{s_1 T_s} z^{-1}} = \frac{2 T_s}{1 - e^{-2 T_s} z^{-1}}
+\end{equation}
+\begin{enumerate}
+    \item \textbf{Case (a): $T_s = 0.1$ s:} $e^{-2(0.1)} = e^{-0.2} \approx 0.8187 \implies H(z) = \mathbf{\dfrac{0.2}{1 - 0.8187 z^{-1}}}$. \\
+    DC Gain: $H(1) = \dfrac{0.2}{1 - 0.8187} = \dfrac{0.2}{0.1813} = \mathbf{1.103} \quad (\approx \text{analog gain } 1.0)$.
+    \item \textbf{Case (b): $T_s = 0.5$ s:} $e^{-2(0.5)} = e^{-1.0} \approx 0.3679 \implies H(z) = \mathbf{\dfrac{1.0}{1 - 0.3679 z^{-1}}}$. \\
+    DC Gain: $H(1) = \dfrac{1.0}{1 - 0.3679} = \dfrac{1.0}{0.6321} = \mathbf{1.582} \quad (\text{severe aliasing error!})$.
+\end{enumerate}
+\textbf{Conclusion:} As $T_s$ increases (lower sampling rate), aliased frequency copies overlap heavily into baseband, distorting filter gain. Smaller $T_s$ significantly reduces aliasing.
 
 \noindent\rule{\textwidth}{0.5pt}
 
