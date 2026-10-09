@@ -429,15 +429,27 @@ h[n] = \{1, \; 2, \; 3, \; 2, \; 1\} \quad \text{for } n = 0, 1, 2, 3, 4
 \end{itemize}
 
 \vspace{1mm}
-\noindent\textbf{Step 2: Amplitude Response Derivation}
-Factoring out the delay $e^{-j 2\omega}$:
+\noindent\textbf{Step 2: Step-by-Step DTFT \& Amplitude Response Derivation (First Principles)}
+Applying the fundamental definition of the DTFT without skipping steps:
 \begin{align}
-H(e^{j\omega}) &= e^{-j2\omega} \left[ h[2] + 2h[1]\cos(\omega) + 2h[0]\cos(2\omega) \right] \nonumber \\
+H(e^{j\omega}) &= \sum_{n=-\infty}^{\infty} h[n] e^{-j\omega n} = \sum_{n=0}^{4} h[n] e^{-j\omega n} \nonumber \\
+&= h[0] e^{-j\omega(0)} + h[1] e^{-j\omega(1)} + h[2] e^{-j\omega(2)} + h[3] e^{-j\omega(3)} + h[4] e^{-j\omega(4)} \nonumber \\
+&= 1 + 2e^{-j\omega} + 3e^{-j2\omega} + 2e^{-j3\omega} + 1e^{-j4\omega}
+\end{align}
+Factoring out the center delay factor $e^{-j\alpha\omega} = e^{-j 2\omega}$:
+\begin{align}
+H(e^{j\omega}) &= e^{-j2\omega} \left[ \frac{1}{e^{-j2\omega}} + \frac{2e^{-j\omega}}{e^{-j2\omega}} + \frac{3e^{-j2\omega}}{e^{-j2\omega}} + \frac{2e^{-j3\omega}}{e^{-j2\omega}} + \frac{e^{-j4\omega}}{e^{-j2\omega}} \right] \nonumber \\
+&= e^{-j2\omega} \left[ 1\cdot e^{j2\omega} + 2\cdot e^{j\omega} + 3 + 2\cdot e^{-j\omega} + 1\cdot e^{-j2\omega} \right] \nonumber \\
+&= e^{-j2\omega} \left[ 3 + 2\big(e^{j\omega} + e^{-j\omega}\big) + 1\big(e^{j2\omega} + e^{-j2\omega}\big) \right]
+\end{align}
+Applying Euler's cosine identity $e^{j\theta} + e^{-j\theta} = 2\cos\theta$ for $\theta = \omega$ and $\theta = 2\omega$:
+\begin{align}
+H(e^{j\omega}) &= e^{-j2\omega} \left[ 3 + 2\big(2\cos(\omega)\big) + 1\big(2\cos(2\omega)\big) \right] \nonumber \\
 &= e^{-j2\omega} \big[ 3 + 4\cos(\omega) + 2\cos(2\omega) \big]
 \end{align}
-Thus, the real-valued amplitude function is:
+Comparing with standard polar form $H(e^{j\omega}) = A(\omega) e^{j\theta(\omega)}$, the real-valued amplitude function is:
 \begin{equation}
-\mathbf{A(\omega) = 3 + 4\cos(\omega) + 2\cos(2\omega)}
+\mathbf{A(\omega) = 3 + 4\cos(\omega) + 2\cos(2\omega)}, \qquad \mathbf{\theta(\omega) = -2\omega}
 \end{equation}
 
 \vspace{1mm}
@@ -628,10 +640,11 @@ Taking the DTFT of $h[n]$:
 \begin{equation}
 H(e^{j\omega}) = \frac{1}{M} \sum_{n=0}^{M-1} e^{-j\omega n} = \frac{1}{M} \frac{1 - e^{-j M \omega}}{1 - e^{-j\omega}}
 \end{equation}
-Factoring out the half-angle phase factors:
-\begin{equation}
-H(e^{j\omega}) = \frac{1}{M} \frac{e^{-j M \omega / 2}\big(e^{j M \omega / 2} - e^{-j M \omega / 2}\big)}{e^{-j\omega/2}\big(e^{j\omega/2} - e^{-j\omega/2}\big)} = \left[ \frac{\sin(M\omega/2)}{M\sin(\omega/2)} \right] e^{-j \left(\frac{M-1}{2}\right)\omega}
-\end{equation}
+Factoring out the half-angle phase factors and applying Euler's sine formula ($e^{j\theta} - e^{-j\theta} = 2j\sin\theta$):
+\begin{align}
+H(e^{j\omega}) &= \frac{1}{M} \frac{e^{-j M \omega / 2}\big(e^{j M \omega / 2} - e^{-j M \omega / 2}\big)}{e^{-j\omega/2}\big(e^{j\omega/2} - e^{-j\omega/2}\big)} \nonumber \\
+&= \frac{1}{M} \frac{e^{-j M \omega / 2} \cdot 2j\sin(M\omega/2)}{e^{-j\omega/2} \cdot 2j\sin(\omega/2)} = \left[ \frac{\sin(M\omega/2)}{M\sin(\omega/2)} \right] e^{-j \left(\frac{M-1}{2}\right)\omega}
+\end{align}
 The amplitude response $A(\omega)$ is the periodic discrete Dirichlet sinc function:
 \begin{equation}
 \mathbf{A(\omega) = \frac{\sin(M\omega/2)}{M\sin(\omega/2)}}, \quad \mathbf{\theta(\omega) = -\left(\frac{M-1}{2}\right)\omega}

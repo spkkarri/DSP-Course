@@ -3,7 +3,7 @@
 \usepackage{amsmath,amsfonts,amssymb}
 \usepackage{graphicx}
 \usepackage{geometry}
-\geometry{margin=1in}
+\geometry{top=0.7in,bottom=0.7in,left=0.75in,right=0.75in}
 \usepackage{booktabs}
 \usepackage{hyperref}
 \usepackage{float}
@@ -44,13 +44,9 @@ An LTI filter transmits an input signal without waveform distortion if all frequ
     \item A strictly constant time delay: $\tau_g = \alpha$
 \end{enumerate}
 \begin{itemize}
-    \item \textbf{Phase Delay:} The time delay experienced by each individual sinusoidal carrier:
+    \item \textbf{Phase Delay} (carrier time delay) and \textbf{Group Delay} (envelope time delay):
     \begin{equation}
-    \tau_p(\omega) = -\frac{\theta(\omega)}{\omega}
-    \end{equation}
-    \item \textbf{Group Delay:} The time delay experienced by the signal's modulation envelope:
-    \begin{equation}
-    \tau_g(\omega) = -\frac{d\theta(\omega)}{d\omega}
+    \mathbf{\tau_p(\omega) = -\frac{\theta(\omega)}{\omega}}, \qquad \mathbf{\tau_g(\omega) = -\frac{d\theta(\omega)}{d\omega}}
     \end{equation}
 \end{itemize}
 \textbf{The Linear Phase Criterion:} If $\theta(\omega) = -\alpha \omega$, then $\tau_p(\omega) = \tau_g(\omega) = \alpha = \text{constant}$. This eliminates \textbf{phase distortion} and \textbf{envelope dispersion}.
@@ -111,7 +107,7 @@ Consequently, if $z_0 = r e^{j\phi}$ is a zero of $H(z)$, its reciprocal $1/z_0 
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.7\textwidth]{images/fir_zero_locations_zplane.png}
+\includegraphics[width=0.52\textwidth]{images/fir_zero_locations_zplane.png}
 \caption{Zero constellations for linear-phase FIR systems: complex quadruplets off the unit circle, pairs on the unit circle ($|z|=1$), and mandatory boundary zeros at $z = \pm 1$.}
 \label{fig:zeros_zplane}
 \end{figure}
@@ -134,19 +130,57 @@ Consequently, if $z_0 = r e^{j\phi}$ is a zero of $H(z)$, its reciprocal $1/z_0 
 
 \section{Moving Average (MA) Filters}
 
-\subsection{Basic Equations}
-An $M$-point Moving Average filter is defined by:
+\subsection{Definition and Impulse Response}
+An $M$-point Moving Average filter computes the local arithmetic mean of the input over a sliding window of length $M$:
 \begin{equation}
-y[n] = \frac{1}{M}\sum_{k=0}^{M-1} x[n-k] \iff h[n] = \frac{1}{M}, \quad 0 \le n \le M-1
+y[n] = \frac{1}{M}\sum_{k=0}^{M-1} x[n-k] = \frac{1}{M}\big(x[n] + x[n-1] + \dots + x[n-M+1]\big)
 \end{equation}
+Its unit impulse response is a causal rectangular sequence of amplitude $1/M$:
+\begin{equation}
+h[n] = \begin{cases} \frac{1}{M}, & 0 \le n \le M-1 \\ 0, & \text{otherwise} \end{cases}
+\end{equation}
+\textbf{Linear Phase Property:} Because $h[n] = h[M-1-n] = \frac{1}{M}$ is perfectly symmetric about $\alpha = \frac{M-1}{2}$:
 \begin{itemize}
-    \item \textbf{Symmetry:} $h[n] = h[M-1-n] = \frac{1}{M}$ $\implies$ \textbf{Always Linear Phase} with group delay $\tau = \frac{M-1}{2}$.
-    \item \textbf{Frequency Response:}
+    \item If $M$ is odd $\implies$ \textbf{Type 1 FIR Filter} with integer group delay $\tau = \frac{M-1}{2}$ samples.
+    \item If $M$ is even $\implies$ \textbf{Type 2 FIR Filter} with half-integer group delay $\tau = \frac{M-1}{2}$ samples.
+\end{itemize}
+
+\subsection{Step-by-Step Derivation of Dirichlet Sinc Frequency Response}
+\begin{enumerate}
+    \item \textbf{Apply the DTFT Definition:}
     \begin{equation}
-    H(e^{j\omega}) = \left[ \frac{\sin(M\omega/2)}{M\sin(\omega/2)} \right] e^{-j \left(\frac{M-1}{2}\right)\omega}
+    H(e^{j\omega}) = \sum_{n=-\infty}^{\infty} h[n] e^{-j\omega n} = \frac{1}{M} \sum_{n=0}^{M-1} e^{-j\omega n} = \frac{1}{M} \sum_{n=0}^{M-1} \left(e^{-j\omega}\right)^n
     \end{equation}
-    \item \textbf{Zeros in Z-Domain:} $H(z) = \frac{1}{M} \frac{1 - z^{-M}}{1 - z^{-1}}$. The numerator has zeros at the $M$ roots of unity $e^{j 2\pi k / M}$. The zero at $k=0$ ($z=1$) is cancelled by the denominator pole at $z=1$.
-    \item Exactly $M-1$ zeros lie on the unit circle: $\mathbf{z_k = e^{j \frac{2\pi k}{M}}}$ for $k = 1, 2, \dots, M-1$, producing transmission notches at harmonic frequencies.
+
+    \item \textbf{Sum the Finite Geometric Series:}
+    Recall the geometric series sum $\sum_{n=0}^{M-1} r^n = \frac{1 - r^M}{1 - r}$ with common ratio $r = e^{-j\omega} \ne 1$:
+    \begin{equation}
+    H(e^{j\omega}) = \frac{1}{M} \left[ \frac{1 - \left(e^{-j\omega}\right)^M}{1 - e^{-j\omega}} \right] = \frac{1}{M} \left[ \frac{1 - e^{-j M \omega}}{1 - e^{-j\omega}} \right]
+    \end{equation}
+
+    \item \textbf{Factor Out Half-Angle Phase Terms (Symmetric Extraction):}
+    Factor out $e^{-j M\omega / 2}$ from the numerator and $e^{-j\omega / 2}$ from the denominator:
+    \begin{equation}
+    1 - e^{-j M \omega} = e^{-j \frac{M\omega}{2}} \left( e^{j \frac{M\omega}{2}} - e^{-j \frac{M\omega}{2}} \right), \qquad 1 - e^{-j\omega} = e^{-j \frac{\omega}{2}} \left( e^{j \frac{\omega}{2}} - e^{-j \frac{\omega}{2}} \right)
+    \end{equation}
+
+    \item \textbf{Apply Euler's Sine Formula ($e^{j\theta} - e^{-j\theta} = 2j\sin\theta$) \& Simplify:}
+    Cancelling $2j$ and combining the linear phase factor $\frac{e^{-j M\omega/2}}{e^{-j\omega/2}} = e^{-j \left(\frac{M-1}{2}\right)\omega}$:
+    \begin{equation}
+    H(e^{j\omega}) = \frac{1}{M} \frac{e^{-j \frac{M\omega}{2}} \cdot 2j \sin\left(\frac{M\omega}{2}\right)}{e^{-j \frac{\omega}{2}} \cdot 2j \sin\left(\frac{\omega}{2}\right)} = \mathbf{\left[ \frac{\sin\left(\frac{M\omega}{2}\right)}{M\sin\left(\frac{\omega}{2}\right)} \right] e^{-j \left(\frac{M-1}{2}\right)\omega}}
+    \end{equation}
+\end{enumerate}
+
+\subsection{Key Mathematical Characteristics \& Transmission Nulls}
+\begin{itemize}
+    \item \textbf{Real Amplitude Response:} $A(\omega) = \frac{\sin(M\omega/2)}{M\sin(\omega/2)}$, with phase $\theta(\omega) = -\left(\frac{M-1}{2}\right)\omega$.
+    \item \textbf{Continuous vs. Discrete Sinc:} For small $\omega \ll 1$, $\sin(\omega/2) \approx \omega/2$, so $A(\omega) \approx \frac{\sin(M\omega/2)}{M(\omega/2)} = \text{sinc}\left(\frac{M\omega}{2\pi}\right)$. The discrete sine denominator makes $A(\omega)$ strictly $2\pi$-periodic.
+    \item \textbf{DC Gain ($\omega = 0$):} By L'Hôpital's rule, $A(0) = \lim_{\omega \to 0} \frac{\frac{M}{2}\cos(M\omega/2)}{M \cdot \frac{1}{2}\cos(\omega/2)} = \mathbf{1}$ (unity DC gain).
+    \item \textbf{Stopband Transmission Nulls (Unit Circle Zeros):} $A(\omega) = 0$ when $\sin(M\omega/2) = 0$ and $\sin(\omega/2) \ne 0$:
+    \begin{equation}
+    \frac{M\omega_k}{2} = k\pi \implies \mathbf{\omega_k = \frac{2\pi k}{M}}, \quad k = 1, 2, \dots, M-1
+    \end{equation}
+    In the $Z$-domain, $H(z) = \frac{1}{M}\frac{1 - z^{-M}}{1 - z^{-1}}$. The root at $z = 1$ ($k=0$) is cancelled by the pole at $z=1$, leaving exactly $M-1$ zeros on the unit circle: $\mathbf{z_k = e^{j 2\pi k / M}}$ ($k \ne 0$).
 \end{itemize}
 
 \noindent\rule{\textwidth}{0.5pt}
@@ -160,51 +194,132 @@ h[n] = \{1, \; 2, \; 3, \; 2, \; 1\}, \quad \text{for } n = 0, 1, 2, 3, 4
 \begin{enumerate}
     \item Verify linear phase and determine the group delay $\tau_g$.
     \item Identify the filter type (Type 1 to 4) and its filter suitability.
-    \item Find the amplitude function $A(\omega)$ and evaluate the DC gain $H(e^{j0})$.
-    \item Find all zeros of $H(z)$ and sketch their constellation.
+    \item \textbf{Derive the DTFT step-by-step from first principles (no shortcuts)}, obtain the amplitude response $A(\omega)$ and phase response $\theta(\omega)$, and evaluate $A(\omega)$ at $\omega = 0, \frac{\pi}{2}, \frac{2\pi}{3}, \pi$.
+    \item Find all zeros of $H(z)$ algebraically and verify their constellation on the unit circle.
 \end{enumerate}
 
 \vspace{1mm}
 \noindent\textbf{Solution:}
 
 \noindent\textbf{Step 1: Symmetry and Group Delay}
-Length $N = 5$ (Odd). Center of symmetry: $\alpha = \frac{N-1}{2} = \frac{5-1}{2} = 2$.
-Checking symmetry: $h[0] = h[4] = 1$, $h[1] = h[3] = 2$, $h[2] = 3$.
-Since $h[n] = h[4-n]$, the filter has \textbf{even symmetry} with constant group delay:
-\begin{equation}
-\mathbf{\tau_g = \alpha = 2 \text{ samples}}
-\end{equation}
+\begin{itemize}
+    \item Length $N = 5$ (Odd length). Order $M = N - 1 = 4$ (Even order).
+    \item Center of symmetry: $\alpha = \frac{N-1}{2} = \frac{5-1}{2} = \mathbf{2}$.
+    \item Symmetry verification:
+    \begin{equation}
+    h[0] = h[4] = 1, \quad h[1] = h[3] = 2, \quad h[2] = 3
+    \end{equation}
+    Since $h[n] = h[N-1-n] = h[4-n]$ for all $n \in \{0, 1, 2, 3, 4\}$, the filter possesses \textbf{even symmetry}.
+    \item The group delay is strictly constant:
+    \begin{equation}
+    \mathbf{\tau_g = \alpha = 2 \text{ samples}} \quad (\text{independent of frequency } \omega)
+    \end{equation}
+\end{itemize}
 
+\vspace{1mm}
 \noindent\textbf{Step 2: Filter Classification}
-Even symmetry + Odd length $N=5$ $\implies$ \textbf{Type 1 Linear-Phase FIR Filter}.
-Suitability: Universal (Can implement Lowpass, Highpass, Bandpass, or Bandstop filters).
+\begin{itemize}
+    \item \textbf{Classification:} Even symmetry + Odd length $N = 5 \implies$ \textbf{Type 1 Linear-Phase FIR Filter}.
+    \item \textbf{Filter Suitability:} Universal. Type 1 filters have no mandatory zeros at either $\omega = 0$ ($z = 1$) or $\omega = \pi$ ($z = -1$). Hence, they can freely synthesize Lowpass, Highpass, Bandpass, or Bandstop filters.
+\end{itemize}
 
-\noindent\textbf{Step 3: Amplitude Response and DC Gain}
-Factoring out the linear-phase factor $e^{-j2\omega}$:
-\begin{align}
-H(e^{j\omega}) &= e^{-j2\omega} \big[ h[2] + 2h[1]\cos(\omega) + 2h[0]\cos(2\omega) \big] \nonumber \\
-&= e^{-j2\omega} \big[ 3 + 4\cos(\omega) + 2\cos(2\omega) \big]
-\end{align}
-Thus:
-\begin{equation}
-\mathbf{A(\omega) = 3 + 4\cos(\omega) + 2\cos(2\omega)}
-\end{equation}
-At DC ($\omega = 0$): $A(0) = 3 + 4(1) + 2(1) = \mathbf{9} = \sum_{n=0}^4 h[n]$.
+\vspace{1mm}
+\noindent\textbf{Step 3: Step-by-Step Derivation of DTFT \& Amplitude Response (First Principles)}
+\begin{enumerate}
+    \item \textbf{Fundamental Definition of the DTFT:}
+    \begin{equation}
+    H(e^{j\omega}) = \sum_{n=-\infty}^{\infty} h[n] e^{-j\omega n} = \sum_{n=0}^{4} h[n] e^{-j\omega n}
+    \end{equation}
 
-\noindent\textbf{Step 4: Algebraic Zero Extraction}
-\begin{equation}
-H(z) = 1 + 2z^{-1} + 3z^{-2} + 2z^{-3} + z^{-4} = 0 \implies z^4 + 2z^3 + 3z^2 + 2z + 1 = 0
-\end{equation}
-Dividing by $z^2$: $(z^2 + z^{-2}) + 2(z + z^{-1}) + 3 = 0$.
-Let $u = z + z^{-1}$ (so $z^2 + z^{-2} = u^2 - 2$):
-\begin{equation}
-(u^2 - 2) + 2u + 3 = 0 \implies u^2 + 2u + 1 = 0 \implies (u + 1)^2 = 0 \implies u = -1 \text{ (multiplicity 2)}
-\end{equation}
-Now solve $z + z^{-1} = -1 \implies z^2 + z + 1 = 0$:
-\begin{equation}
-z = \frac{-1 \pm j\sqrt{3}}{2} = e^{\pm j \frac{2\pi}{3}} \quad \text{(each of multiplicity 2)}
-\end{equation}
-\textbf{Conclusion:} All 4 zeros lie on the unit circle at angles $\pm 120^\circ$ (multiplicity 2), satisfying the reciprocal property $|z|=1$.
+    \item \textbf{Expand Sample-by-Sample for all $n \in \{0, 1, 2, 3, 4\}$:}
+    \begin{equation}
+    H(e^{j\omega}) = h[0] e^{-j\omega(0)} + h[1] e^{-j\omega(1)} + h[2] e^{-j\omega(2)} + h[3] e^{-j\omega(3)} + h[4] e^{-j\omega(4)}
+    \end{equation}
+
+    \item \textbf{Substitute the Numerical Coefficients of $h[n]$:}
+    \begin{align}
+    H(e^{j\omega}) &= 1\cdot e^{0} + 2\cdot e^{-j\omega} + 3\cdot e^{-j2\omega} + 2\cdot e^{-j3\omega} + 1\cdot e^{-j4\omega} \nonumber \\
+    &= 1 + 2e^{-j\omega} + 3e^{-j2\omega} + 2e^{-j3\omega} + e^{-j4\omega}
+    \end{align}
+
+    \item \textbf{Factor Out the Center Symmetry Delay $e^{-j\alpha\omega} = e^{-j2\omega}$:}
+    \begin{equation}
+    H(e^{j\omega}) = e^{-j2\omega} \left[ \frac{1}{e^{-j2\omega}} + \frac{2e^{-j\omega}}{e^{-j2\omega}} + \frac{3e^{-j2\omega}}{e^{-j2\omega}} + \frac{2e^{-j3\omega}}{e^{-j2\omega}} + \frac{e^{-j4\omega}}{e^{-j2\omega}} \right]
+    \end{equation}
+    \begin{equation}
+    H(e^{j\omega}) = e^{-j2\omega} \left[ 1\cdot e^{j2\omega} + 2\cdot e^{j\omega} + 3 + 2\cdot e^{-j\omega} + 1\cdot e^{-j2\omega} \right]
+    \end{equation}
+
+    \item \textbf{Group Symmetric Conjugate Pairs:}
+    \begin{equation}
+    H(e^{j\omega}) = e^{-j2\omega} \left[ 3 + 2\big(e^{j\omega} + e^{-j\omega}\big) + 1\big(e^{j2\omega} + e^{-j2\omega}\big) \right]
+    \end{equation}
+
+    \item \textbf{Apply Euler's Cosine Identity ($e^{j\theta} + e^{-j\theta} = 2\cos\theta$):}
+    \begin{equation}
+    e^{j\omega} + e^{-j\omega} = 2\cos(\omega), \qquad e^{j2\omega} + e^{-j2\omega} = 2\cos(2\omega)
+    \end{equation}
+
+    \item \textbf{Substitute into the Grouped Expression:}
+    \begin{align}
+    H(e^{j\omega}) &= e^{-j2\omega} \left[ 3 + 2\big(2\cos(\omega)\big) + 1\big(2\cos(2\omega)\big) \right] \nonumber \\
+    &= e^{-j2\omega} \big[ 3 + 4\cos(\omega) + 2\cos(2\omega) \big]
+    \end{align}
+
+    \item \textbf{Identify Amplitude and Phase Functions:}
+    Comparing with the standard linear-phase polar form $H(e^{j\omega}) = A(\omega) e^{j\theta(\omega)}$:
+    \begin{align}
+    \mathbf{A(\omega)} &= \mathbf{3 + 4\cos(\omega) + 2\cos(2\omega)} \quad \text{\textbf{(Real Amplitude Response)}} \\
+    \mathbf{\theta(\omega)} &= \mathbf{-2\omega} \quad \text{\textbf{(Strict Linear Phase)}} \\
+    \mathbf{\tau_p(\omega)} &= \mathbf{\tau_g(\omega) = 2 \text{ samples}} \quad \text{\textbf{(Constant Phase \& Group Delay)}}
+    \end{align}
+
+    \item \textbf{Frequency Response Evaluations:}
+    \begin{itemize}
+        \item \textbf{DC Gain ($\omega = 0$):} $A(0) = 3 + 4(1) + 2(1) = \mathbf{9} = \sum_{n=0}^4 h[n]$.
+        \item \textbf{Quarter-Sampling ($\omega = \pi/2$):} $A(\pi/2) = 3 + 4(0) + 2(-1) = \mathbf{1}$.
+        \item \textbf{Nyquist Frequency ($\omega = \pi$):} $A(\pi) = 3 + 4(-1) + 2(1) = 3 - 4 + 2 = \mathbf{1}$.
+        \item \textbf{Notch Frequency ($\omega = 2\pi/3 = 120^\circ$):}
+        $A(2\pi/3) = 3 + 4(-0.5) + 2(-0.5) = 3 - 2 - 1 = \mathbf{0}$ (Transmission notch).
+    \end{itemize}
+\end{enumerate}
+
+\vspace{1mm}
+\noindent\textbf{Step 4: Step-by-Step Algebraic Zero Extraction}
+\begin{enumerate}
+    \item \textbf{Formulate Z-transform \& Clear Negative Powers:}
+    \begin{equation}
+    H(z) = 1 + 2z^{-1} + 3z^{-2} + 2z^{-3} + z^{-4} = 0 \implies z^4 + 2z^3 + 3z^2 + 2z + 1 = 0
+    \end{equation}
+    Because coefficients $\{1, 2, 3, 2, 1\}$ are symmetric, this is a \textbf{palindromic (reciprocal) polynomial}.
+    
+    \item \textbf{Divide by Center Term $z^2$ \& Group Reciprocal Pairs:}
+    \begin{equation}
+    \left(z^2 + \frac{1}{z^2}\right) + 2\left(z + \frac{1}{z}\right) + 3 = 0
+    \end{equation}
+    
+    \item \textbf{Substitute $u = z + z^{-1}$ (where $z^2 + z^{-2} = u^2 - 2$):}
+    \begin{equation}
+    (u^2 - 2) + 2u + 3 = 0 \implies u^2 + 2u + 1 = 0 \implies (u + 1)^2 = 0 \implies \mathbf{u = -1 \text{ (multiplicity 2)}}
+    \end{equation}
+    
+    \item \textbf{Solve for $z$ from $z + z^{-1} = -1 \implies z^2 + z + 1 = 0$:}
+    Using the quadratic formula $z = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}$:
+    \begin{equation}
+    z = \frac{-1 \pm \sqrt{1 - 4}}{2} = -\frac{1}{2} \pm j \frac{\sqrt{3}}{2}
+    \end{equation}
+    
+    \item \textbf{Convert to Polar Form $r e^{j\phi}$:}
+    \begin{equation}
+    |z| = \sqrt{(-1/2)^2 + (\sqrt{3}/2)^2} = \mathbf{1}, \qquad \phi = \pm 120^\circ = \mathbf{\pm \frac{2\pi}{3} \text{ rad}}
+    \end{equation}
+    Therefore, the 4 zeros of $H(z)$ are:
+    \begin{equation}
+    \mathbf{z_{1,2} = e^{j \frac{2\pi}{3}} \quad (\text{double zero at } +120^\circ), \qquad z_{3,4} = e^{-j \frac{2\pi}{3}} \quad (\text{double zero at } -120^\circ)}
+    \end{equation}
+    \item \textbf{Verification of Linear-Phase Zero Property:}
+    All 4 zeros lie directly on the unit circle ($|z| = 1$) at angles $\pm 120^\circ$. For zeros on the unit circle, the reciprocal partner is the complex conjugate: $\frac{1}{e^{j 2\pi/3}} = e^{-j 2\pi/3}$. Thus, the reciprocal zero pairing theorem is verified. Furthermore, setting $\omega = \pm 2\pi/3$ corresponds exactly to the notch frequency $A(2\pi/3) = 0$ derived in Step 3!
+\end{enumerate}
 
 \noindent\rule{\textwidth}{0.5pt}
 
